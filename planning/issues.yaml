@@ -86,7 +86,7 @@ issues:
     requirements: [C-02, C-11]
     depends_on: []
     blockers: []
-    rationale: The ~1 hour : 7 years ratio (~61,000x) requires a near-extremal Kerr black hole and a specific orbit; the old draft's Schwarzschild claim lacks observer/orbit conditions.
+    rationale: "The ~1 hour : 7 years ratio (~61,000x) requires a near-extremal Kerr black hole and a specific orbit; the old draft's Schwarzschild claim lacks observer/orbit conditions."
     scope:
       - Model inventory classified as established / approximation / speculative / fictional (incl. Miller's waves, wormhole).
       - Equations, units, frames, valid domains for the orbit/surface time ratio; cite primary sources (Thorne, The Science of Interstellar; James et al. 2015).
