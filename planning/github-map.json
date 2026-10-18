@@ -1,0 +1,128 @@
+{
+  "repository": "adisakshya/interstellar-rpg",
+  "plan_version": "0.1.0",
+  "published": "2026-10-18",
+  "note": "Publication record only; requirements live in planning/issues.yaml. Sub-issue links are native; blocked-by is written as body sections (native dependency API not available to the publishing tool).",
+  "issues": {
+    "EPIC-M0": {
+      "number": 1,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/1"
+    },
+    "EPIC-M1": {
+      "number": 2,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/2"
+    },
+    "EPIC-M2": {
+      "number": 3,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/3"
+    },
+    "EPIC-M3": {
+      "number": 4,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/4"
+    },
+    "EPIC-M4": {
+      "number": 5,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/5"
+    },
+    "EPIC-M5": {
+      "number": 6,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/6"
+    },
+    "DOCS-001": {
+      "number": 7,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/7"
+    },
+    "DOCS-002": {
+      "number": 8,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/8"
+    },
+    "DOCS-003": {
+      "number": 9,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/9"
+    },
+    "DOCS-004": {
+      "number": 10,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/10"
+    },
+    "SETUP-001": {
+      "number": 11,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/11"
+    },
+    "DOCS-005": {
+      "number": 12,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/12"
+    },
+    "DOCS-006": {
+      "number": 13,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/13"
+    },
+    "SPIKE-001": {
+      "number": 14,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/14"
+    },
+    "CI-001": {
+      "number": 15,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/15"
+    },
+    "DOM-001": {
+      "number": 16,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/16"
+    },
+    "TIME-001": {
+      "number": 17,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/17"
+    },
+    "CONT-001": {
+      "number": 18,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/18"
+    },
+    "SCENE-001": {
+      "number": 19,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/19"
+    },
+    "DOCS-007": {
+      "number": 20,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/20"
+    },
+    "TIME-002": {
+      "number": 21,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/21"
+    },
+    "TIME-003": {
+      "number": 22,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/22"
+    },
+    "TIME-004": {
+      "number": 23,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/23"
+    },
+    "RES-001": {
+      "number": 24,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/24"
+    },
+    "INPUT-001": {
+      "number": 25,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/25"
+    },
+    "PERF-001": {
+      "number": 26,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/26"
+    },
+    "SAVE-001": {
+      "number": 27,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/27"
+    },
+    "UI-001": {
+      "number": 28,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/28"
+    },
+    "SLICE-001": {
+      "number": 29,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/29"
+    },
+    "QA-001": {
+      "number": 30,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/30"
+    }
+  }
+}

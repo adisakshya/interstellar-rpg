@@ -1,0 +1,598 @@
+# Backlog source of truth. GitHub numbers live in planning/github-map.json.
+# Statuses: draft | blocked | ready | in-progress | review | done
+#   ready   = dependencies merged AND no open product decision blocks it.
+#   blocked = waiting on a dependency or a creator decision (named in blockers/depends_on).
+# Requirement IDs: C-xx (brief §2), D-xx (DECISIONS.md). FR/NFR IDs are assigned by DOCS-005 and back-filled.
+# Size heuristic: S <= 0.5 day, M <= 1 day, L <= 2 days human-equivalent. Review = creator hours.
+plan_version: 0.1.0
+repository: adisakshya/interstellar-rpg
+
+epics:
+  - key: EPIC-M0
+    title: "M0 — Design and feasibility decisions"
+    outcome: Approved episode boundary, timeline rules, device targets, architecture, and an executable M1 backlog.
+    exit: [Approved compact docs (TIMELINES, PHYSICS, ARCHITECTURE+ADRs, VISION/GDD, PRD/VALIDATION, co-op policy), Babylon mobile spike result, all M1 issues ready or explicitly blocked]
+    depends_on: [creator review]
+  - key: EPIC-M1
+    title: "M1 — End-to-end prototype (Cooper + Romilly)"
+    outcome: Placeholder Cooper (Miller surface) and Romilly (Endurance orbit); cockpit-to-surface transition; one shared time consequence; switching; touch; save/load.
+    exit: [Playable Pages build, timeline invariant tests green, desktop + mobile measurements, one recorded creator playthrough]
+    depends_on: [EPIC-M0]
+  - key: EPIC-M2
+    title: "M2 — Miller's planet episode"
+    outcome: Scientific problem, mission trade-offs, dialogue/relationship consequences, Brand + Murph playable, alternative outcome, adaptive audio, progression per D-03.
+    exit: [Complete episode, two outcome playtests, asset inventory, understandable time feedback]
+    depends_on: [EPIC-M1 validated]
+  - key: EPIC-M3
+    title: "M3 — Single-player public release candidate"
+    outcome: Reliable, accessible episode ready for public play on GitHub Pages.
+    exit: [Device/browser matrix results, performance evidence, save compatibility, Pages deployment check, content completeness]
+    depends_on: [EPIC-M2]
+  - key: EPIC-M4
+    title: "M4 — Campaign expansion"
+    outcome: Further characters, scenes, spacecraft operations, and outcomes in bounded episodes.
+    exit: [Each episode passes regression and playtest gates without breaking established history]
+    depends_on: [EPIC-M3, prioritisation review]
+  - key: EPIC-M5
+    title: "M5 — Live co-op"
+    outcome: Friends own different characters in one authoritative shared campaign.
+    exit: [Agreed player count, infrastructure decision, ownership/waiting policy, measured two-client consistency, reconnect and failure recovery]
+    depends_on: [EPIC-M3, networking feasibility spike]
+
+issues:
+  # ---------------- M0: planning (Claude Code) ----------------
+  - key: DOCS-001
+    title: Define timeline, switching, and causality contract (docs/TIMELINES.md)
+    type: docs
+    area: timeline
+    priority: P0
+    milestone: M0
+    epic: EPIC-M0
+    agent: claude-code
+    status: ready
+    size: L
+    review_effort: 2h
+    requirements: [C-04, C-05, C-06, C-11, P-04, P-05]
+    depends_on: []
+    blockers: [Save slots / death-checkpoint policy, whether real-world absence advances simulation — ask via pop-up while drafting]
+    rationale: Free switching without explicit causality rules allows contradictory state, knowledge leaks, and cost evasion. Every M1 domain issue implements this contract.
+    scope:
+      - Define real elapsed time, reference/simulation time, per-character proper time, and narrative event order.
+      - Committed event history, bounded automatic actions for uncontrolled characters, decision barriers (block-dependent vs block-all, with worked example).
+      - Availability states (dead, incapacitated, unreachable, occupied, future-blocked) and UI reason codes.
+      - Per-character knowledge vs player-seen facts; in-world message delivery delays.
+      - Unattended resource consumption, task duration, death, checkpoints, browser suspension, save/reload.
+      - Separate single-player and draft co-op waiting policies.
+      - Required walkthroughs 1–5 and 7 from brief §8.
+    exclusions: [Code, physics derivations (DOCS-002), UI design]
+    interfaces: [Command/event names and invariants consumed by DOM-001, TIME-001..004, RES-001, SAVE-001]
+    acceptance:
+      - Each walkthrough has a step-by-step state table with expected clock/resource/knowledge values.
+      - Invariants are numbered (INV-xx) and testable.
+      - Open questions are asked through pop-ups and recorded in DECISIONS.md.
+    validation: Creator review; Codex-agnostic reading test (another agent can derive test cases from INV-xx alone).
+
+  - key: DOCS-002
+    title: Validate Miller's planet time-dilation model and physics inventory (docs/PHYSICS.md)
+    type: docs
+    area: physics
+    priority: P0
+    milestone: M0
+    epic: EPIC-M0
+    agent: claude-code
+    status: ready
+    size: M
+    review_effort: 1.5h
+    requirements: [C-02, C-11]
+    depends_on: []
+    blockers: []
+    rationale: The ~1 hour : 7 years ratio (~61,000x) requires a near-extremal Kerr black hole and a specific orbit; the old draft's Schwarzschild claim lacks observer/orbit conditions.
+    scope:
+      - Model inventory classified as established / approximation / speculative / fictional (incl. Miller's waves, wormhole).
+      - Equations, units, frames, valid domains for the orbit/surface time ratio; cite primary sources (Thorne, The Science of Interstellar; James et al. 2015).
+      - Independent numeric reference fixtures with tolerances; game ratio must be labelled derived or tuned.
+      - Precomputed-table vs runtime decision; control assists list.
+    exclusions: [Black-hole renderer, flight dynamics implementation]
+    interfaces: [Ratio table/fixture format consumed by TIME-001]
+    acceptance:
+      - Every physical claim has a source, applicability note, and date checked.
+      - Old draft's unsupported claims are listed and resolved or flagged.
+      - Fixture file values are reproducible from documented equations.
+    validation: Creator review; recomputation of fixtures by a second method.
+
+  - key: DOCS-003
+    title: Architecture and ADRs for Babylon.js + TS + Vite client (docs/ARCHITECTURE.md, docs/adr/)
+    type: docs
+    area: architecture
+    priority: P0
+    milestone: M0
+    epic: EPIC-M0
+    agent: claude-code
+    status: ready
+    size: L
+    review_effort: 1.5h
+    requirements: [C-09, C-10, C-13, D-04]
+    depends_on: []
+    blockers: []
+    rationale: Domain/presentation separation must exist from M1 so co-op authority (M5) is an adapter, not a rewrite.
+    scope:
+      - Component boundaries; domain layer is pure TS with no Babylon imports.
+      - Command -> validate -> event -> state interfaces; stable entity IDs; idempotent command IDs.
+      - Content schema approach (JSON + runtime validation), save snapshot + bounded event history.
+      - Input adapters (keyboard/mouse, touch), quality tiers, lifecycle handling, Pages subpath build.
+      - ADR-001 stack, ADR-002 domain/command model, ADR-003 save format, ADR-004 future authority model.
+    exclusions: [Engine bake-off, networking implementation, ray marching/floating origin unless measured need]
+    interfaces: [TypeScript interface sketches for GameState, Command, DomainEvent, SaveFile]
+    acceptance:
+      - ADRs state context, decision, consequences, and status (provisional until SPIKE-001).
+      - Directory layout and module dependency rules are explicit enough for Codex to scaffold.
+    validation: Creator review; consistency check against DOCS-001 invariants.
+
+  - key: DOCS-004
+    title: Vision and GDD for Miller's planet episode (docs/VISION.md, docs/GDD.md)
+    type: docs
+    area: narrative
+    priority: P0
+    milestone: M0
+    epic: EPIC-M0
+    agent: claude-code
+    status: ready
+    size: L
+    review_effort: 2h
+    requirements: [C-01, C-02, C-07, C-08, D-01, D-02, D-03, P-01, P-02]
+    depends_on: []
+    blockers: [Creative review of beat sheet before expanding dialogue]
+    rationale: Content and progression issues cannot be written without an approved beat sheet and progression model.
+    scope:
+      - Target player, emotional objective, four pillars, full-product vs episode boundary.
+      - Beat sheet: Cooper (surface) + Romilly (orbit) for M1; Brand (surface) and Murph (Earth) additions for M2.
+      - Core loop, player verbs, one scientific problem, one relationship decision, one resource trade-off, two outcomes.
+      - Progression model covering relationships/trust, knowledge/evidence, skills, equipment/resources (D-03) with staging proposal.
+      - Death/checkpoint behaviour; content-volume estimate.
+    exclusions: [Final dialogue script, voiceover, full film recreation]
+    interfaces: [Content IDs (characters, locations, decisions, facts) consumed by CONT-001]
+    acceptance:
+      - Each beat names the controlling character, decision, clock impact, and persistent consequence.
+      - Two outcomes differ in game-domain state, not only text.
+      - Staging of progression types is marked Proposed for creator approval.
+    validation: Creator reads the beat sheet and can explain the time/resource trade-off.
+
+  - key: DOCS-005
+    title: PRD, validation plan, device matrix, and budgets (docs/PRD.md, docs/VALIDATION.md)
+    type: docs
+    area: qa
+    priority: P1
+    milestone: M0
+    epic: EPIC-M0
+    agent: claude-code
+    status: blocked
+    size: M
+    review_effort: 1h
+    requirements: [C-10, C-12, C-13, P-03]
+    depends_on: [DOCS-001, DOCS-004]
+    blockers: [Creator nominates reference phone(s), desktop, browser versions]
+    rationale: Performance claims need named devices and measurement conditions.
+    scope:
+      - Stable FR/NFR IDs with priority, milestone, acceptance criteria, C-ID traceability, exclusions.
+      - Device/browser matrix, frame-time percentiles, cold-cache and network profile.
+      - Manual playtest protocol, accessibility checks, release evidence list.
+    exclusions: [Analytics, monetisation]
+    interfaces: [FR/NFR IDs back-filled into planning/issues.yaml]
+    acceptance:
+      - Every M1 issue maps to at least one FR/NFR.
+      - Budgets reference named devices and measurement method.
+    validation: Creator review.
+
+  - key: SETUP-001
+    title: Scaffold Vite + TypeScript + Babylon.js project with lint, typecheck, unit tests, and CI
+    type: chore
+    area: build
+    priority: P0
+    milestone: M1
+    epic: EPIC-M1
+    agent: codex
+    status: ready
+    size: M
+    review_effort: 0.5h
+    requirements: [D-04, C-13]
+    depends_on: []
+    blockers: []
+    rationale: Stack is confirmed (D-04); every implementation issue needs a working toolchain.
+    scope:
+      - Vite + strict TypeScript, @babylonjs/core (ES modules, tree-shakeable imports), Vitest, ESLint + Prettier.
+      - Folders src/domain (no Babylon imports, enforced by lint rule), src/render, src/input, src/ui, src/content.
+      - Base path configurable for GitHub Pages subpath (/interstellar-rpg/).
+      - GitHub Actions CI on PR: install, lint, typecheck, test, build.
+      - Placeholder scene rendering a single mesh.
+    exclusions: [Deployment (CI-001), game logic]
+    interfaces: [npm scripts dev/build/test/lint/typecheck]
+    acceptance:
+      - npm ci && npm run lint && npm run typecheck && npm test && npm run build pass locally and in CI.
+      - Importing @babylonjs/* from src/domain fails lint.
+      - README documents commands.
+    validation: CI run link; screenshot of placeholder scene.
+
+  - key: DOCS-006
+    title: Draft co-op authority and ownership policy (docs/COOP_POLICY.md)
+    type: docs
+    area: multiplayer
+    priority: P2
+    milestone: M0
+    epic: EPIC-M0
+    agent: claude-code
+    status: blocked
+    size: M
+    review_effort: 1h
+    requirements: [C-04, C-05, C-06]
+    depends_on: [DOCS-001, DOCS-003]
+    blockers: [Creator decides co-op player count and host/authority preference]
+    rationale: Single-player pause rules do not automatically become fair multiplayer rules; constraints must enter M0 even though networking is M5.
+    scope: [Session authority, character ownership, simultaneous inputs, shared choices, waiting at barriers, join/leave, reconnect, save ownership, walkthrough 7]
+    exclusions: [Networking code, infrastructure selection]
+    interfaces: [Constraints that DOM-001 must not violate]
+    acceptance: [Walkthrough 7 resolved with expected behaviour; listed constraints are referenced in ARCHITECTURE.md]
+    validation: Creator review.
+
+  - key: SPIKE-001
+    title: "Spike: Babylon.js mobile feasibility — bundle size, FPS, and touch on reference devices"
+    type: spike
+    area: performance
+    priority: P0
+    milestone: M0
+    epic: EPIC-M0
+    agent: codex
+    status: blocked
+    size: M
+    review_effort: 1h
+    requirements: [C-09, C-10, P-03]
+    depends_on: [SETUP-001]
+    blockers: [Reference phone nominated (or emulator-only result accepted as provisional)]
+    rationale: Budgets (P-03) are unmeasured targets; ADR-001 stays provisional until measured.
+    scope:
+      - Time box 1.5 days. Question - can a small terrain + water plane + capsule character + cockpit interior hit P-03 budgets?
+      - Measure compressed initial transfer, p50/p95 frame time on desktop and phone, memory, touch joystick latency.
+      - Compare tree-shaken @babylonjs/core vs full build size.
+    exclusions: [Production assets, shaders beyond defaults]
+    interfaces: [Report docs/spikes/SPIKE-001.md]
+    acceptance: [Report with raw numbers, device names, conditions, and recommendation; emulator vs physical results distinguished]
+    validation: Creator reproduces the build on their phone.
+
+  - key: DOCS-007
+    title: M0 gate — roadmap, traceability, and promote M1 issues to ready
+    type: docs
+    area: planning
+    priority: P0
+    milestone: M0
+    epic: EPIC-M0
+    agent: claude-code
+    status: blocked
+    size: S
+    review_effort: 1h
+    requirements: [C-12, C-14, C-15]
+    depends_on: [DOCS-001, DOCS-002, DOCS-003, DOCS-004, DOCS-005, DOCS-006, SPIKE-001]
+    blockers: [Creator approval of baseline]
+    rationale: M1 implementation must start from an approved, consistent baseline.
+    scope: [docs/ROADMAP.md, docs/TRACEABILITY.md, update issues.yaml + GitHub issues with FR/NFR IDs and contract links, flip readiness labels]
+    exclusions: [Detailed M2+ tickets]
+    interfaces: []
+    acceptance: [No dependency cycles; every M1 issue references contract sections; creator approval recorded in DECISIONS.md]
+    validation: Creator sign-off.
+
+  # ---------------- M1: implementation (Codex) ----------------
+  - key: CI-001
+    title: Deploy main to GitHub Pages under repository subpath
+    type: chore
+    area: build
+    priority: P1
+    milestone: M1
+    epic: EPIC-M1
+    agent: codex
+    status: blocked
+    size: S
+    review_effort: 0.5h
+    requirements: [C-13]
+    depends_on: [SETUP-001]
+    blockers: []
+    rationale: Every milestone ends in a playable build the creator can open on a phone.
+    scope: [GitHub Actions Pages workflow on push to main, correct base path and asset URLs, refresh on deep link does not 404]
+    exclusions: [Service worker, custom domain]
+    interfaces: []
+    acceptance: [Site loads at https://adisakshya.github.io/interstellar-rpg/ on desktop and mobile; no secrets in bundle]
+    validation: Deployed URL + screenshot.
+
+  - key: DOM-001
+    title: Domain core — state, commands, events, and idempotent command processing
+    type: feature
+    area: domain
+    priority: P0
+    milestone: M1
+    epic: EPIC-M1
+    agent: codex
+    status: blocked
+    size: L
+    review_effort: 1h
+    requirements: [C-04, D-04]
+    depends_on: [SETUP-001, DOCS-003]
+    blockers: []
+    rationale: Single authority for state changes; later co-op attaches here.
+    scope: [GameState type with stable IDs, Command/DomainEvent unions, dispatch(command) -> Result, processed command-ID set, subscribe() for read-only consumers]
+    exclusions: [Clocks, persistence, rendering]
+    interfaces: [Per ARCHITECTURE.md ADR-002]
+    acceptance: [Re-dispatching a command ID is a no-op; rejected commands leave state unchanged; state is immutable to subscribers]
+    validation: Vitest unit tests.
+
+  - key: TIME-001
+    title: Per-character clocks advance once per committed simulation step
+    type: feature
+    area: timeline
+    priority: P0
+    milestone: M1
+    epic: EPIC-M1
+    agent: codex
+    status: blocked
+    size: M
+    review_effort: 1h
+    requirements: [C-05, C-08, C-11]
+    depends_on: [DOM-001, DOCS-001, DOCS-002]
+    blockers: []
+    rationale: Core mechanic - local time on Miller costs time elsewhere.
+    scope: [Reference + proper-time clocks per character, ratio lookup from DOCS-002 fixture, synthetic test ratio labelled test-only]
+    exclusions: [GR solver, UI]
+    interfaces: [AdvanceTime command, ClockAdvanced event]
+    acceptance:
+      - With a synthetic 10x fixture, advancing Cooper 60 s advances Romilly/reference 600 s.
+      - Duplicate command ID does not double-advance.
+      - Switch command changes controlled character only; clocks unchanged.
+    validation: Independent expected-value fixtures (not formula copies).
+
+  - key: TIME-002
+    title: Decision barriers block dependent events until resolved
+    type: feature
+    area: timeline
+    priority: P0
+    milestone: M1
+    epic: EPIC-M1
+    agent: codex
+    status: blocked
+    size: M
+    review_effort: 1h
+    requirements: [C-06]
+    depends_on: [TIME-001]
+    blockers: []
+    rationale: Uncontrolled expeditions advance to decision points and wait (C-06).
+    scope: [PendingDecision entity, barrier policy per DOCS-001 (P-05), Blocked result type, resolve command]
+    exclusions: [Dialogue UI]
+    interfaces: [ResolveDecision command, DecisionPending/DecisionResolved events]
+    acceptance: [Advancing past a barrier returns Blocked with no partial commit; resolution unblocks exactly dependent events; walkthrough 3 passes as a test]
+    validation: Unit tests from INV-xx.
+
+  - key: TIME-003
+    title: Character availability rules and switch command with reason codes
+    type: feature
+    area: timeline
+    priority: P0
+    milestone: M1
+    epic: EPIC-M1
+    agent: codex
+    status: blocked
+    size: M
+    review_effort: 0.5h
+    requirements: [C-05]
+    depends_on: [TIME-001]
+    blockers: []
+    rationale: Free switching requires explicit availability (C-05).
+    scope: [Availability states from DOCS-001, SwitchCharacter command, reason codes for UI, assist hand-off flag for piloting]
+    exclusions: [HUD rendering]
+    interfaces: [SwitchCharacter command, AvailabilityChanged event]
+    acceptance: [Switching to unavailable character returns reason code; repeated switching changes no clocks/resources (walkthrough 2)]
+    validation: Property-based test over random switch sequences.
+
+  - key: TIME-004
+    title: Per-character knowledge and in-world message delivery
+    type: feature
+    area: timeline
+    priority: P1
+    milestone: M1
+    epic: EPIC-M1
+    agent: codex
+    status: blocked
+    size: M
+    review_effort: 0.5h
+    requirements: [C-05, C-11]
+    depends_on: [TIME-001]
+    blockers: []
+    rationale: Player sees facts through one character that another character must not know without in-world cause.
+    scope: [Fact registry, knownBy per character, playerSeen set, message entity with delivery time on receiver clock]
+    exclusions: [Dialogue presentation]
+    interfaces: [LearnFact, SendMessage commands; FactLearned, MessageDelivered events]
+    acceptance: [A fact seen via Cooper is not in Romilly's knowledge until a message is delivered; delivery respects receiver clock]
+    validation: Unit tests.
+
+  - key: RES-001
+    title: Resource model with consumption during unattended intervals
+    type: feature
+    area: domain
+    priority: P1
+    milestone: M1
+    epic: EPIC-M1
+    agent: codex
+    status: blocked
+    size: M
+    review_effort: 0.5h
+    requirements: [C-07, C-08]
+    depends_on: [TIME-001]
+    blockers: []
+    rationale: Time spent on Miller must cost Endurance resources (walkthrough 1).
+    scope: [Fuel, oxygen/life support, supplies as placeholders; consumption rates per clock; depletion events]
+    exclusions: [Equipment progression (M2)]
+    interfaces: [ResourceChanged, ResourceDepleted events]
+    acceptance: [Walkthrough 1 passes - extra surface time changes Romilly's elapsed time and Endurance resources deterministically]
+    validation: Unit tests.
+
+  - key: SAVE-001
+    title: Versioned local save/load with export, import, and corrupt-save handling
+    type: feature
+    area: persistence
+    priority: P0
+    milestone: M1
+    epic: EPIC-M1
+    agent: codex
+    status: blocked
+    size: L
+    review_effort: 1h
+    requirements: [C-13, P-04]
+    depends_on: [DOM-001, TIME-002, RES-001, TIME-004]
+    blockers: []
+    rationale: Saves must preserve pending decisions and clocks without duplicate effects.
+    scope: [Snapshot + bounded event history, schema version + migration hook, localStorage/IndexedDB, JSON export/import, corrupt and incompatible handling without silent discard]
+    exclusions: [Cloud sync, accounts]
+    interfaces: [SaveFile per ADR-003]
+    acceptance: [Walkthrough 4 passes - save at pending decision, reload, resolve once, no duplicate effects; corrupt file shows recoverable error]
+    validation: Round-trip and fuzzed-corruption tests.
+
+  - key: CONT-001
+    title: Content schema and loader for placeholder episode data
+    type: feature
+    area: content
+    priority: P1
+    milestone: M1
+    epic: EPIC-M1
+    agent: codex
+    status: blocked
+    size: M
+    review_effort: 0.5h
+    requirements: [C-07, D-01, D-02]
+    depends_on: [DOM-001, DOCS-004]
+    blockers: []
+    rationale: Authored content drives the domain via commands; schema must be validated at load.
+    scope: [JSON schema for characters, locations, decisions, facts, beats; runtime validation (e.g. zod); placeholder M1 episode file]
+    exclusions: [Final dialogue, M2 characters' content]
+    interfaces: [Content IDs from GDD]
+    acceptance: [Invalid content fails with a precise error; placeholder episode loads and references only existing IDs]
+    validation: Unit tests with valid/invalid fixtures.
+
+  - key: SCENE-001
+    title: Babylon scenes — first-person cockpit and third-person Miller surface with bounded transition
+    type: feature
+    area: render
+    priority: P0
+    milestone: M1
+    epic: EPIC-M1
+    agent: codex
+    status: blocked
+    size: L
+    review_effort: 1h
+    requirements: [C-09, C-10]
+    depends_on: [SETUP-001, SPIKE-001, DOM-001]
+    blockers: []
+    rationale: Hybrid presentation (C-09) with placeholder art; renderer reads state, never mutates it.
+    scope: [Cockpit interior placeholder (Ranger), shallow-water surface placeholder with distant wave silhouette, capsule character controller, fade/transition scene for landing]
+    exclusions: [Production art, black-hole rendering, flight physics]
+    interfaces: [Renderer subscribes to GameState]
+    acceptance: [Scenes switch with active character; no domain mutation from render code (lint/test enforced)]
+    validation: Screenshots desktop + mobile emulation.
+
+  - key: INPUT-001
+    title: Input adapters — keyboard/mouse and touch mapped to the same commands
+    type: feature
+    area: input
+    priority: P0
+    milestone: M1
+    epic: EPIC-M1
+    agent: codex
+    status: blocked
+    size: M
+    review_effort: 0.5h
+    requirements: [C-10]
+    depends_on: [SCENE-001]
+    blockers: []
+    rationale: Mobile must reach the same game-domain outcomes (walkthrough 6).
+    scope: [Action map, keyboard/mouse adapter, on-screen joystick + buttons, no hover-only or multi-finger-precision requirements]
+    exclusions: [Gamepad, remapping UI]
+    interfaces: [InputAction -> Command]
+    acceptance: [Same scripted action sequence via each adapter yields identical domain state; touch targets >= 44 CSS px]
+    validation: Unit test of adapters + emulated touch run.
+
+  - key: UI-001
+    title: HUD — character switcher, clocks, unavailable reasons, and pending decision prompt
+    type: feature
+    area: ui
+    priority: P0
+    milestone: M1
+    epic: EPIC-M1
+    agent: codex
+    status: blocked
+    size: M
+    review_effort: 1h
+    requirements: [C-05, C-06, C-10]
+    depends_on: [TIME-002, TIME-003, INPUT-001]
+    blockers: []
+    rationale: Players must read time consequences and why a character is unavailable.
+    scope: [Switcher with availability + reason, per-character elapsed time display, decision prompt, safe-area aware responsive layout, not colour-only]
+    exclusions: [Final visual design, dialogue system]
+    interfaces: [Reads state; dispatches SwitchCharacter/ResolveDecision]
+    acceptance: [Usable at 360x640 portrait and desktop; keyboard and touch operable; reasons readable by screen reader]
+    validation: Screenshots + accessibility check.
+
+  - key: PERF-001
+    title: Quality tiers, adaptive resolution, and lifecycle (pause/resume, WebGL context loss)
+    type: feature
+    area: performance
+    priority: P1
+    milestone: M1
+    epic: EPIC-M1
+    agent: codex
+    status: blocked
+    size: M
+    review_effort: 0.5h
+    requirements: [C-10, P-03]
+    depends_on: [SCENE-001, SPIKE-001]
+    blockers: []
+    rationale: Mobile keeps gameplay with simpler graphics (C-10).
+    scope: [Low/high tiers, hardware scaling, visibilitychange handling (UI pause - not a physical time stop), context-loss recovery]
+    exclusions: [Asset streaming]
+    interfaces: []
+    acceptance: [Backgrounding the tab does not advance simulation unless DOCS-001 says so; context loss recovers without losing state]
+    validation: Manual steps + recordings.
+
+  - key: SLICE-001
+    title: "Vertical slice: Cooper on Miller, Romilly on Endurance, one shared time consequence"
+    type: feature
+    area: gameplay
+    priority: P0
+    milestone: M1
+    epic: EPIC-M1
+    agent: codex
+    status: blocked
+    size: L
+    review_effort: 2h
+    requirements: [C-05, C-06, C-07, C-08, D-01, D-02]
+    depends_on: [CONT-001, SAVE-001, UI-001, PERF-001, RES-001]
+    blockers: []
+    rationale: Proves the core promise end to end before deepening systems.
+    scope: [Cockpit inspection -> landing -> one evidence pickup -> choice (stay longer / leave now) -> switch to Romilly sees elapsed years + resource change -> outcome screen showing who experienced how much time]
+    exclusions: [Brand/Murph, dialogue trees, audio]
+    interfaces: []
+    acceptance: [Both choices produce different, explainable cross-character consequences; save/replay a different choice works]
+    validation: Recorded desktop + mobile playthrough.
+
+  - key: QA-001
+    title: End-to-end invariant tests, performance harness, and M1 playtest evidence
+    type: test
+    area: qa
+    priority: P0
+    milestone: M1
+    epic: EPIC-M1
+    agent: codex
+    status: blocked
+    size: M
+    review_effort: 2h
+    requirements: [C-10, C-12]
+    depends_on: [SLICE-001, CI-001]
+    blockers: [Reference devices from DOCS-005 for physical gate]
+    rationale: M1 exit needs evidence, not a compiling build.
+    scope: [Playwright desktop + mobile-emulation runs of both paths asserting identical domain outcomes, frame-time capture script, docs/evidence/M1.md]
+    exclusions: [Physical-device automation]
+    interfaces: []
+    acceptance: [Walkthroughs 1, 2, 4, 6 automated and green in CI; physical device results recorded or listed as remaining gate]
+    validation: CI link + creator playthrough recording.
