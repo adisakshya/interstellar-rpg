@@ -360,10 +360,15 @@ issues:
     depends_on: [TIME-001]
     blockers: []
     rationale: Uncontrolled expeditions advance to decision points and wait (C-06).
-    scope: [PendingDecision entity, barrier policy per DOCS-001 (P-05), Blocked result type, resolve command]
+    scope: [PendingDecision entity, soft/hard barrier policy per TIMELINES.md §3 (P-05), Interrupted and Blocked result types, early resolution of forecast decisions, resolve command]
     exclusions: [Dialogue UI]
     interfaces: [ResolveDecision command, DecisionPending/DecisionResolved events]
-    acceptance: [Advancing past a barrier returns Blocked with no partial commit; resolution unblocks exactly dependent events; walkthrough 3 passes as a test]
+    acceptance:
+      - An interruptible activity that reaches an unresolved hard deadline commits up to that deadline as ActivityInterrupted (progress kept) and returns Interrupted; T stops at the deadline (INV-06)
+      - An atomic activity whose span contains an unresolved hard deadline returns Blocked and commits nothing (INV-05)
+      - Early ResolveDecision of a forecast decision commits DecisionPending, then CheckpointCreated if flagged, then DecisionResolved
+      - Soft decisions block only dependent events (INV-07); resolution unblocks exactly those events
+      - Walkthrough 3 (both the interruptible and the atomic variant) passes as a test
     validation: Unit tests from INV-xx.
 
   - key: TIME-003

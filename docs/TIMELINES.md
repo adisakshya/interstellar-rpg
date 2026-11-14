@@ -42,7 +42,7 @@ A decision has an owner character, options, a trigger time `T_trig`, a deadline 
 When an advance would pass an unresolved hard deadline:
 
 - **Interruptible activity** (the default): it commits up to `T_dead` as `ActivityInterrupted` (progress kept), and the result is `Interrupted{decisionId}`. This is a complete, defined outcome, not a partial commit.
-- **Atomic activity** (flagged in content, e.g. a docking burn): nothing commits, and the result is `Blocked{decisionId, T_dead}`. The blocking decision may then be resolved early, even if its trigger has not been reached yet, because the domain is deterministic and the decision can be forecast.
+- **Atomic activity** (flagged in content, e.g. a docking burn): nothing commits, and the result is `Blocked{decisionId, T_dead}`. The blocking decision may then be resolved early, even if its trigger has not been reached yet, because the domain is deterministic and the decision can be forecast. An early `ResolveDecision` commits, in order, `DecisionPending`, then `CheckpointCreated` if the decision is flagged (the snapshot is taken before the choice), then `DecisionResolved`. So early resolution still gets its checkpoint (D-08), and the `Blocked` command itself still commits nothing.
 
 *Proposed (P-05): this soft/hard split. The alternative, stopping all time at every pending decision, would make the cost of waiting invisible.*
 
@@ -91,7 +91,7 @@ When an advance would pass an unresolved hard deadline:
 | Slot | Written when | Holds |
 | --- | --- | --- |
 | Autosave (1) | After each committed command (debounced ~2 s) and on `visibilitychange: hidden` | Full snapshot |
-| Checkpoints (≤3) | Automatically, at the commit that makes a `checkpoint: true` decision pending. The oldest is dropped when a fourth arrives | Full snapshot |
+| Checkpoints (≤3) | Automatically, at the commit that makes a `checkpoint: true` decision pending, including the early-resolution path in §3. The oldest is dropped when a fourth arrives | Full snapshot |
 
 - A snapshot contains: schema version, content version, `T`, every `τ[c]`, location, availability, resources, knowledge, pending decisions, the active-activity progress, processed command ids, the RNG seed, the controlled character, and a bounded tail of the event history (debugging only, not required to rebuild state).
 - **Loading a checkpoint** is the only way to undo committed history. It asks for confirmation and replaces the autosave. Switching characters and reloading the page never rewind anything.
@@ -162,7 +162,7 @@ From step 0 the player orders a 4 h interruptible survey:
 | C1 | `DecisionPending(D_hib)` | 20.0 yr | 2 h 51 m 26 s | 10 |
 | C2 | Deadline reached → `ActivityInterrupted(survey, 89.3%)` | 25.0 yr | 3 h 34 m 17 s | 5 |
 
-The result is `Interrupted{D_hib}`, and `T` is held at 25 yr (INV-06). Everything already committed stands: Romilly really did wait 25 years. The player switches (free), and Romilly resolves "hibernate". Romilly becomes `HIBERNATING` and unswitchable, and his consumption drops. Only now can the survey continue. If the survey had been `atomic`, the command would have returned `Blocked` with nothing committed (INV-05), and the player could resolve D_hib early.
+The result is `Interrupted{D_hib}`, and `T` is held at 25 yr (INV-06). Everything already committed stands: Romilly really did wait 25 years. The player switches (free), and Romilly resolves "hibernate". Romilly becomes `HIBERNATING` and unswitchable, and his consumption drops. Only now can the survey continue. If the survey had been `atomic`, the command would have returned `Blocked` with nothing committed (INV-05), and the player could resolve D_hib early. That resolve commits `DecisionPending` and the D_hib checkpoint before `DecisionResolved`.
 
 ### W4. Save and reload at a pending decision
 
