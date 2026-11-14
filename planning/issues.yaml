@@ -4,7 +4,7 @@
 #   blocked = waiting on a dependency or a creator decision (named in blockers/depends_on).
 # Requirement IDs: C-xx (brief §2), D-xx (DECISIONS.md). FR/NFR IDs are assigned by DOCS-005 and back-filled.
 # Size heuristic: S <= 0.5 day, M <= 1 day, L <= 2 days human-equivalent. Review = creator hours.
-plan_version: 0.1.0
+plan_version: 0.2.0
 repository: adisakshya/interstellar-rpg
 
 epics:
@@ -49,12 +49,12 @@ issues:
     milestone: M0
     epic: EPIC-M0
     agent: claude-code
-    status: ready
+    status: review
     size: L
     review_effort: 2h
     requirements: [C-04, C-05, C-06, C-11, P-04, P-05]
     depends_on: []
-    blockers: [Save slots / death-checkpoint policy, whether real-world absence advances simulation — ask via pop-up while drafting]
+    blockers: []  # resolved 2026-11-14 as D-07, D-08, D-09
     rationale: Free switching without explicit causality rules allows contradictory state, knowledge leaks, and cost evasion. Every M1 domain issue implements this contract.
     scope:
       - Define real elapsed time, reference/simulation time, per-character proper time, and narrative event order.
@@ -170,7 +170,7 @@ issues:
     review_effort: 1h
     requirements: [C-10, C-12, C-13, P-03]
     depends_on: [DOCS-001, DOCS-004]
-    blockers: [Creator nominates reference phone(s), desktop, browser versions]
+    blockers: [Creator nominates reference desktop and browser versions (phone resolved as D-06)]
     rationale: Performance claims need named devices and measurement conditions.
     scope:
       - Stable FR/NFR IDs with priority, milestone, acceptance criteria, C-ID traceability, exclusions.
@@ -246,7 +246,7 @@ issues:
     review_effort: 1h
     requirements: [C-09, C-10, P-03]
     depends_on: [SETUP-001]
-    blockers: [Reference phone nominated (or emulator-only result accepted as provisional)]
+    blockers: []  # reference phone resolved as D-06 (iPhone 16e)
     rationale: Budgets (P-03) are unmeasured targets; ADR-001 stays provisional until measured.
     scope:
       - Time box 1.5 days. Question - can a small terrain + water plane + capsule character + cockpit interior hit P-03 budgets?
