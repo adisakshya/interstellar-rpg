@@ -105,8 +105,8 @@ renderer.attach(game);
 // everything else is a domain command with a fresh id per player action.
 const interactions = episode.interactions;
 const onAction = (action: InputAction) => {
-  // Once the episode is over the outcome dialog owns the screen; keys pressed behind it do nothing.
-  if (isFinished(game.getState(), episode.ending)) return;
+  // While the title screen is up, and once the episode is over (the outcome dialog), keys pressed behind them do nothing.
+  if (titleOpen || isFinished(game.getState(), episode.ending)) return;
   if (action.kind === "Move") {
     renderer.setMove(action.x, action.y);
     return;
@@ -285,8 +285,8 @@ attachLifecycle({
 });
 
 // The title screen (FAN-001, D-21): the fan-project notice is seen before play starts. It is skipped for an explicit
-// new game (`?fresh`, from the outcome screen) and for the test hook.
-if (!fresh && !params.has("debug")) {
+// new game (`?fresh`, from the outcome screen) and for the test hook (`?debug`, unless it also asks for `&title`).
+if ((!fresh && !params.has("debug")) || params.has("title")) {
   titleOpen = true;
   syncStoryPause();
   const close = () => {
