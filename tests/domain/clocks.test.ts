@@ -40,7 +40,7 @@ function state(cooperAt = slow): GameState {
     knowledge: {},
     playerSeen: [],
     messages: [],
-    activity: null,
+    activities: {},
     processedCommandIds: [],
     rng: { seed: 1, state: 1 },
   };

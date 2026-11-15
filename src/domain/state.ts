@@ -52,7 +52,8 @@ export interface GameState {
   readonly knowledge: Readonly<Record<CharacterId, readonly FactId[]>>;
   readonly playerSeen: readonly FactId[];
   readonly messages: readonly MessageState[];
-  readonly activity: ActivityProgress | null;
+  /** In-progress (interrupted) activity per character, at most one each (TIMELINES §3). */
+  readonly activities: Readonly<Record<CharacterId, ActivityProgress>>;
   /** Most recent processed command ids, oldest first, at most PROCESSED_ID_WINDOW (ADR-002). */
   readonly processedCommandIds: readonly string[];
   readonly rng: { readonly seed: number; readonly state: number };

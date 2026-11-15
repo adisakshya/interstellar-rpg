@@ -93,8 +93,14 @@ export function createClockHandlers(
     const Tend = barrier ? barrier.deadlineT! : T1;
     const tauAt = (T: number) => (T === T1 ? actor.tau + dTau : actor.tau + (T - T0) * actorRate);
     // A resumed activity's Δτ covers what was left, so progress accumulates on top of what was kept (§3).
-    const resumed = activity && state.activity?.activityId === activity.id && state.activity.actorId === actorId;
-    const kept = resumed ? state.activity!.progress : 0;
+    // Each character keeps their own interrupted work, so switching never loses another character's progress.
+    const saved = state.activities[actorId];
+    const resumed = activity !== null && saved?.activityId === activity.id;
+    const kept = resumed ? saved.progress : 0;
+    const withProgress = (g: GameState, progress: number): GameState =>
+      activity
+        ? { ...g, activities: { ...g.activities, [actorId]: { activityId: activity.id, actorId, progress } } }
+        : g;
     const progressAt = (T: number) => kept + ((T - T0) / (T1 - T0)) * (1 - kept);
 
     // Decisions not yet triggered whose trigger is at or before Tend, in T order then id order.
@@ -114,7 +120,7 @@ export function createClockHandlers(
       }
       s = { ...s, decisions: { ...s.decisions, [d.id]: { status: "pending", optionId: null } } };
       // The snapshot is a full state at this moment, including how far the activity has got (§8).
-      if (activity) s = { ...s, activity: { activityId: activity.id, actorId, progress: progressAt(at) } };
+      s = withProgress(s, progressAt(at));
       events.push({ kind: "DecisionPending", T: at, decisionId: d.id });
       if (d.checkpoint) {
         events.push({ kind: "CheckpointCreated", T: at, decisionId: d.id });
@@ -130,14 +136,15 @@ export function createClockHandlers(
     if (barrier) {
       const progress = progressAt(Tend);
       if (activity) {
-        s = { ...s, activity: { activityId: activity.id, actorId, progress } };
+        s = withProgress(s, progress);
         events.push({ kind: "ActivityInterrupted", T: Tend, activityId: activity.id, progress });
       }
       return { kind: "commit", state: s, events, checkpoints, interruptedBy: barrier.id };
     }
     if (activity) {
-      // Done: clear it, or put back an unrelated activity that was in progress before this command.
-      s = { ...s, activity: resumed ? null : state.activity };
+      // Done: clear the resumed entry, or keep the actor's earlier unrelated entry as it was.
+      const rest = Object.fromEntries(Object.entries(state.activities).filter(([id]) => id !== actorId));
+      s = { ...s, activities: resumed ? rest : state.activities };
       events.push({ kind: "ActivityCompleted", T: Tend, activityId: activity.id, progress: 1 });
     }
     return { kind: "commit", state: s, events, checkpoints };

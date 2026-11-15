@@ -69,7 +69,7 @@ function start(): GameState {
     knowledge: {},
     playerSeen: [],
     messages: [],
-    activity: null,
+    activities: {},
     processedCommandIds: [],
     rng: { seed: 1, state: 1 },
   };
@@ -130,7 +130,7 @@ describe("W3, interruptible survey (INV-06)", () => {
     expect(s.characters[romilly]!.tau).toBe(25 * YEAR);
     const interrupted = r.events[4]!;
     expect(interrupted.kind === "ActivityInterrupted" && interrupted.progress).toBeCloseTo(0.893, 3);
-    expect(s.activity).toMatchObject({ activityId: "survey", actorId: cooper });
+    expect(s.activities[cooper]).toMatchObject({ activityId: "survey", actorId: cooper });
   });
 
   it("refuses to move past the held deadline, then continues once Romilly hibernates", () => {
@@ -150,7 +150,7 @@ describe("W3, interruptible survey (INV-06)", () => {
     const rest = apply(s, survey("c3", 4 * H - s.characters[cooper]!.tau), h);
     expect(rest.result.kind).toBe("Ok");
     near(rest.state.characters[cooper]!.tau, 4 * H, 1e-6);
-    expect(rest.state.activity).toBeNull();
+    expect(rest.state.activities).toEqual({});
   });
 });
 
@@ -215,27 +215,52 @@ describe("activity progress across interruptions and checkpoints (TIMELINES §3,
   it("keeps cumulative progress when a resumed activity is interrupted again", () => {
     const h = createHandlers({ ...tables(false, [hard(first, 10, 80), hard(second, 82, 85)]) });
     let s = apply(onShip(), survey("c1", 100), h).state;
-    expect(s.activity?.progress).toBeCloseTo(0.8, 12);
+    expect(s.activities[cooper]?.progress).toBeCloseTo(0.8, 12);
     s = apply(s, resolve("r1", first, "go"), h).state;
     const again = apply(s, survey("c2", 20), h);
     expect(again.result.kind).toBe("Interrupted");
-    expect(again.state.activity?.progress).toBeCloseTo(0.85, 12);
+    expect(again.state.activities[cooper]?.progress).toBeCloseTo(0.85, 12);
     const done = apply(apply(again.state, resolve("r2", second, "go"), h).state, survey("c3", 15), h);
-    expect(done.state.activity).toBeNull();
+    expect(done.state.activities).toEqual({});
   });
 
   it("records the activity's progress in a checkpoint taken part-way through", () => {
     const h = createHandlers({ ...tables(false, [{ ...hard(first, 70, 1000, true), deadlineT: null }]) });
     const out = apply(onShip(), survey("c1", 100), h);
     const r = committed(out.result);
-    expect(r.checkpoints[0]!.state.activity).toEqual({ activityId: "survey", actorId: cooper, progress: 0.7 });
-    expect(out.state.activity).toBeNull();
+    expect(r.checkpoints[0]!.state.activities[cooper]).toEqual({
+      activityId: "survey",
+      actorId: cooper,
+      progress: 0.7,
+    });
+    expect(out.state.activities).toEqual({});
+  });
+
+  it("keeps each character's interrupted work when another character's activity is interrupted", () => {
+    const dRom = asId("decision", "decision.romilly_deadline");
+    const h = createHandlers({
+      ...tables(false, [hard(first, 10, 80), { ...hard(dRom, 85, 85), owner: romilly }]),
+    });
+    let s = apply(onShip(), survey("c1", 100), h).state; // Cooper's survey stops at 80%
+    s = apply(s, resolve("r1", first, "go"), h).state;
+    s = apply(s, switchTo("s1", romilly), h).state;
+    const repair = apply(
+      s,
+      { kind: "AdvanceTime", commandId: "c2", actorId: romilly, activityId: "repair", dTau: 10 },
+      h,
+    );
+    expect(repair.result.kind).toBe("Interrupted");
+    expect(repair.state.activities[romilly]).toMatchObject({ activityId: "repair", progress: 0.5 });
+    expect(repair.state.activities[cooper]).toMatchObject({ activityId: "survey", progress: 0.8 });
   });
 
   it("does not drop an unrelated interrupted activity when another one completes", () => {
     const h = createHandlers(tables(false, []));
-    const s: GameState = { ...onShip(), activity: { activityId: "repair", actorId: cooper, progress: 0.5 } };
-    expect(apply(s, survey("c1", 10), h).state.activity).toEqual(s.activity);
+    const s: GameState = {
+      ...onShip(),
+      activities: { [cooper]: { activityId: "repair", actorId: cooper, progress: 0.5 } },
+    };
+    expect(apply(s, survey("c1", 10), h).state.activities).toEqual(s.activities);
   });
 });
 
