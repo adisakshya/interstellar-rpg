@@ -8,7 +8,15 @@ export * from "./ids";
 export * from "./state";
 export * from "./commands";
 export { apply, createEngine, deepFreeze, PROCESSED_ID_WINDOW } from "./engine";
-export type { EngineRules, Forecaster, GameEngine, Handler, HandlerMap, HandlerOutcome } from "./engine";
-export { createHandlers, defaultHandlers } from "./handlers";
-export { createClockHandlers } from "./clocks";
-export type { RateTable } from "./clocks";
+export type {
+  CheckpointCapture,
+  EngineRules,
+  Forecaster,
+  GameEngine,
+  Handler,
+  HandlerMap,
+  HandlerOutcome,
+} from "./engine";
+export { createHandlers, createRules, defaultHandlers } from "./handlers";
+export { createClockHandlers, createForecaster } from "./clocks";
+export type { ActivityDef, DecisionDef, DecisionEffect, RateTable, TimeTables } from "./rules";

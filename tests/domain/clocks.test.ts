@@ -107,7 +107,7 @@ describe("TIME-001 acceptance (synthetic 10x, test-only)", () => {
 });
 
 describe("rejections commit nothing (INV-05)", () => {
-  const handlers = createClockHandlers(SYNTHETIC_10X);
+  const handlers = createClockHandlers({ rates: SYNTHETIC_10X });
   const cases: [string, GameState, Command, string][] = [
     ["actor not controlled", state(), advance("r1", 60, romilly), "NOT_CONTROLLED"],
     ["zero dTau", state(), advance("r2", 0), "INVALID"],
@@ -169,7 +169,7 @@ describe("rejections commit nothing (INV-05)", () => {
 });
 
 describe("TIMELINES W1 with the placeholder ratio (independent expected values)", () => {
-  const handlers = createClockHandlers(PLACEHOLDER);
+  const handlers = createClockHandlers({ rates: PLACEHOLDER });
   it("1 h for Cooper is 7.0 years for Romilly; 3 h is 21.0 years", () => {
     const a1 = apply(state(LOCATIONS.millerSurface), advance("a1", 3600), handlers).state;
     closeRel(a1.T, 7 * YEAR);
@@ -181,7 +181,7 @@ describe("TIMELINES W1 with the placeholder ratio (independent expected values)"
 });
 
 describe("physics fixture rates (PHYSICS §4)", () => {
-  const handlers = createClockHandlers(LOCATION_RATES);
+  const handlers = createClockHandlers({ rates: LOCATION_RATES });
 
   it("1 h on Miller's surface is 6.894409814750342 Endurance years", () => {
     // Expected value computed by kerr_fixtures.py in 60-digit arithmetic, not by this code path.
