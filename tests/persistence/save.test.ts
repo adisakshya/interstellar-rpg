@@ -187,6 +187,16 @@ describe("W4: save and reload at a pending decision", () => {
     expect(autosave.ok && autosave.save.state.seq).toBe(cp!.seq);
   });
 
+  it("drops the oldest-created checkpoint even after a rewind makes seq go back", async () => {
+    const slots = new SaveSlots(new MemoryBackend(), OPTS);
+    for (const seq of [10, 20, 30])
+      await slots.addCheckpoint({ decisionId: dHib, state: { ...start(), seq } }, SAVED_AT);
+    // Restore the seq-10 checkpoint, then play on: new checkpoints arrive with seq 15 and 16.
+    await slots.addCheckpoint({ decisionId: dHib, state: { ...start(), seq: 15 } }, SAVED_AT);
+    await slots.addCheckpoint({ decisionId: dHib, state: { ...start(), seq: 16 } }, SAVED_AT);
+    expect((await slots.listCheckpoints()).map((c) => c.seq)).toEqual([16, 15, 30]);
+  });
+
   it("keeps at most three checkpoints, dropping the oldest", async () => {
     const slots = new SaveSlots(new MemoryBackend(), OPTS);
     for (let seq = 1; seq <= 5; seq++) {
@@ -212,6 +222,11 @@ describe("corrupt and incompatible saves are refused with a code, never thrown o
       "from a newer build",
       async (t) => rehash({ ...JSON.parse(t), schemaVersion: SCHEMA_VERSION + 1 }),
       "SCHEMA_TOO_NEW",
+    ],
+    [
+      "an envelope version that disagrees with the state",
+      async (t) => rehash({ ...JSON.parse(t), state: { ...JSON.parse(t).state, schemaVersion: SCHEMA_VERSION + 1 } }),
+      "FORMAT",
     ],
     ["for other content", async (t) => rehash({ ...JSON.parse(t), contentVersion: "other" }), "CONTENT_VERSION"],
     [
@@ -275,6 +290,16 @@ describe("corrupt and incompatible saves are refused with a code, never thrown o
     expect(await slots.exportSlot(key)).toBe("{corrupt");
     expect(await slots.loadAutosave()).toEqual({ ok: false, code: "EMPTY" });
     expect((await slots.listQuarantine()).map((q) => [q.from, q.code])).toEqual([["autosave", "PARSE"]]);
+  });
+
+  it("overlapping bad imports each keep their own quarantine entry", async () => {
+    const slots = new SaveSlots(new MemoryBackend(), OPTS);
+    const [a, b] = await Promise.all([slots.importSave("bad1"), slots.importSave("bad2")]);
+    const keyA = !a.ok && "quarantinedAs" in a ? a.quarantinedAs : "";
+    const keyB = !b.ok && "quarantinedAs" in b ? b.quarantinedAs : "";
+    expect(keyA).not.toBe(keyB);
+    expect(await slots.exportSlot(keyA)).toBe("bad1");
+    expect(await slots.exportSlot(keyB)).toBe("bad2");
   });
 
   it("a bad import is quarantined and leaves the current autosave untouched; a good one replaces it", async () => {

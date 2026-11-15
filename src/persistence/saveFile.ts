@@ -86,6 +86,10 @@ export async function decodeSave(text: string, options: DecodeOptions): Promise<
   if (file.schemaVersion > target) return fail("SCHEMA_TOO_NEW", `schema ${file.schemaVersion} > ${target}`);
   if (typeof file.state !== "object" || file.state === null) return fail("INVALID_STATE", "state is not an object");
   let state = file.state as Record<string, unknown>;
+  // The hash covers only the state, so the envelope's version must agree with it before choosing migrations.
+  if (state["schemaVersion"] !== file.schemaVersion) {
+    return fail("FORMAT", `envelope schema ${file.schemaVersion} ≠ state schema ${String(state["schemaVersion"])}`);
+  }
   for (let v = file.schemaVersion; v < target; v++) {
     const step = migrations[v];
     if (!step) return fail("MIGRATION_MISSING", `no migration ${v} → ${v + 1}`);
@@ -96,6 +100,9 @@ export async function decodeSave(text: string, options: DecodeOptions): Promise<
     }
   }
 
+  if (state["schemaVersion"] !== target) {
+    return fail("MIGRATION_FAILED", `state is at schema ${String(state["schemaVersion"])}, expected ${target}`);
+  }
   if (file.contentVersion !== options.contentVersion || state["contentVersion"] !== options.contentVersion) {
     return fail(
       "CONTENT_VERSION",

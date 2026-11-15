@@ -40,37 +40,53 @@ export interface CheckpointInfo {
  * ADR-003, TIMELINES §8). A save that fails to load is moved to quarantine, never deleted.
  */
 export class SaveSlots {
+  /** Operations run one at a time, so key allocation and ring-buffer pruning never interleave. */
+  #queue: Promise<unknown> = Promise.resolve();
+
   constructor(
     private readonly backend: SaveBackend,
     private readonly options: DecodeOptions,
   ) {}
 
-  async writeAutosave(state: GameState, events: readonly DomainEvent[], savedAt: string): Promise<void> {
-    await this.backend.put(AUTOSAVE, await encodeSave(state, events, savedAt));
+  private serial<T>(op: () => Promise<T>): Promise<T> {
+    const run = this.#queue.then(op, op);
+    this.#queue = run.catch(() => undefined);
+    return run;
   }
 
-  async loadAutosave(): Promise<LoadResult> {
-    return this.load(AUTOSAVE);
+  writeAutosave(state: GameState, events: readonly DomainEvent[], savedAt: string): Promise<void> {
+    return this.serial(async () => this.backend.put(AUTOSAVE, await encodeSave(state, events, savedAt)));
   }
 
-  /** Store a checkpoint from `result.checkpoints`; a fourth one drops the oldest. */
-  async addCheckpoint(snapshot: CheckpointSnapshot, savedAt: string): Promise<string> {
-    const key = `${CHECKPOINT}${String(snapshot.state.seq).padStart(12, "0")}.${snapshot.decisionId}`;
-    await this.backend.put(key, await encodeSave(snapshot.state, [], savedAt));
-    const all = (await this.backend.keys()).filter((k) => k.startsWith(CHECKPOINT)).sort();
-    for (const old of all.slice(0, Math.max(0, all.length - MAX_CHECKPOINTS))) await this.backend.delete(old);
-    return key;
+  loadAutosave(): Promise<LoadResult> {
+    return this.serial(() => this.load(AUTOSAVE));
   }
 
-  /** Checkpoints, newest first. */
-  async listCheckpoints(): Promise<CheckpointInfo[]> {
-    const keys = (await this.backend.keys())
-      .filter((k) => k.startsWith(CHECKPOINT))
-      .sort()
-      .reverse();
-    return keys.map((key) => {
-      const [seq, ...rest] = key.slice(CHECKPOINT.length).split(".");
-      return { key, seq: Number(seq), decisionId: rest.join(".") };
+  /**
+   * Store a checkpoint from `result.checkpoints`; a fourth one drops the oldest. Order is creation order, not the
+   * domain `seq`, which restarts from an earlier value after a checkpoint is restored.
+   */
+  addCheckpoint(snapshot: CheckpointSnapshot, savedAt: string): Promise<string> {
+    return this.serial(async () => {
+      const existing = await this.checkpointKeys();
+      const created =
+        existing.reduce((max, k) => (parseCheckpoint(k).created > max ? parseCheckpoint(k).created : max), 0) + 1;
+      const key = `${CHECKPOINT}${pad(created, 12)}.${pad(snapshot.state.seq, 12)}.${snapshot.decisionId}`;
+      await this.backend.put(key, await encodeSave(snapshot.state, [], savedAt));
+      const all = [...existing, key].sort();
+      for (const old of all.slice(0, Math.max(0, all.length - MAX_CHECKPOINTS))) await this.backend.delete(old);
+      return key;
+    });
+  }
+
+  /** Checkpoints, most recently created first. */
+  listCheckpoints(): Promise<CheckpointInfo[]> {
+    return this.serial(async () => {
+      const keys = (await this.checkpointKeys()).sort().reverse();
+      return keys.map((key) => {
+        const { seq, decisionId } = parseCheckpoint(key);
+        return { key, seq, decisionId };
+      });
     });
   }
 
@@ -78,43 +94,55 @@ export class SaveSlots {
    * Load a checkpoint to replace the autosave (TIMELINES §8: the only rewind; the UI asks first). The caller then
    * builds a fresh engine from the returned state.
    */
-  async restoreCheckpoint(key: string): Promise<LoadResult> {
-    const out = await this.load(key);
-    if (out.ok) {
-      const text = await this.backend.get(key);
-      if (text !== undefined) await this.backend.put(AUTOSAVE, text);
-    }
-    return out;
+  restoreCheckpoint(key: string): Promise<LoadResult> {
+    return this.serial(async () => {
+      const out = await this.load(key);
+      if (out.ok) {
+        const text = await this.backend.get(key);
+        if (text !== undefined) await this.backend.put(AUTOSAVE, text);
+      }
+      return out;
+    });
   }
 
   /** Raw text of any slot, including quarantined ones, for "Export save". */
-  async exportSlot(key: string): Promise<string | undefined> {
-    if (key.startsWith(QUARANTINE)) {
-      const entry = await this.backend.get(key);
-      return entry === undefined ? undefined : (JSON.parse(entry) as QuarantineEntry).raw;
-    }
-    return this.backend.get(key);
+  exportSlot(key: string): Promise<string | undefined> {
+    return this.serial(async () => {
+      if (key.startsWith(QUARANTINE)) {
+        const entry = await this.backend.get(key);
+        return entry === undefined ? undefined : (JSON.parse(entry) as QuarantineEntry).raw;
+      }
+      return this.backend.get(key);
+    });
   }
 
   /** Import a file as the autosave. A bad file goes to quarantine and the current autosave is left alone. */
-  async importSave(text: string): Promise<LoadResult> {
-    const decoded = await decodeSave(text, this.options);
-    if (!decoded.ok) {
-      const quarantinedAs = await this.quarantine("import", text, decoded.code, decoded.detail);
-      return { ok: false, code: decoded.code, detail: decoded.detail, quarantinedAs };
-    }
-    await this.backend.put(AUTOSAVE, text);
-    return decoded;
+  importSave(text: string): Promise<LoadResult> {
+    return this.serial(async () => {
+      const decoded = await decodeSave(text, this.options);
+      if (!decoded.ok) {
+        const quarantinedAs = await this.quarantine("import", text, decoded.code, decoded.detail);
+        return { ok: false, code: decoded.code, detail: decoded.detail, quarantinedAs };
+      }
+      await this.backend.put(AUTOSAVE, text);
+      return decoded;
+    });
   }
 
-  async listQuarantine(): Promise<QuarantineEntry[]> {
-    const keys = (await this.backend.keys()).filter((k) => k.startsWith(QUARANTINE)).sort();
-    const out: QuarantineEntry[] = [];
-    for (const key of keys) {
-      const entry = await this.backend.get(key);
-      if (entry !== undefined) out.push(JSON.parse(entry) as QuarantineEntry);
-    }
-    return out;
+  listQuarantine(): Promise<QuarantineEntry[]> {
+    return this.serial(async () => {
+      const keys = (await this.backend.keys()).filter((k) => k.startsWith(QUARANTINE)).sort();
+      const out: QuarantineEntry[] = [];
+      for (const key of keys) {
+        const entry = await this.backend.get(key);
+        if (entry !== undefined) out.push(JSON.parse(entry) as QuarantineEntry);
+      }
+      return out;
+    });
+  }
+
+  private async checkpointKeys(): Promise<string[]> {
+    return (await this.backend.keys()).filter((k) => k.startsWith(CHECKPOINT));
   }
 
   private async load(key: string): Promise<LoadResult> {
@@ -131,12 +159,21 @@ export class SaveSlots {
   private async quarantine(from: string, raw: string, code: SaveErrorCode, detail: string): Promise<string> {
     const used = (await this.backend.keys())
       .filter((k) => k.startsWith(QUARANTINE))
-      .map((k) => Number(k.slice(QUARANTINE.length)));
-    const key = `${QUARANTINE}${String(used.reduce((a, b) => (b > a ? b : a), -1) + 1).padStart(6, "0")}`;
+      .map((k) => Number(k.slice(QUARANTINE.length).split("-")[0]));
+    const next = used.reduce((a, b) => (b > a ? b : a), -1) + 1;
+    // The random suffix keeps keys unique even if another tab quarantines at the same moment.
+    const key = `${QUARANTINE}${pad(next, 6)}-${crypto.randomUUID()}`;
     const entry: QuarantineEntry = { key, from, code, detail, raw };
     await this.backend.put(key, JSON.stringify(entry));
     return key;
   }
+}
+
+const pad = (n: number, width: number) => String(n).padStart(width, "0");
+
+function parseCheckpoint(key: string): { created: number; seq: number; decisionId: string } {
+  const [created, seq, ...rest] = key.slice(CHECKPOINT.length).split(".");
+  return { created: Number(created), seq: Number(seq), decisionId: rest.join(".") };
 }
 
 /** In-memory backend for tests and for browsers without IndexedDB (nothing survives a reload). */
