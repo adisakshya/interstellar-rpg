@@ -1,0 +1,45 @@
+{
+ "promptWaits": true,
+ "running": {
+  "t0": 60436.39643610151,
+  "t1": 241745.58574440604,
+  "advanced": true
+ },
+ "hidden": {
+  "h0": 241745.58574440604,
+  "h1": 241745.58574440604,
+  "frozen": true,
+  "pausedShown": "Paused"
+ },
+ "autosave": {
+  "bytes": 2304,
+  "T": 241745.58574440604
+ },
+ "visible": {
+  "v1": 302181.98218050756,
+  "resumed": true,
+  "pausedHidden": true
+ },
+ "contextLost": {
+  "frozen": true,
+  "pausedShown": true
+ },
+ "contextRestored": {
+  "current": "surface",
+  "newScene": true,
+  "advancing": true,
+  "pausedHidden": true
+ },
+ "foregroundAutosave": 664800.3607971166,
+ "reload": {
+  "savedT": 664800.3607971166,
+  "resumedT": 664800.3607971166,
+  "resumed": true
+ },
+ "logs": [
+  "log: BJS - [15:26:40]: Babylon.js v9.36.0 - WebGL2",
+  "warning: BJS - [15:26:55]: WebGL context lost.",
+  "warning: BJS - [15:26:58]: WebGL context successfully restored.",
+  "log: BJS - [15:27:06]: Babylon.js v9.36.0 - WebGL2"
+ ]
+}

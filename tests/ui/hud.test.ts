@@ -212,6 +212,23 @@ describe("decision prompts", () => {
   });
 });
 
+describe("pause", () => {
+  it("shows Paused in text and announces it once, then clears it", () => {
+    const { root } = setup();
+    hud!.update(model());
+    const note = root.querySelector(".irpg-paused") as HTMLElement;
+    expect(note.hidden).toBe(true);
+    hud!.setPaused(true);
+    expect(note.hidden).toBe(false);
+    expect(note.textContent).toBe("Paused");
+    expect(live(root)).toBe("Paused");
+    hud!.setPaused(true);
+    hud!.setPaused(false);
+    expect(note.hidden).toBe(true);
+    expect(live(root)).toBe("Resumed");
+  });
+});
+
 describe("layout rules", () => {
   it("sizes every control at 44 px or more (2.75rem), keeps focus visible, and scales with text", () => {
     const { root } = setup();

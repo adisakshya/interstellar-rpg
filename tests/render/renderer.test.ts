@@ -1,5 +1,5 @@
 import { NullEngine } from "@babylonjs/core/Engines/nullEngine";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import m1 from "../../src/content/episodes/m1.json";
 import { loadEpisode } from "../../src/content";
 import { createEngine, createInitialState, createRules, type GameState } from "../../src/domain";
@@ -203,5 +203,42 @@ describe("quality tiers change visuals only", () => {
     expect(scalingLevel("low", 3)).toBeCloseTo(0.5, 12); // 2 rendered pixels per CSS pixel on a 3x phone
     expect(scalingLevel("high", 1)).toBe(1);
     expect(TIERS.low.antialias).toBe(false);
+  });
+});
+
+describe("context-loss recovery (PERF-001, TIMELINES §5)", () => {
+  it("rebuilds the visible scene from the latest state and leaves game state untouched", async () => {
+    engine = new NullEngine();
+    renderer = createRenderer(engine, { tier: "high", fadeMs: 0 });
+    const game = newGame();
+    renderer.attach(game);
+    await renderer.show(game.getState());
+    renderer.setMove(0, 1);
+    const before = await stateHash(game.getState());
+    const stateObject = game.getState();
+    const oldScene = renderer.handle!.scene;
+
+    await renderer.rebuild();
+
+    expect(renderer.current).toBe("surface");
+    expect(renderer.handle!.scene).not.toBe(oldScene);
+    expect(oldScene.isDisposed).toBe(true);
+    expect(engine.scenes).toHaveLength(1);
+    expect(game.getState()).toBe(stateObject);
+    expect(await stateHash(game.getState())).toBe(before);
+    for (let i = 0; i < 3; i++) renderer.render(); // the new scene draws, with the held movement carried over
+  });
+
+  it("follows a scene change made while the context was down, and survives a scene that fails to dispose", async () => {
+    engine = new NullEngine();
+    renderer = createRenderer(engine, { tier: "low", fadeMs: 0 });
+    const game = newGame();
+    await renderer.show(game.getState());
+    vi.spyOn(renderer.handle!, "dispose").mockImplementation(() => {
+      throw new Error("context lost");
+    });
+    await renderer.show(at(game.getState(), "loc.ranger")).catch(() => undefined);
+    await renderer.rebuild();
+    expect(renderer.current).toBe("cockpit");
   });
 });
