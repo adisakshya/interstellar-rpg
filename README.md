@@ -4,7 +4,7 @@ A free browser RPG set in the *Interstellar* universe, where every minute on Mil
 
 ## Requirements
 
-Node.js 20 or newer (CI uses 22), npm, and Python 3 for the physics fixture check.
+Node.js 22.13+ or 24+ (CI uses 22), npm, and Python 3 for the physics fixture check. Vitest and ESLint don't support older Node versions.
 
 ## Commands
 
