@@ -6,7 +6,7 @@ Status: **Accepted** for M1.
 TIMELINES requires atomic commands (INV-05), idempotency (INV-04), exact save/reload (INV-14), identical results across devices (INV-15), and a later co-op authority that must not rewrite gameplay.
 
 ## Decision
-- `apply(state, command, content) → { state, result }` is a pure function in `src/domain`. `GameEngine` wraps it with `dispatch`, `getState`, `subscribe` and `forecast` (ARCHITECTURE §3).
+- `apply(state, command, handlers) → { state, result }` (handlers built from content) is a pure function in `src/domain`. `GameEngine` wraps it with `dispatch`, `getState`, `subscribe` and `forecast` (ARCHITECTURE §3).
 - Commands carry a client-generated UUID `commandId`. The state keeps the most recent **1 024** processed ids. Older ids cannot reappear, because the input layer generates a fresh id per player action and never retries an old one beyond a session.
 - State is immutable: every reducer returns a new object, and the engine deep-freezes it in development builds.
 - Time and randomness enter only as command data (`dTau`) or through a seeded PRNG (mulberry32) stored in state. No `Date`, `Math.random` or transcendental `Math.*` in timeline math (TIMELINES §1).
