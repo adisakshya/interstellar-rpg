@@ -240,8 +240,8 @@ issues:
     priority: P0
     milestone: M0
     epic: EPIC-M0
-    agent: codex
-    status: ready
+    agent: claude-code  # taken over 2026-11-15: Codex had no environment for this repo
+    status: review  # emulated half done; physical iPhone 16e run pending (creator)
     size: M
     review_effort: 1h
     requirements: [C-09, C-10, P-03, NFR-02, NFR-03]

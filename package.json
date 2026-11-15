@@ -14,7 +14,8 @@
     "lint": "eslint . && prettier --check .",
     "format": "prettier --write .",
     "test": "vitest run",
-    "physics:check": "python3 docs/physics/kerr_fixtures.py --check"
+    "physics:check": "python3 docs/physics/kerr_fixtures.py --check",
+    "spike:measure": "node spike/measure.mjs"
   },
   "dependencies": {
     "@babylonjs/core": "^9.36.0",

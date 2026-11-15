@@ -1,0 +1,150 @@
+{
+  "generatedBy": "spike/measure.mjs",
+  "emulated": true,
+  "conditions": {
+    "warmupMs": 10000,
+    "measureMs": 60000,
+    "node": "v22.22.0",
+    "browser": "Chromium (Playwright 1.56), headless, software WebGL"
+  },
+  "bundles": {
+    "tree": {
+      "raw": 1581634,
+      "gzip": 370617,
+      "brotli": 299363
+    },
+    "full": {
+      "raw": 7365202,
+      "gzip": 1667219,
+      "brotli": 1249666
+    }
+  },
+  "runs": [
+    {
+      "profile": "desktop-chromium-headless",
+      "view": "surface",
+      "scaling": 1,
+      "devicePixelRatio": 1,
+      "canvas": {
+        "width": 1280,
+        "height": 800
+      },
+      "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/141.0.7390.37 Safari/537.36",
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "frames": 635,
+      "frameMs": {
+        "p50": 93.90000000037253,
+        "p95": 113.3000000002794,
+        "p99": 124,
+        "mean": 94.49700787401517
+      },
+      "fps": {
+        "p50": 10.649627263003543,
+        "p95": 8.826125330957934
+      },
+      "inputLatencyMs": [],
+      "heapMB": 9.5367431640625,
+      "firstFrameMs": 15.700000000186265
+    },
+    {
+      "profile": "desktop-chromium-headless",
+      "view": "cockpit",
+      "scaling": 1,
+      "devicePixelRatio": 1,
+      "canvas": {
+        "width": 1280,
+        "height": 800
+      },
+      "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/141.0.7390.37 Safari/537.36",
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "frames": 1094,
+      "frameMs": {
+        "p50": 54.10000000009313,
+        "p95": 67.20000000018626,
+        "p99": 73.70000000018626,
+        "mean": 54.86252285191922
+      },
+      "fps": {
+        "p50": 18.484288354866518,
+        "p95": 14.880952380911134
+      },
+      "inputLatencyMs": [],
+      "heapMB": 9.5367431640625,
+      "firstFrameMs": 24
+    },
+    {
+      "profile": "iphone15-viewport-chromium-headless",
+      "view": "surface",
+      "scaling": 1.5,
+      "devicePixelRatio": 3,
+      "canvas": {
+        "width": 786,
+        "height": 1318
+      },
+      "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1",
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "frames": 938,
+      "frameMs": {
+        "p50": 63.29999999981374,
+        "p95": 77.60000000009313,
+        "p99": 83,
+        "mean": 63.968336886993406
+      },
+      "fps": {
+        "p50": 15.797788309683135,
+        "p95": 12.886597938128864
+      },
+      "inputLatencyMs": [
+        271.89999999990687,
+        157.8000000002794,
+        161.10000000009313,
+        188.5,
+        147.6999999997206,
+        171.39999999990687,
+        158.60000000009313,
+        160.1999999997206,
+        131.5,
+        144.70000000018626
+      ],
+      "heapMB": 10.10894775390625,
+      "firstFrameMs": 15.799999999813735
+    },
+    {
+      "profile": "iphone15-viewport-chromium-headless",
+      "view": "cockpit",
+      "scaling": 1.5,
+      "devicePixelRatio": 3,
+      "canvas": {
+        "width": 786,
+        "height": 1318
+      },
+      "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1",
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+      "frames": 1242,
+      "frameMs": {
+        "p50": 47.89999999990687,
+        "p95": 60.200000000186265,
+        "p99": 64,
+        "mean": 48.330193236715054
+      },
+      "fps": {
+        "p50": 20.876826722378794,
+        "p95": 16.611295681011725
+      },
+      "inputLatencyMs": [
+        223.8000000002794,
+        144.39999999990687,
+        157.1999999997206,
+        100.5,
+        148.8000000002794,
+        158.20000000018626,
+        112,
+        119.1999999997206,
+        124.39999999990687,
+        142.89999999990687
+      ],
+      "heapMB": 9.5367431640625,
+      "firstFrameMs": 18.5
+    }
+  ]
+}
