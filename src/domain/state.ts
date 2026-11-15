@@ -10,6 +10,8 @@ export interface CharacterState {
   readonly tau: number;
   readonly location: LocationId;
   readonly unavailable: UnavailableReason | null;
+  /** Why the character died; set together with `DEAD` (TIMELINES §4, shown in the switcher). */
+  readonly cause?: string;
 }
 
 export interface ResourceState {

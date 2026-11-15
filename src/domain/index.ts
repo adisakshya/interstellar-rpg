@@ -19,4 +19,6 @@ export type {
 } from "./engine";
 export { createHandlers, createRules, defaultHandlers } from "./handlers";
 export { createClockHandlers, createForecaster } from "./clocks";
+export { switchRejection, switchView } from "./availability";
+export type { Handoff, SwitchOption, SwitchView } from "./availability";
 export type { ActivityDef, DecisionDef, DecisionEffect, RateTable, TimeTables } from "./rules";
