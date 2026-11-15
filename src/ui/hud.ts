@@ -4,6 +4,8 @@ import type { CharacterRow, DecisionPrompt, HudModel } from "./model";
 export interface HudHandlers {
   onSwitch(characterId: string): void;
   onResolve(decisionId: DecisionId, optionId: string): void;
+  /** The player chose the offered interaction (same as pressing E or the Act button). */
+  onAct(): void;
 }
 
 export interface Hud {
@@ -86,6 +88,15 @@ export function mountHud(root: HTMLElement, handlers: HudHandlers): Hud {
   const pausedNote = make(doc, "p", { class: "irpg-note irpg-paused", hidden: "" }, "Paused");
   timePanel.append(clock, clockSpoken, pausedNote);
 
+  const actionPanel = make(doc, "section", { class: "irpg-panel", "aria-labelledby": "irpg-act-h", hidden: "" });
+  actionPanel.append(make(doc, "h2", { id: "irpg-act-h" }, "Action"));
+  const actionButton = make(doc, "button", { type: "button", class: "irpg-btn", "aria-keyshortcuts": "E" });
+  const actionLabel = make(doc, "span", { class: "irpg-name" });
+  const actionCost = make(doc, "span", { class: "irpg-meta" });
+  actionButton.append(actionLabel, actionCost);
+  actionButton.addEventListener("click", () => handlers.onAct());
+  actionPanel.append(actionButton);
+
   const roster = make(doc, "nav", { class: "irpg-panel", "aria-labelledby": "irpg-who-h" });
   roster.append(make(doc, "h2", { id: "irpg-who-h" }, "Characters"));
   const list = make(doc, "ul", { class: "irpg-list" });
@@ -99,7 +110,7 @@ export function mountHud(root: HTMLElement, handlers: HudHandlers): Hud {
   const status = make(doc, "div", { class: "irpg-sr", role: "status", "aria-live": "polite" });
 
   const column = make(doc, "div", { class: "irpg-scroll" });
-  column.append(timePanel, roster, prompts, notes);
+  column.append(timePanel, actionPanel, roster, prompts, notes);
   wrap.append(column, status);
   root.append(style, wrap);
 
@@ -187,8 +198,12 @@ export function mountHud(root: HTMLElement, handlers: HudHandlers): Hud {
 
   /** The countdown changes as reference time advances, so it is repainted on every update, never rebuilt. */
   function paintDeadline(el: HTMLElement, p: DecisionPrompt): void {
-    el.textContent = p.deadline ? `Deadline in ${p.deadline} of reference time` : "";
-    el.hidden = !p.deadline;
+    el.textContent = p.deadline
+      ? `Deadline in ${p.deadline} of reference time`
+      : p.hard
+        ? "Time is held until you choose."
+        : "";
+    el.hidden = !p.deadline && !p.hard;
   }
 
   return {
@@ -215,6 +230,14 @@ export function mountHud(root: HTMLElement, handlers: HudHandlers): Hud {
 
       clock.textContent = `${model.controlledName} · ${model.reference} passed overall`;
       clockSpoken.textContent = `Reference time ${model.referenceSpoken}`;
+
+      // The offered action: one button repainted in place, so focus stays on it while its cost changes.
+      actionPanel.hidden = model.action === null;
+      if (model.action) {
+        actionLabel.textContent = model.action.label;
+        actionCost.textContent = model.action.cost;
+        actionButton.setAttribute("aria-label", `${model.action.label}, ${model.action.costSpoken}`);
+      }
 
       // Decision prompts: created when they appear, removed when resolved; never rebuilt while open.
       const live = new Set(model.prompts.map((p) => p.id as string));

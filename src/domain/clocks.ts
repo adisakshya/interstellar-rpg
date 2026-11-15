@@ -25,7 +25,9 @@ function clocksAt(
   const dT = T - start.T;
   const characters: Record<CharacterId, CharacterState> = {};
   for (const [id, c] of Object.entries(start.characters) as [CharacterId, CharacterState][]) {
-    characters[id] = { ...c, tau: id === actorId ? actorTau : c.tau + rateOf(c.location) * dT };
+    // The dead stop living: their clock keeps the time they had when they died.
+    const tau = id === actorId ? actorTau : c.unavailable === "DEAD" ? c.tau : c.tau + rateOf(c.location) * dT;
+    characters[id] = { ...c, tau };
   }
   return { ...current, T, characters, resources: resourcesAt(start, tables, T, rateOf) };
 }
@@ -39,10 +41,18 @@ function effectsOf(state: GameState, def: DecisionDef, optionId: string): { stat
   const events: EventDraft[] = [];
   let s = state;
   for (const effect of def.options[optionId] ?? ([] as readonly DecisionEffect[])) {
-    if (effect.kind === "SetAvailability") {
+    if (effect.kind === "SpendTime") {
+      continue; // time passes after every effect has applied (see ResolveDecision)
+    } else if (effect.kind === "SetAvailability") {
       const c = s.characters[effect.characterId];
       if (!c) continue;
-      s = { ...s, characters: { ...s.characters, [c.id]: { ...c, unavailable: effect.reason } } };
+      s = {
+        ...s,
+        characters: {
+          ...s.characters,
+          [c.id]: { ...c, unavailable: effect.reason, ...(effect.cause === undefined ? {} : { cause: effect.cause }) },
+        },
+      };
       events.push({ kind: "AvailabilityChanged", T: s.T, characterId: c.id, reason: effect.reason });
     } else {
       const out = learn(s, effect.characterId, effect.factId);
@@ -68,6 +78,8 @@ export function createClockHandlers(
     actorId: CharacterId,
     dTau: number,
     activity: { id: string; atomic: boolean } | null,
+    /** Never stop part-way at a hard deadline, even with no activity to resume (a choice's own time cost). */
+    wholly = false,
   ): HandlerOutcome {
     const actor = state.characters[actorId];
     if (!actor) return reject("INVALID", `unknown character ${actorId}`);
@@ -99,7 +111,7 @@ export function createClockHandlers(
         barrierT = dl;
       }
     }
-    if (barrier && (activity?.atomic || barrierT <= T0)) {
+    if (barrier && (wholly || activity?.atomic || barrierT <= T0)) {
       // Atomic, or already held at the deadline: nothing commits (INV-05).
       return { kind: "blocked", decisionId: barrier.id, deadlineT: barrierT };
     }
@@ -237,7 +249,24 @@ export function createClockHandlers(
       s = { ...s, decisions: { ...s.decisions, [def.id]: { status: "resolved", optionId: command.optionId } } };
       events.push({ kind: "DecisionResolved", T: s.T, decisionId: def.id, optionId: command.optionId });
       const effects = effectsOf(s, def, command.optionId);
-      return { kind: "commit", state: effects.state, events: [...events, ...effects.events], checkpoints };
+      const committed = { state: effects.state, events: [...events, ...effects.events], checkpoints };
+      // The choice's own time cost runs through the ordinary clock rules, so another decision that triggers inside it
+      // is handled as for any activity. But it cannot stop half-way: there is no activity to resume, and the choice is
+      // already made. So a hard deadline inside the span blocks the whole choice (nothing commits, INV-05); the player
+      // resolves that decision first, which a hard decision allows even before it is pending, and then chooses.
+      for (const effect of def.options[command.optionId] ?? []) {
+        if (effect.kind !== "SpendTime") continue;
+        const out = advance(committed.state, effect.characterId, effect.dTau, null, true);
+        if (out.kind !== "commit") return out;
+        const offset = committed.events.length;
+        committed.state = out.state;
+        committed.events = [...committed.events, ...out.events];
+        committed.checkpoints = [
+          ...committed.checkpoints,
+          ...(out.checkpoints ?? []).map((c) => ({ ...c, afterEvents: c.afterEvents + offset })),
+        ];
+      }
+      return { kind: "commit", ...committed };
     },
   };
 }

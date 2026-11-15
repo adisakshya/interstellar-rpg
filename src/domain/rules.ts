@@ -6,7 +6,18 @@ export type RateTable = Readonly<Record<LocationId, number>>;
 
 /** A consequence of choosing an option. Committed only when the decision resolves (INV-07). */
 export type DecisionEffect =
-  | { readonly kind: "SetAvailability"; readonly characterId: CharacterId; readonly reason: UnavailableReason | null }
+  | {
+      readonly kind: "SetAvailability";
+      readonly characterId: CharacterId;
+      readonly reason: UnavailableReason | null;
+      /** Why, shown for DEAD ("wave"). */
+      readonly cause?: string;
+    }
+  /**
+   * The choice itself costs the decision owner this much of their own proper time (e.g. flooded engines need an hour
+   * of Cooper's time), passing through the normal clock rules: resources, other characters' clocks, later decisions.
+   */
+  | { readonly kind: "SpendTime"; readonly characterId: CharacterId; readonly dTau: number }
   | { readonly kind: "LearnFact"; readonly characterId: CharacterId; readonly factId: FactId };
 
 /** "When resource X is at or below this amount". */

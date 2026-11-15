@@ -9,6 +9,7 @@ import {
   type DecisionId,
   type GameState,
 } from "../../src/domain";
+import { offerFor } from "../../src/app/interactions";
 import { buildHudModel, formatDuration, labelFromId, spokenDuration } from "../../src/ui";
 
 const loaded = loadEpisode(m1);
@@ -97,17 +98,27 @@ describe("decision prompts (C-06)", () => {
 
   it("shows a prompt to the owner, with options, hardness and the time left", () => {
     const game = createEngine(start(), createRules(episode.tables));
-    const s = { ...pending(start(), "decision.recall"), controlled: "char.cooper" as never, T: 130542616 };
+    const s = { ...pending(start(), "decision.recall"), controlled: "char.cooper" as never, T: 65_000_000 };
     const m = buildHudModel(
       s,
       ctxFor((id) => game.forecast(id)),
     );
     const p = m.prompts.find((x) => x.id === "decision.recall")!;
-    expect(p.options.map((o) => o.label)).toEqual(["Run now", "Finish search"]);
+    expect(p.options.map((o) => o.label)).toEqual(["Leave now", "Stay longer"]);
     expect(p).toMatchObject({ hard: true, title: "Recall" });
-    expect(p.deadline).toBe(formatDuration(166804454 - 130542616));
-    expect(p.deadlineSpoken).toContain("year");
+    expect(p.deadline).toBe(formatDuration(75_000_000 - 65_000_000));
+    expect(p.deadlineSpoken).toContain("days");
     expect(m.waiting).toEqual([]);
+  });
+
+  it("has no countdown once time is held at the deadline", () => {
+    const game = createEngine(start(), createRules(episode.tables));
+    const s = { ...pending(start(), "decision.recall"), controlled: "char.cooper" as never, T: 75_000_000 };
+    const p = buildHudModel(
+      s,
+      ctxFor((id) => game.forecast(id)),
+    ).prompts[0]!;
+    expect(p).toMatchObject({ hard: true, deadline: null, deadlineSpoken: null });
   });
 
   it("tells everyone else who the game is waiting on", () => {
@@ -125,7 +136,7 @@ describe("decision prompts (C-06)", () => {
   it("does not offer resolved decisions", () => {
     const s: GameState = {
       ...start(),
-      decisions: { ["decision.descent" as never]: { status: "resolved", optionId: "direct" } },
+      decisions: { ["decision.recall" as never]: { status: "resolved", optionId: "leave_now" } },
     };
     expect(buildHudModel(s, ctxFor()).prompts).toEqual([]);
   });
@@ -137,5 +148,23 @@ describe("introduction while the controlled character is locked", () => {
     const model = buildHudModel(locked, ctxFor());
     expect(model.characters.map((c) => c.id)).toEqual(["char.cooper", "char.romilly"]);
     expect(model.characters.map((c) => c.slot)).toEqual([1, 2]);
+  });
+});
+
+describe("the offered action and what it costs (SLICE-001)", () => {
+  it("shows the actor's cost and the time that passes for characters the player has met", () => {
+    const state = start();
+    const offer = offerFor(state, episode.interactions, episode.tables.rates)!;
+    const m = buildHudModel(state, { ...ctxFor(), offer });
+    expect(m.action).toEqual({
+      label: "Scan the beacon",
+      // 10 minutes on Miller is about 1.15 years for Romilly (GDD B4); Brand, Doyle and Murph are not mentioned yet.
+      cost: "10 m for you · Romilly +1.1 y",
+      costSpoken: "costs 10 minutes of your time. Romilly will see 1.1 years pass",
+    });
+  });
+
+  it("offers nothing when there is nothing to do", () => {
+    expect(buildHudModel(start(), ctxFor()).action).toBeNull();
   });
 });

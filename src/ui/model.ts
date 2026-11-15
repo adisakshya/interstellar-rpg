@@ -49,18 +49,36 @@ export interface WaitingNote {
   readonly text: string;
 }
 
+/** What the player can do right now and what it will cost, before committing (TIMELINES §1). */
+export interface ActionRow {
+  readonly label: string;
+  /** "10 min for you · Romilly +1.2 y". */
+  readonly cost: string;
+  readonly costSpoken: string;
+}
+
 export interface HudModel {
   readonly characters: readonly CharacterRow[];
   readonly controlledName: string;
   readonly reference: string;
   readonly referenceSpoken: string;
+  /** The interaction on offer, if any. */
+  readonly action: ActionRow | null;
   /** Decisions the controlled character must make now. */
   readonly prompts: readonly DecisionPrompt[];
   /** Decisions waiting on someone else: switch to them to decide. */
   readonly waiting: readonly WaitingNote[];
 }
 
+/** The offered interaction with its time cost for the actor and for everyone else (built by `app`). */
+export interface ActionOffer {
+  readonly label: string;
+  readonly dTau: number;
+  readonly others: readonly { readonly id: string; readonly dTau: number }[];
+}
+
 export interface HudContext {
+  readonly offer?: ActionOffer | null | undefined;
   readonly names: Readonly<Record<string, string>>;
   readonly decisions: Readonly<Record<DecisionId, DecisionDef>>;
   readonly activities?: Readonly<Record<string, ActivityDef>> | undefined;
@@ -91,6 +109,22 @@ export function buildHudModel(state: GameState, ctx: HudContext): HudModel {
     };
   });
 
+  const shown = new Set<string>(characters.map((c) => c.id));
+  const aged = ctx.offer?.others.filter((o) => shown.has(o.id)) ?? [];
+  const action: ActionRow | null = ctx.offer
+    ? {
+        label: ctx.offer.label,
+        cost: [
+          `${formatDuration(ctx.offer.dTau)} for you`,
+          ...aged.map((o) => `${nameOf(ctx, o.id)} +${formatDuration(o.dTau)}`),
+        ].join(" · "),
+        costSpoken: [
+          `costs ${spokenDuration(ctx.offer.dTau)} of your time`,
+          ...aged.map((o) => `${nameOf(ctx, o.id)} will see ${spokenDuration(o.dTau)} pass`),
+        ].join(". "),
+      }
+    : null;
+
   const prompts: DecisionPrompt[] = [];
   const waiting: WaitingNote[] = [];
   for (const [id, entry] of Object.entries(state.decisions) as [DecisionId, GameState["decisions"][DecisionId]][]) {
@@ -106,8 +140,9 @@ export function buildHudModel(state: GameState, ctx: HudContext): HudModel {
         title,
         options: Object.keys(def.options).map((o) => ({ id: o, label: labelFromId(o) })),
         hard: def.deadlineT !== null || def.deadlineWhen !== undefined,
-        deadline: left === null ? null : formatDuration(left),
-        deadlineSpoken: left === null ? null : spokenDuration(left),
+        // At the deadline itself there is nothing left to count: time is simply held until the player chooses.
+        deadline: left === null || left <= 0 ? null : formatDuration(left),
+        deadlineSpoken: left === null || left <= 0 ? null : spokenDuration(left),
       });
     } else {
       waiting.push({ id, ownerName: nameOf(ctx, def.owner), text: `${title}: waiting on ${nameOf(ctx, def.owner)}` });
@@ -121,6 +156,7 @@ export function buildHudModel(state: GameState, ctx: HudContext): HudModel {
     controlledName: nameOf(ctx, state.controlled),
     reference: formatDuration(state.T),
     referenceSpoken: spokenDuration(state.T),
+    action,
     prompts,
     waiting,
   };

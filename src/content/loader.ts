@@ -23,6 +23,12 @@ export interface LoadedEpisode {
   readonly initial: InitialSpec;
   readonly names: Readonly<Record<string, string>>;
   readonly beats: EpisodeFile["beats"];
+  /** What Interact offers at each place, in priority order (SLICE-001). */
+  readonly interactions: EpisodeFile["interactions"];
+  readonly ending: EpisodeFile["ending"];
+  readonly outcomeNotes: EpisodeFile["outcomeNotes"];
+  /** Fact id → player-facing text, for the outcome screen. */
+  readonly facts: Readonly<Record<string, string>>;
 }
 
 export type LoadResult =
@@ -57,7 +63,7 @@ export function loadEpisode(json: unknown): LoadResult {
   const chars = ids(ep.characters, "characters", "character");
   const locs = ids(ep.locations, "locations", "location");
   const facts = ids(ep.facts, "facts", "fact");
-  ids(ep.activities, "activities", "activity");
+  const acts = ids(ep.activities, "activities", "activity");
   const res = ids(ep.resources, "resources", "resource");
   const decs = ids(ep.decisions, "decisions", "decision");
   ids(ep.beats, "beats", "beat");
@@ -115,6 +121,25 @@ export function loadEpisode(json: unknown): LoadResult {
       });
     }
   });
+  ids(ep.interactions, "interactions", "interaction");
+  ep.interactions.forEach((x, i) => {
+    const at = (...rest: PropertyKey[]) => ["interactions", i, ...rest];
+    ref(locs, "location", x.location, at("location"));
+    ref(acts, "activity", x.activityId, at("activityId"));
+    x.requires?.forEach((f, j) => ref(facts, "fact", f, at("requires", j)));
+    x.unless?.forEach((f, j) => ref(facts, "fact", f, at("unless", j)));
+    x.after?.forEach((d, j) => ref(decs, "decision", d, at("after", j)));
+    x.before?.forEach((d, j) => ref(decs, "decision", d, at("before", j)));
+  });
+  ref(facts, "fact", ep.ending.fact, ["ending", "fact"]);
+  ref(chars, "character", ep.ending.knownBy, ["ending", "knownBy"]);
+  ep.outcomeNotes.forEach((n, i) => {
+    ref(decs, "decision", n.decision, ["outcomeNotes", i, "decision"]);
+    const d = ep.decisions.find((x) => x.id === n.decision);
+    if (d && !Object.hasOwn(d.options, n.option)) {
+      err(["outcomeNotes", i, "option"], `decision "${n.decision}" has no option "${n.option}"`);
+    }
+  });
   ep.beats.forEach((b, i) => {
     if (b.controlling !== null) ref(chars, "character", b.controlling, ["beats", i, "controlling"]);
     if (b.decision !== undefined) ref(decs, "decision", b.decision, ["beats", i, "decision"]);
@@ -155,6 +180,42 @@ export function loadEpisode(json: unknown): LoadResult {
         }
       }),
     ),
+  );
+  // A choice's own time cost is paid by the decision's owner, the only character who can be controlled to resolve it.
+  ep.decisions.forEach((d, i) =>
+    Object.entries(d.options).forEach(([name, effects]) =>
+      effects.forEach((e, j) => {
+        if (e.kind === "SpendTime" && e.characterId !== d.owner) {
+          err(
+            ["decisions", i, "options", name, j, "characterId"],
+            `"${e.characterId}" is not the decision owner "${d.owner}"`,
+          );
+        }
+      }),
+    ),
+  );
+  // INV-11: a playable character's supplies must not be able to run out unattended. Some hard decision of theirs has
+  // to be tied to that resource, so the player is warned and given a choice first.
+  ep.resources.forEach((r, i) => {
+    if (!("character" in r.owner) || r.rate <= 0) return;
+    const owner = r.owner.character;
+    if (!ep.characters.some((c) => c.id === owner && c.playable)) return;
+    const guarded = ep.decisions.some((d) => d.owner === owner && d.deadlineWhen?.resourceId === r.id);
+    if (!guarded) {
+      err(["resources", i], `"${r.id}" can run out for playable "${owner}" with no hard decision tied to it (INV-11)`);
+    }
+  });
+  // Some path must remain after a death: no single choice may kill every playable character.
+  const playable = ep.characters.filter((c) => c.playable).map((c) => c.id);
+  ep.decisions.forEach((d, i) =>
+    Object.entries(d.options).forEach(([name, effects]) => {
+      const dead = new Set(
+        effects.flatMap((e) => (e.kind === "SetAvailability" && e.reason === "DEAD" ? [e.characterId] : [])),
+      );
+      if (playable.length > 0 && playable.every((c) => dead.has(c))) {
+        err(["decisions", i, "options", name], "kills every playable character, so no path would remain");
+      }
+    }),
   );
   if (errors.length > 0) return { ok: false, errors };
 
@@ -198,6 +259,17 @@ export function loadEpisode(json: unknown): LoadResult {
   const names = Object.fromEntries([...ep.characters, ...ep.locations].map((x) => [x.id, x.name]));
   return {
     ok: true,
-    episode: { contentVersion: ep.contentVersion, episode: ep.episode, tables, initial, names, beats: ep.beats },
+    episode: {
+      contentVersion: ep.contentVersion,
+      episode: ep.episode,
+      tables,
+      initial,
+      names,
+      beats: ep.beats,
+      interactions: ep.interactions,
+      ending: ep.ending,
+      outcomeNotes: ep.outcomeNotes,
+      facts: Object.fromEntries(ep.facts.map((f) => [f.id, f.text])),
+    },
   };
 }

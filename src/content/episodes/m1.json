@@ -1,6 +1,6 @@
 {
-  "contentVersion": "m1-placeholder-1",
-  "episode": "Episode 1: Miller's planet (M1 placeholder)",
+  "contentVersion": "m1-slice-1",
+  "episode": "Episode 1: Miller's planet (vertical slice)",
   "seed": 1,
   "controlled": "char.cooper",
   "characters": [
@@ -87,6 +87,14 @@
     {
       "id": "fact.elapsed_years_on_return",
       "text": "How many years Romilly waited."
+    },
+    {
+      "id": "fact.surface_searched",
+      "text": "The ground near the lander holds nothing but water and wreckage."
+    },
+    {
+      "id": "fact.lifted_off",
+      "text": "Cooper is back aboard the Ranger, in orbit above Miller."
     }
   ],
   "activities": [
@@ -107,6 +115,22 @@
     },
     {
       "id": "walk",
+      "atomic": false
+    },
+    {
+      "id": "search.surface",
+      "atomic": false,
+      "learns": ["fact.surface_searched"]
+    },
+    {
+      "id": "ascend",
+      "atomic": true,
+      "piloting": true,
+      "assist": true,
+      "learns": ["fact.lifted_off"]
+    },
+    {
+      "id": "wait",
       "atomic": false
     }
   ],
@@ -147,52 +171,33 @@
   ],
   "decisions": [
     {
-      "id": "decision.descent",
-      "owner": "char.cooper",
-      "triggerT": 0,
-      "deadlineT": null,
-      "checkpoint": false,
-      "options": {
-        "direct": [],
-        "efficient": []
-      },
-      "note": "Routes and fuel arrive with transit (later issue); placeholder choice only."
-    },
-    {
-      "id": "decision.recorder",
-      "owner": "char.cooper",
-      "triggerT": 58018941,
-      "deadlineT": null,
-      "checkpoint": true,
-      "options": {
-        "search": [],
-        "leave": []
-      },
-      "note": "After about 16 min of Cooper's time on the surface (placeholder)."
-    },
-    {
-      "id": "decision.share_data",
-      "owner": "char.cooper",
-      "triggerT": 58018941,
-      "deadlineT": null,
-      "checkpoint": false,
-      "options": {
-        "send": [],
-        "keep": []
-      },
-      "note": "Sending is a SendMessage command; this records the choice."
-    },
-    {
       "id": "decision.recall",
       "owner": "char.cooper",
-      "triggerT": 130542616,
-      "deadlineT": 166804454,
+      "triggerT": 60000000,
+      "deadlineT": 75000000,
       "checkpoint": true,
       "options": {
-        "run_now": [],
-        "finish_search": []
+        "leave_now": [],
+        "stay_longer": [
+          {
+            "kind": "LearnFact",
+            "characterId": "char.cooper",
+            "factId": "fact.miller_died_on_landing"
+          },
+          {
+            "kind": "SetAvailability",
+            "characterId": "char.doyle",
+            "reason": "DEAD",
+            "cause": "wave"
+          },
+          {
+            "kind": "SpendTime",
+            "characterId": "char.cooper",
+            "dTau": 3900
+          }
+        ]
       },
-      "note": "Wave warning at about 36 min of Cooper's time; 10 min to decide (placeholder, GDD §5)."
+      "note": "Wave warning; stay longer recovers the recorder (5 min) but Doyle dies and flooded engines cost 60 min (GDD §5, placeholder numbers)."
     },
     {
       "id": "decision.hibernate",
@@ -222,7 +227,7 @@
     {
       "id": "decision.docking",
       "owner": "char.cooper",
-      "triggerT": 166804454,
+      "triggerT": 500000000,
       "deadlineT": null,
       "checkpoint": false,
       "options": {
@@ -234,7 +239,7 @@
           }
         ]
       },
-      "note": "B10 ascent and docking (placeholder until transit routes exist): docking wakes Romilly from hibernation."
+      "note": "Wake fallback for a hibernating Romilly: Cooper's docking wakes him. The slice ends when Cooper lifts off, before this triggers."
     }
   ],
   "beats": [
@@ -242,7 +247,6 @@
       "id": "beat.b1",
       "title": "Ranger cockpit above Miller",
       "controlling": "char.cooper",
-      "decision": "decision.descent",
       "requires": ["char.cooper"]
     },
     {
@@ -261,15 +265,7 @@
       "id": "beat.b5",
       "title": "The wreck and the recorder",
       "controlling": "char.cooper",
-      "decision": "decision.recorder",
       "requires": ["char.cooper", "char.brand"]
-    },
-    {
-      "id": "beat.b6",
-      "title": "Send the readings to Romilly",
-      "controlling": "char.cooper",
-      "decision": "decision.share_data",
-      "requires": ["char.cooper"]
     },
     {
       "id": "beat.b7",
@@ -296,6 +292,70 @@
       "title": "Outcome",
       "controlling": null,
       "requires": []
+    }
+  ],
+  "interactions": [
+    {
+      "id": "act.scan",
+      "location": "loc.miller_surface",
+      "label": "Scan the beacon",
+      "activityId": "scan.beacon",
+      "dTau": 600,
+      "unless": ["fact.beacon_active"],
+      "before": ["decision.recall"]
+    },
+    {
+      "id": "act.search",
+      "location": "loc.miller_surface",
+      "label": "Search the surface",
+      "activityId": "search.surface",
+      "dTau": 1200,
+      "requires": ["fact.beacon_active"],
+      "unless": ["fact.surface_searched"],
+      "before": ["decision.recall"]
+    },
+    {
+      "id": "act.ascend",
+      "location": "loc.miller_surface",
+      "label": "Lift off and dock",
+      "activityId": "ascend",
+      "dTau": 1800,
+      "after": ["decision.recall"],
+      "unless": ["fact.lifted_off"]
+    },
+    {
+      "id": "act.wait",
+      "location": "loc.endurance",
+      "label": "Wait a month",
+      "activityId": "wait",
+      "dTau": 2592000,
+      "before": ["decision.docking"]
+    }
+  ],
+  "ending": {
+    "fact": "fact.lifted_off",
+    "knownBy": "char.cooper"
+  },
+  "outcomeNotes": [
+    {
+      "decision": "decision.recall",
+      "option": "leave_now",
+      "text": "You ran from the wave. Doyle lived, the engines stayed dry, and the flight recorder stayed on Miller."
+    },
+    {
+      "decision": "decision.recall",
+      "option": "stay_longer",
+      "text": "You stayed for the recorder. Doyle died in the wave and the flooded engines cost an hour on Miller, which Romilly paid in years."
+    },
+    {
+      "decision": "decision.hibernate",
+      "option": "hibernate",
+      "text": "Romilly hibernated to make his supplies last."
+    },
+    {
+      "decision": "decision.hibernate",
+      "option": "stay_awake",
+      "text": "Romilly stayed awake while his supplies ran down."
     }
   ]
 }

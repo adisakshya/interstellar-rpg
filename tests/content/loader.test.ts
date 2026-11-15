@@ -57,8 +57,13 @@ describe("placeholder M1 episode", () => {
     ).state;
     expect(s.characters["char.romilly" as never]!.unavailable).toBe("HIBERNATING");
     s = apply(s, { kind: "SwitchCharacter", commandId: "s2", targetId: "char.cooper" as never }, h).state;
-    // Play on until docking becomes pending (it triggers at the recall deadline, which holds T there).
-    s = apply(s, { kind: "FreeRoamTick", commandId: "t1", actorId: "char.cooper" as never, dTau: 3600 }, h).state;
+    // Answer the wave warning early (a hard decision may be), then play on until docking becomes pending.
+    s = apply(
+      s,
+      { kind: "ResolveDecision", commandId: "r0", decisionId: "decision.recall" as never, optionId: "leave_now" },
+      h,
+    ).state;
+    s = apply(s, { kind: "FreeRoamTick", commandId: "t1", actorId: "char.cooper" as never, dTau: 9000 }, h).state;
     expect(s.decisions["decision.docking" as never]?.status).toBe("pending");
     s = apply(
       s,
@@ -121,21 +126,21 @@ describe("invalid content fails with a precise error", () => {
     ],
     [
       "a deadline before its trigger",
-      (e) => (e.decisions[3].deadlineT = 1),
-      "decisions[3].deadlineT: deadline 1 is before trigger",
+      (e) => (e.decisions[0].deadlineT = 1),
+      "decisions[0].deadlineT: deadline 1 is before trigger",
     ],
     [
       "an unknown resource level",
-      (e) => (e.decisions[4].triggerWhen.resourceId = "res.nope"),
-      'decisions[4].triggerWhen.resourceId: unknown resource "res.nope"',
+      (e) => (e.decisions[1].triggerWhen.resourceId = "res.nope"),
+      'decisions[1].triggerWhen.resourceId: unknown resource "res.nope"',
     ],
     ["a wrong id prefix", (e) => (e.characters[0].id = "cooper"), "characters[0].id:"],
     ["an unknown field", (e) => (e.facts[0].colour = "red"), "facts[0]:"],
     ["a negative rate", (e) => (e.resources[0].rate = -1), "resources[0].rate:"],
     [
       "a decision owned by an NPC",
-      (e) => (e.decisions[4].owner = "char.brand"),
-      'decisions[4].owner: "char.brand" is not playable',
+      (e) => (e.decisions[1].owner = "char.brand"),
+      'decisions[1].owner: "char.brand" is not playable',
     ],
     [
       "an inherited name as a rate key",
@@ -149,13 +154,66 @@ describe("invalid content fails with a precise error", () => {
     ],
     [
       "an effect that makes an NPC available",
-      (e) => e.decisions[0].options.direct.push({ kind: "SetAvailability", characterId: "char.brand", reason: null }),
-      'decisions[0].options.direct[0].reason: "char.brand" is not playable',
+      (e) =>
+        e.decisions[0].options.leave_now.push({ kind: "SetAvailability", characterId: "char.brand", reason: null }),
+      'decisions[0].options.leave_now[0].reason: "char.brand" is not playable',
     ],
     [
       "an incapacitation with no wake fallback",
-      (e) => (e.decisions[5].options.dock = []),
-      'decisions[4].options.hibernate[0].reason: HIBERNATING for "char.romilly" has no wake fallback',
+      (e) => (e.decisions[2].options.dock = []),
+      'decisions[1].options.hibernate[0].reason: HIBERNATING for "char.romilly" has no wake fallback',
+    ],
+  ])("%s", (_name, mutate, expected) => {
+    const e = clone();
+    mutate(e);
+    expect(errorsOf(e).some((m) => m.startsWith(expected))).toBe(true);
+  });
+
+  it.each<[string, (e: Json) => void, string]>([
+    [
+      "an interaction at an unknown place",
+      (e) => (e.interactions[0].location = "loc.nowhere"),
+      'interactions[0].location: unknown location "loc.nowhere"',
+    ],
+    [
+      "an interaction with an unknown activity",
+      (e) => (e.interactions[0].activityId = "scan.nothing"),
+      'interactions[0].activityId: unknown activity "scan.nothing"',
+    ],
+    [
+      "an interaction gated on an unknown fact",
+      (e) => (e.interactions[1].requires = ["fact.nope"]),
+      'interactions[1].requires[0]: unknown fact "fact.nope"',
+    ],
+    [
+      "an interaction gated on an unknown decision",
+      (e) => (e.interactions[2].after = ["decision.nope"]),
+      'interactions[2].after[0]: unknown decision "decision.nope"',
+    ],
+    [
+      "a duplicate interaction id",
+      (e) => (e.interactions[1].id = e.interactions[0].id),
+      'interactions[1].id: duplicate interaction "act.scan"',
+    ],
+    [
+      "time spent by someone other than the decision owner",
+      (e) => (e.decisions[0].options.stay_longer[2].characterId = "char.romilly"),
+      'decisions[0].options.stay_longer[2].characterId: "char.romilly" is not the decision owner "char.cooper"',
+    ],
+    [
+      "supplies that can run out with no hard decision (INV-11)",
+      (e) => delete e.decisions[1].deadlineWhen,
+      'resources[0]: "res.endurance_supplies" can run out for playable "char.romilly" with no hard decision tied to it (INV-11)',
+    ],
+    [
+      "a choice that kills every playable character",
+      (e) => {
+        e.decisions[0].options.leave_now.push(
+          { kind: "SetAvailability", characterId: "char.cooper", reason: "DEAD", cause: "wave" },
+          { kind: "SetAvailability", characterId: "char.romilly", reason: "DEAD", cause: "starvation" },
+        );
+      },
+      "decisions[0].options.leave_now: kills every playable character, so no path would remain",
     ],
   ])("%s", (_name, mutate, expected) => {
     const e = clone();

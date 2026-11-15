@@ -1,17 +1,12 @@
 import { isIntroduced, switchView, type ActivityDef, type Command, type GameState } from "../domain";
 import type { InputAction } from "../input";
-
-/** What "Interact" does at a place: spend `dTau` seconds of the actor's time on an activity. */
-export interface Interaction {
-  readonly activityId: string;
-  readonly dTau: number;
-}
+import { currentInteraction, type InteractionDef } from "./interactions";
 
 export interface TranslateContext {
   /** A fresh id per player action (a UUID in the app; counters in tests), so a retry is never mistaken for a new act. */
   readonly newId: () => string;
-  /** Interaction by location id. M1 placeholder table; SLICE-001 derives it from beats. */
-  readonly interactions: Readonly<Record<string, Interaction>>;
+  /** What Interact can do at each place, with its conditions (from content). */
+  readonly interactions: readonly InteractionDef[];
   readonly activities?: Readonly<Record<string, ActivityDef>> | undefined;
 }
 
@@ -25,7 +20,7 @@ export function actionToCommand(action: InputAction, state: GameState, ctx: Tran
       return null;
     case "Interact": {
       const actor = state.characters[state.controlled];
-      const what = actor ? ctx.interactions[actor.location] : undefined;
+      const what = currentInteraction(state, ctx.interactions);
       if (!actor || !what) return null;
       return {
         kind: "AdvanceTime",

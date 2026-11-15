@@ -16,7 +16,9 @@ const loaded = loadEpisode(m1);
 if (!loaded.ok) throw new Error(loaded.errors.join("\n"));
 const episode = loaded.episode;
 const newGame = () => createEngine(createInitialState(episode.initial), createRules(episode.tables));
-const interactions = { "loc.miller_surface": { activityId: "scan.beacon", dTau: 600 } };
+const interactions = [
+  { id: "act.scan", location: "loc.miller_surface", label: "Scan the beacon", activityId: "scan.beacon", dTau: 600 },
+];
 const counterContext = (): TranslateContext => {
   let n = 0;
   return { newId: () => `cmd-${++n}`, interactions, activities: episode.tables.activities };

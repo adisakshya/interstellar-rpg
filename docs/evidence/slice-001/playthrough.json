@@ -1,0 +1,162 @@
+{
+ "desktop": {
+  "errors": [],
+  "action1": "Scan the beacon\n10 m for you · Romilly +1.1 y",
+  "prompt": {
+   "options": [
+    "Leave now",
+    "Stay longer"
+   ],
+   "actionHidden": true
+  },
+  "leave": {
+   "liftOffLabel": "Lift off and dock\n30 m for you · Romilly +3.4 y",
+   "state": {
+    "T": 183785513.5849827,
+    "controlled": "char.cooper",
+    "recall": {
+     "status": "resolved",
+     "optionId": "leave_now"
+    },
+    "doyle": "NOT_INTRODUCED",
+    "cooperTau": 3040.974055746298,
+    "romillyTau": 183785513.5849827,
+    "supplies": 24.176188506572657,
+    "knows": [
+     "fact.beacon_active",
+     "fact.beacon_local_age",
+     "fact.lifted_off"
+    ]
+   },
+   "outcome": {
+    "rows": [
+     "Who | Time lived | State",
+     "Cooper | 50 m 40 s | Alive",
+     "Romilly | 5.8 y | Alive"
+    ],
+    "notes": [
+     "You ran from the wave. Doyle lived, the engines stayed dry, and the flight recorder stayed on Miller.",
+     "Miller's beacon is still transmitting. (known by Cooper)",
+     "By Miller's own clock the beacon has only been on for hours. (known by Cooper)",
+     "Cooper is back aboard the Ranger, in orbit above Miller. (known by Cooper)",
+     "Endurance supplies: 24.2 left",
+     "Ranger fuel: 100.0 left"
+    ],
+    "buttons": [
+     "Go back to \"Recall\" and choose differently",
+     "Start a new game"
+    ]
+   }
+  },
+  "afterReplay": {
+   "T": 60000000,
+   "controlled": "char.cooper",
+   "recall": {
+    "status": "pending",
+    "optionId": null
+   },
+   "doyle": "NOT_INTRODUCED",
+   "cooperTau": 992.7792445970383,
+   "romillyTau": 60000000,
+   "supplies": 28.09871473115826,
+   "knows": [
+    "fact.beacon_active",
+    "fact.beacon_local_age"
+   ]
+  },
+  "stay": {
+   "liftOffLabel": "Lift off and dock\n30 m for you · Romilly +3.4 y",
+   "state": {
+    "T": 404547896.08221465,
+    "controlled": "char.cooper",
+    "recall": {
+     "status": "resolved",
+     "optionId": "stay_longer"
+    },
+    "doyle": "DEAD",
+    "cooperTau": 6693.779244597038,
+    "romillyTau": 404547896.08221465,
+    "supplies": 17.180650743966122,
+    "knows": [
+     "fact.beacon_active",
+     "fact.beacon_local_age",
+     "fact.miller_died_on_landing",
+     "fact.lifted_off"
+    ]
+   },
+   "outcome": {
+    "rows": [
+     "Who | Time lived | State",
+     "Cooper | 1 h 51 m | Alive",
+     "Doyle | 16 m 32 s | Dead: wave",
+     "Romilly | 12.8 y | Alive"
+    ],
+    "notes": [
+     "You stayed for the recorder. Doyle died in the wave and the flooded engines cost an hour on Miller, which Romilly paid in years.",
+     "Miller's beacon is still transmitting. (known by Cooper)",
+     "By Miller's own clock the beacon has only been on for hours. (known by Cooper)",
+     "The flight recorder shows Miller died on landing. (known by Cooper)",
+     "Cooper is back aboard the Ranger, in orbit above Miller. (known by Cooper)",
+     "Endurance supplies: 17.2 left",
+     "Ranger fuel: 100.0 left"
+    ],
+    "buttons": [
+     "Go back to \"Recall\" and choose differently",
+     "Start a new game"
+    ]
+   }
+  }
+ },
+ "phone": {
+  "errors": [],
+  "action1": "Scan the beacon\n10 m for you · Romilly +1.1 y",
+  "prompt": {
+   "options": [
+    "Leave now",
+    "Stay longer"
+   ],
+   "actionHidden": true
+  },
+  "stay": {
+   "state": {
+    "T": 419487459.68577856,
+    "controlled": "char.cooper",
+    "recall": {
+     "status": "resolved",
+     "optionId": "stay_longer"
+    },
+    "doyle": "DEAD",
+    "cooperTau": 6940.974055746297,
+    "romillyTau": 419487459.68577856,
+    "supplies": 16.70724454059312,
+    "knows": [
+     "fact.beacon_active",
+     "fact.beacon_local_age",
+     "fact.miller_died_on_landing",
+     "fact.lifted_off"
+    ]
+   },
+   "outcome": {
+    "rows": [
+     "Who | Time lived | State",
+     "Cooper | 1 h 55 m | Alive",
+     "Doyle | 20 m 40 s | Dead: wave",
+     "Romilly | 13.3 y | Alive"
+    ],
+    "notes": [
+     "You stayed for the recorder. Doyle died in the wave and the flooded engines cost an hour on Miller, which Romilly paid in years.",
+     "Miller's beacon is still transmitting. (known by Cooper)",
+     "By Miller's own clock the beacon has only been on for hours. (known by Cooper)",
+     "The flight recorder shows Miller died on landing. (known by Cooper)",
+     "Cooper is back aboard the Ranger, in orbit above Miller. (known by Cooper)",
+     "Endurance supplies: 16.7 left",
+     "Ranger fuel: 100.0 left"
+    ],
+    "buttons": [
+     "Go back to \"Recall\" and choose differently",
+     "Start a new game"
+    ]
+   }
+  }
+ }
+}
