@@ -135,6 +135,15 @@ describe("apply", () => {
     expect(Object.isFrozen(result.events[0])).toBe(true);
   });
 
+  it("deep-freezes state that arrives shallow-frozen", () => {
+    const shallow = Object.freeze(initialState());
+    const engine = createEngine(shallow, { handlers: testHandlers });
+    expect(Object.isFrozen(engine.getState().characters[cooper])).toBe(true);
+    expect(() => {
+      (engine.getState().characters[cooper] as { tau: number }).tau = 5;
+    }).toThrow(TypeError);
+  });
+
   it("stamps checkpoint snapshots with the seq of the events before them", () => {
     const s = apply(initialState(), tick("c1"), testHandlers).state;
     const out = apply(
@@ -170,6 +179,17 @@ describe("SwitchCharacter (INV-03)", () => {
     // Switching back with the same id works: switches are not history.
     const back = apply(out.state, { kind: "SwitchCharacter", commandId: "s1", targetId: cooper }, testHandlers);
     expect(back.state).toEqual(s);
+  });
+
+  it("denies switching away from a locked sequence (TIMELINES §4)", () => {
+    const base = initialState();
+    const locked: GameState = {
+      ...base,
+      characters: { ...base.characters, [cooper]: { ...base.characters[cooper]!, unavailable: "LOCKED_SEQUENCE" } },
+    };
+    const out = apply(locked, { kind: "SwitchCharacter", commandId: "s1", targetId: romilly }, testHandlers);
+    expect(out.result).toEqual({ kind: "Rejected", code: "LOCKED_SEQUENCE" });
+    expect(out.state).toBe(locked);
   });
 
   it("rejects unknown and unavailable targets with a reason", () => {

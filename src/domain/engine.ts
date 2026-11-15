@@ -124,11 +124,17 @@ export function createEngine(initial: GameState, rules: EngineRules): GameEngine
   };
 }
 
-/** Recursively freeze plain objects and arrays so consumers cannot mutate domain data. */
+/** Objects this module has frozen together with everything below them. */
+const deeplyFrozen = new WeakSet<object>();
+
+/**
+ * Recursively freeze plain objects and arrays so consumers cannot mutate domain data. Subtrees already
+ * deep-frozen here are skipped; anything else is traversed, even if it was shallow-frozen elsewhere.
+ */
 export function deepFreeze<T>(value: T): T {
-  if (value !== null && typeof value === "object" && !Object.isFrozen(value)) {
-    Object.freeze(value);
-    for (const key of Object.keys(value)) deepFreeze((value as Record<string, unknown>)[key]);
-  }
+  if (value === null || typeof value !== "object" || deeplyFrozen.has(value)) return value;
+  deeplyFrozen.add(value);
+  Object.freeze(value);
+  for (const key of Object.keys(value)) deepFreeze((value as Record<string, unknown>)[key]);
   return value;
 }
