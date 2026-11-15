@@ -9,7 +9,7 @@ import {
   mountTouchControls,
   type InputAction,
 } from "../input";
-import { IndexedDbBackend, MemoryBackend, SaveSlots } from "../persistence";
+import { IndexedDbBackend, MemoryBackend, SaveSlots, stateHash } from "../persistence";
 import { createAdaptiveScaler, createRenderer, detectTier, scalingLevel, TIERS } from "../render";
 import { buildHudModel, isFinished, mountHud, mountNotice } from "../ui";
 import { actionToCommand } from "./actions";
@@ -141,6 +141,8 @@ const freeRoam = createFreeRoam({
 });
 const baseLevel = scalingLevel(tier, devicePixelRatio);
 const scaler = createAdaptiveScaler(baseLevel, { min: baseLevel, max: baseLevel + 1 });
+// `?debug&fixedres` keeps the resolution fixed, so a measurement is taken at one known pixel count (QA-001).
+const adaptive = !(params.has("debug") && params.has("fixedres"));
 if (notice) {
   const host = hud ?? document.body;
   const exportKey = notice.exportKey;
@@ -192,7 +194,7 @@ watchEnding({
 
 engine.runRenderLoop(() => {
   freeRoam.frame(engine.getDeltaTime());
-  const level = scaler.frame(engine.getDeltaTime());
+  const level = adaptive ? scaler.frame(engine.getDeltaTime()) : null;
   if (level !== null) {
     engine.setHardwareScalingLevel(level);
     engine.resize();
@@ -211,7 +213,24 @@ attachLifecycle({
   rebuildScene: () => renderer.rebuild(),
 });
 
-// Test hook for Playwright and screenshots only (`?debug`); not a game feature.
+// Test hook for Playwright and screenshots only (`?debug`); not a game feature. `?debug&frozen` also stops real-time
+// free-roam from the start, so a scripted run issues exactly the commands it sends and nothing else (QA-001).
 if (new URLSearchParams(location.search).has("debug")) {
-  (window as unknown as { __irpg: unknown }).__irpg = { game, renderer, tier, onAction, freeRoam, slots };
+  if (new URLSearchParams(location.search).has("frozen")) freeRoam.setPaused(true);
+  (window as unknown as { __irpg: unknown }).__irpg = {
+    game,
+    renderer,
+    tier,
+    onAction,
+    freeRoam,
+    slots,
+    /** What the renderer is actually drawing at, for performance reports. */
+    resolution: () => ({
+      scalingLevel: engine.getHardwareScalingLevel(),
+      renderWidth: engine.getRenderWidth(),
+      renderHeight: engine.getRenderHeight(),
+    }),
+    /** Hash of the game state without the random command ids, so runs on any device can be compared (QA-001). */
+    hash: () => stateHash({ ...game.getState(), processedCommandIds: [] }),
+  };
 }

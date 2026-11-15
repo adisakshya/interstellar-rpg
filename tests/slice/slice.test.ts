@@ -86,6 +86,31 @@ describe("vertical slice: Cooper on Miller, Romilly on Endurance (SLICE-001)", (
     expect(cooper.dTau).toBeLessThan(60); // a month on Endurance is under a minute on Miller
   });
 
+  it("INV-12: a death is permanent in committed history; only a checkpoint removes it", () => {
+    const g = newGame();
+    g.act(); // scan
+    const interrupted = g.act(); // search, stopped by the wave warning
+    if (interrupted.kind !== "Interrupted") throw new Error("expected the wave warning");
+    const checkpoint = interrupted.checkpoints[0]!; // taken when the warning became pending, before any choice
+    g.resolve("decision.recall", "stay_longer");
+    const dead = g.game.getState().characters["char.doyle" as never]!;
+    expect(dead).toMatchObject({ unavailable: "DEAD", cause: "wave" });
+
+    // Whatever happens next (switching, waiting years as Romilly, lifting off), Doyle stays dead and his clock stays put.
+    for (let i = 0; i < 3; i++) {
+      g.game.dispatch({ kind: "SwitchCharacter", commandId: `i12-s${i}`, targetId: "char.romilly" as never });
+      g.act(); // "Wait a month" as Romilly
+      g.game.dispatch({ kind: "SwitchCharacter", commandId: `i12-b${i}`, targetId: "char.cooper" as never });
+    }
+    g.act(); // lift off
+    expect(g.game.getState().characters["char.doyle" as never]).toEqual(dead);
+
+    // The checkpoint is the only way back: it still has the wave pending and Doyle not yet affected.
+    expect(checkpoint.decisionId).toBe("decision.recall");
+    expect(checkpoint.state.decisions["decision.recall" as never]?.status).toBe("pending");
+    expect(checkpoint.state.characters["char.doyle" as never]!.unavailable).toBe("NOT_INTRODUCED");
+  });
+
   describe("the choice at the wave", () => {
     const leave = play("leave_now");
     const stay = play("stay_longer");

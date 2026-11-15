@@ -1,0 +1,31 @@
+{
+  "note": "Golden command logs for both slice paths (QA-001, NFR-01, INV-15). The hash is over the final state without the random command ids. Regenerate with UPDATE_GOLDEN=1 npm test only when the content or the rules change on purpose.",
+  "paths": {
+    "leave_now": {
+      "steps": [
+        "interact",
+        "interact",
+        {
+          "decision": "decision.recall",
+          "option": "leave_now",
+          "label": "Leave now"
+        },
+        "interact"
+      ],
+      "hash": "dbd0b7478ddd2fcf651f245313fd18407262eb6997f396144ba2a5284c2268df"
+    },
+    "stay_longer": {
+      "steps": [
+        "interact",
+        "interact",
+        {
+          "decision": "decision.recall",
+          "option": "stay_longer",
+          "label": "Stay longer"
+        },
+        "interact"
+      ],
+      "hash": "75ad84dd724f26716d89c19311855f0ea1def8fecd76536f304897398b6b568f"
+    }
+  }
+}

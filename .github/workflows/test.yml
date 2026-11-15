@@ -37,3 +37,21 @@ jobs:
           persist-credentials: false
       # python3 is preinstalled on ubuntu-latest; the script uses the standard library only.
       - run: python3 -I docs/physics/kerr_fixtures.py --check
+
+  e2e:
+    # Pinned: ubuntu-latest is now 26.04, which this Playwright cannot install browsers on. Move when Playwright supports it.
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      # Both slice paths, by keyboard on desktop and by touch on an emulated iPhone (W1, W2, W4, W6).
+      - run: npm run e2e
