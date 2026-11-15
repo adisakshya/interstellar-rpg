@@ -1,6 +1,6 @@
 {
   "label": "emulated: headless Chromium, software GL. Not a device measurement.",
-  "capturedAt": "2026-11-15T16:11:43.760Z",
+  "capturedAt": "2026-11-15T16:19:37.175Z",
   "warmupSeconds": 10,
   "measureSeconds": 60,
   "device": "iphone",
@@ -12,30 +12,42 @@
   "results": [
     {
       "scene": "surface (Cooper, Miller)",
-      "frames": 3587,
+      "resolution": {
+        "scalingLevel": 0.5,
+        "renderWidth": 780,
+        "renderHeight": 1328
+      },
+      "resolutionChangedDuringMeasurement": false,
+      "frames": 1551,
       "frameMs": {
-        "p50": 16.69999999999709,
-        "p95": 16.799999999995634,
-        "p99": 16.80000000000291,
-        "mean": 16.73111235015291
+        "p50": 33.39999999999418,
+        "p95": 66.69999999999709,
+        "p99": 66.70000000000073,
+        "mean": 38.69123146357169
       },
       "fps": {
-        "p50": 59.880239520968516,
-        "p95": 59.523809523824994
+        "p50": 29.940119760484258,
+        "p95": 14.992503748126591
       }
     },
     {
       "scene": "endurance (Romilly)",
-      "frames": 3600,
+      "resolution": {
+        "scalingLevel": 0.5,
+        "renderWidth": 780,
+        "renderHeight": 1328
+      },
+      "resolutionChangedDuringMeasurement": false,
+      "frames": 2015,
       "frameMs": {
-        "p50": 16.69999999999709,
-        "p95": 16.70000000001164,
-        "p99": 16.80000000000291,
-        "mean": 16.66750000000005
+        "p50": 33.30000000000291,
+        "p95": 33.40000000000873,
+        "p99": 50,
+        "mean": 29.787196029776393
       },
       "fps": {
-        "p50": 59.880239520968516,
-        "p95": 59.88023952091634
+        "p50": 30.030030030027405,
+        "p95": 29.940119760471216
       }
     }
   ]

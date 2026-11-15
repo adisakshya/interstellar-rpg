@@ -37,7 +37,8 @@ const context = await browser.newContext(
     : { viewport: { width: 1280, height: 720 } },
 );
 const page = await context.newPage();
-await page.goto(`${url}?debug&frozen&fresh`);
+// `fixedres` turns the adaptive resolution off, so every sample is taken at the resolution reported with it.
+await page.goto(`${url}?debug&frozen&fixedres&fresh`);
 await page.waitForSelector(".irpg-btn");
 
 const capture = (seconds) =>
@@ -61,9 +62,13 @@ const capture = (seconds) =>
 async function scene(name) {
   await page.keyboard.down("KeyD"); // keep the character moving, as in a real run
   await capture(warmup);
+  const before = await page.evaluate(() => window.__irpg.resolution());
   const deltas = await capture(measure);
+  const after = await page.evaluate(() => window.__irpg.resolution());
   await page.keyboard.up("KeyD");
-  return { scene: name, ...summary(deltas) };
+  // Resolution is fixed for the run; if it still moved (a window resize, say) the numbers are not comparable.
+  const changed = JSON.stringify(before) !== JSON.stringify(after);
+  return { scene: name, resolution: after, resolutionChangedDuringMeasurement: changed, ...summary(deltas) };
 }
 
 const results = [];

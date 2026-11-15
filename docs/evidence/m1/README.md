@@ -25,21 +25,24 @@ Slice evidence is in [../slice-001/](../slice-001/README.md), and the earlier sp
 The hash is taken over the state without the random command ids. Real-time free-roam is frozen (`?debug&frozen`) so
 that a scripted run issues exactly the commands it sends and nothing else. Free-roam itself is covered by unit tests.
 
-### Frame time (emulated, 60 s after a 10 s warm-up, holding a movement key)
+### Frame time (emulated, 60 s after a 10 s warm-up, holding a movement key, resolution fixed)
 
 Headless Chromium with software GL (SwiftShader) on a Linux container. **Emulated: this is not a device measurement
-and says nothing about an iPhone.** It shows the capture tool works and that the scenes hold a steady refresh on a
-machine with no GPU.
+and says nothing about an iPhone.** It shows the capture tool works. The run uses `?debug&fixedres`, which turns the
+adaptive resolution off, and the render size is read back from the engine for each scene, so every row is at one known
+pixel count.
 
-| Run | Tier | Viewport (DPR) | Scene | Frames | p50 | p95 | p99 |
+| Run | Tier | Render size | Scene | Frames | p50 | p95 | p99 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Desktop | high | 1280×720 (1) | Surface | 2443 | 16.7 ms | 33.4 ms | 50.0 ms |
-| Desktop | high | 1280×720 (1) | Endurance | 3564 | 16.7 ms | 16.8 ms | 16.8 ms |
-| iPhone 13 viewport | low | 390×664 (3) | Surface | 3587 | 16.7 ms | 16.8 ms | 16.8 ms |
-| iPhone 13 viewport | low | 390×664 (3) | Endurance | 3600 | 16.7 ms | 16.7 ms | 16.8 ms |
+| Desktop viewport | high | 1280×720 | Surface | 968 | 50.0 ms | 100.0 ms | 116.7 ms |
+| Desktop viewport | high | 1280×720 | Endurance | 1667 | 33.3 ms | 50.0 ms | 50.1 ms |
+| iPhone 13 viewport (DPR 3) | low | 780×1328 | Surface | 1551 | 33.4 ms | 66.7 ms | 66.7 ms |
+| iPhone 13 viewport (DPR 3) | low | 780×1328 | Endurance | 2015 | 33.3 ms | 33.4 ms | 50.0 ms |
 
-The `high` surface scene has the only tail above one frame (transparent water at full resolution on software GL); the
-`low` tier, which is what a phone starts on, does not.
+With no GPU these are slow, as expected, and the surface scene (water and wreck geometry) is heavier than Endurance.
+An earlier run without `fixedres` read 16.7 ms because the adaptive scaler had quietly lowered the resolution; that run
+was withdrawn as misleading. The app's adaptive resolution is therefore doing its job on a machine this slow, and the
+real question (what the iPhone 16e does at the `low` tier) is still open.
 
 ## Remaining before M1 can close
 
