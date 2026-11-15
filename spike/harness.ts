@@ -93,7 +93,9 @@ export function runSpike(): void {
     }
     const t = now - start;
     if (t > warmupMs && t <= warmupMs + measureMs) deltas.push(dt * 1000);
-    if (t > warmupMs + measureMs && !window.__spike) finish();
+    // Once the result exists, leave the JSON on screen so it can be read and screenshotted on the phone.
+    if (window.__spike) return;
+    if (t > warmupMs + measureMs) finish();
     else if (Math.floor(t / 500) !== Math.floor((t - dt * 1000) / 500)) {
       hud.textContent = `${options.view} · ${t < warmupMs ? "warming up" : "measuring"} · ${(1 / Math.max(dt, 1e-3)).toFixed(0)} fps`;
     }
