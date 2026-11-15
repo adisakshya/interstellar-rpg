@@ -462,8 +462,8 @@ issues:
     priority: P1
     milestone: M1
     epic: EPIC-M1
-    agent: codex
-    status: ready
+    agent: claude-code  # taken over 2026-11-15: Codex had no environment for this repo
+    status: done
     size: M
     review_effort: 0.5h
     requirements: [C-07, D-01, D-02, FR-09, FR-13]

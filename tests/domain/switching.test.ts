@@ -20,7 +20,7 @@ const brand = asId("char", "char.brand");
 const murph = asId("char", "char.murph");
 const doyle = asId("char", "char.doyle");
 const ghost = asId("char", "char.nobody");
-const RATES: RateTable = { [LOCATIONS.millerSurface]: 1 / 61362, [LOCATIONS.endurance]: 1, [LOCATIONS.earth]: 1 };
+const RATES: RateTable = { [LOCATIONS.millerSurface]: 1 / 61362, [LOCATIONS.endurance]: 1, [LOCATIONS.earthFarm]: 1 };
 const TABLES: TimeTables = {
   rates: RATES,
   activities: {
@@ -48,7 +48,7 @@ function start(overrides: Partial<Record<CharacterId, UnavailableReason | null>>
       [cooper]: ch(cooper, LOCATIONS.millerSurface),
       [romilly]: ch(romilly, LOCATIONS.endurance),
       [brand]: ch(brand, LOCATIONS.millerSurface),
-      [murph]: ch(murph, LOCATIONS.earth),
+      [murph]: ch(murph, LOCATIONS.earthFarm),
       [doyle]: ch(doyle, LOCATIONS.millerSurface),
     },
     resources: { "res.endurance.supplies": { amount: 30 } },
