@@ -610,7 +610,7 @@ issues:
     milestone: M1
     epic: EPIC-M1
     agent: claude-code
-    status: draft  # plan v0.4.0 (D-19); published to GitHub once the creator approves the revised plan
+    status: done  # plan v0.4.0 (D-19); published to GitHub once the creator approves the revised plan
     size: M
     review_effort: 1h
     requirements: [D-14, D-22]
@@ -652,7 +652,7 @@ issues:
     milestone: M1
     epic: EPIC-M1
     agent: claude-code
-    status: draft  # plan v0.4.0 (D-19); published to GitHub once the creator approves the revised plan
+    status: done  # plan v0.4.0 (D-19); published to GitHub once the creator approves the revised plan
     size: L
     review_effort: 0.5h
     requirements: [D-16, FR-11]
