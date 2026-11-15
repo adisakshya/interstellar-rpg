@@ -1,7 +1,7 @@
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import type { GameEngine, GameState } from "../domain";
 import { TIERS, type Tier } from "./quality";
-import type { SceneFactory, SceneHandle } from "./scenes/common";
+import type { SceneAssets, SceneFactory, SceneHandle } from "./scenes/common";
 
 export type SceneKind = "cockpit" | "surface" | "endurance";
 
@@ -31,6 +31,8 @@ export interface RendererOptions {
   /** A full-screen fade used to hide scene swaps (landing, switching); omitted in tests. */
   readonly fade?: { set(opacity: number): void };
   readonly fadeMs?: number;
+  /** Where scene images are served from; leave out to build scenes without them (tests). */
+  readonly assets?: SceneAssets;
   readonly loaders?: Readonly<Record<SceneKind, () => Promise<SceneFactory>>>;
   /** Where scene-load failures go when following an engine (default: console.error). */
   readonly onError?: (error: unknown) => void;
@@ -87,7 +89,7 @@ export function createRenderer(engine: AbstractEngine, options: RendererOptions)
       handle?.dispose();
       handle = null;
       current = null;
-      handle = factory(engine, TIERS[options.tier]);
+      handle = factory(engine, TIERS[options.tier], options.assets);
       handle.setMove(move.x, move.y);
       current = kind;
       if (latest) handle.update({ characterId: latest.controlled });
@@ -148,7 +150,7 @@ export function createRenderer(engine: AbstractEngine, options: RendererOptions)
         }
         handle = null;
         current = null;
-        handle = factory(engine, TIERS[options.tier]);
+        handle = factory(engine, TIERS[options.tier], options.assets);
         handle.setMove(move.x, move.y);
         current = kind;
         wanted = kind;

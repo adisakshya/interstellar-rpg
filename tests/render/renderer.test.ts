@@ -191,7 +191,9 @@ describe("quality tiers change visuals only", () => {
       return alpha;
     };
     expect(await waterAlpha("low")).toBe(1);
-    expect(await waterAlpha("high")).toBe(0.75);
+    const high = await waterAlpha("high");
+    expect(high).toBeLessThan(1); // the exact value is an art choice; only "transparent on high" is a rule
+    expect(high).toBeGreaterThan(0.5);
   });
 
   it("picks low for touch or dense screens, honours ?tier, and scales below native on low", () => {

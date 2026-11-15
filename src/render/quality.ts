@@ -11,11 +11,25 @@ export interface TierSettings {
   /** Transparent water costs a full-screen blend; `low` draws it opaque. */
   readonly transparentWater: boolean;
   readonly terrainSubdivisions: number;
+  /** The Gargantua sky image for this tier, under `public/sky/` (ART_DIRECTION §8: 1 MB low, 3 MB high). */
+  readonly skyFile: string;
 }
 
 export const TIERS: Readonly<Record<Tier, TierSettings>> = {
-  low: { scaling: 1.5, antialias: false, transparentWater: false, terrainSubdivisions: 48 },
-  high: { scaling: 1, antialias: true, transparentWater: true, terrainSubdivisions: 128 },
+  low: {
+    scaling: 1.5,
+    antialias: false,
+    transparentWater: false,
+    terrainSubdivisions: 48,
+    skyFile: "sky/gargantua-low.webp",
+  },
+  high: {
+    scaling: 1,
+    antialias: true,
+    transparentWater: true,
+    terrainSubdivisions: 128,
+    skyFile: "sky/gargantua-high.webp",
+  },
 };
 
 /** Touch-first or dense screens start on `low`; a `?tier=low|high` query overrides (for testing). */
