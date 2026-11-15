@@ -134,9 +134,15 @@ def main():
         bad = []
         def cmp(x, y, path):
             if isinstance(x, dict):
+                if not isinstance(y, dict) or set(x) != set(y):
+                    bad.append(f"{path} (keys differ)")
+                    return
                 for k in x:
-                    cmp(x[k], y.get(k), f"{path}.{k}")
+                    cmp(x[k], y[k], f"{path}.{k}")
             elif isinstance(x, list):
+                if not isinstance(y, list) or len(x) != len(y):
+                    bad.append(f"{path} (length differs)")
+                    return
                 for i, (p, q) in enumerate(zip(x, y)):
                     cmp(p, q, f"{path}[{i}]")
             elif isinstance(x, float):
