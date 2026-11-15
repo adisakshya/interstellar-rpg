@@ -39,7 +39,8 @@ jobs:
       - run: python3 -I docs/physics/kerr_fixtures.py --check
 
   e2e:
-    runs-on: ubuntu-latest
+    # Pinned: ubuntu-latest is now 26.04, which this Playwright cannot install browsers on. Move when Playwright supports it.
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
