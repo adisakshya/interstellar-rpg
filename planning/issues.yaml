@@ -165,12 +165,12 @@ issues:
     milestone: M0
     epic: EPIC-M0
     agent: claude-code
-    status: blocked
+    status: review
     size: M
     review_effort: 1h
     requirements: [C-10, C-12, C-13, P-03]
     depends_on: [DOCS-001, DOCS-004]
-    blockers: [Creator nominates reference desktop and browser versions (phone resolved as D-06)]
+    blockers: []  # desktop proposed as P-12; phone confirmed as D-06
     rationale: Performance claims need named devices and measurement conditions.
     scope:
       - Stable FR/NFR IDs with priority, milestone, acceptance criteria, C-ID traceability, exclusions.
