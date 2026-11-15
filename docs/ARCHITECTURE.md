@@ -89,9 +89,13 @@ type DomainEvent = { seq: number; T: number } & (
   | { kind: "CheckpointCreated"; decisionId: DecisionId }
   /* …FactLearned, MessageSent, MessageDelivered, ResourceChanged, ResourceDepleted, AvailabilityChanged */ );
 
+// One per CheckpointCreated in this command: the state at the moment the decision became
+// pending, before any later event in the same command (e.g. an early resolve) is applied.
+interface CheckpointSnapshot { decisionId: DecisionId; state: GameState }
+
 type Result =
-  | { kind: "Ok"; events: DomainEvent[] }
-  | { kind: "Interrupted"; decisionId: DecisionId; events: DomainEvent[] }
+  | { kind: "Ok"; events: DomainEvent[]; checkpoints: CheckpointSnapshot[] }
+  | { kind: "Interrupted"; decisionId: DecisionId; events: DomainEvent[]; checkpoints: CheckpointSnapshot[] }
   | { kind: "Blocked"; decisionId: DecisionId; deadlineT: number }        // nothing committed
   | { kind: "Duplicate" }
   | { kind: "Rejected"; code: RejectCode };
@@ -108,10 +112,12 @@ The domain is a **pure reducer** underneath: `apply(state, command, content) →
 
 `LoadCheckpoint` is not a domain command. `persistence` loads a snapshot and the app swaps in a new engine (TIMELINES §8).
 
+**Checkpoints are captured by the reducer, not reconstructed by persistence.** When a command commits `CheckpointCreated`, the reducer copies the state at that point into `result.checkpoints`, before applying any later event in the same command. This covers both the normal path (the decision becomes pending part-way through an advance) and the early-resolution path (`DecisionPending` → `CheckpointCreated` → `DecisionResolved` in one command). `app` hands each snapshot to `persistence`, which writes it to the checkpoint ring. A loaded checkpoint therefore always has its decision still pending.
+
 ## 4. Frame loop and free-roam
 
 - Babylon's render loop runs at the display's frame rate and only *reads* state.
-- `app` keeps a real-time accumulator. While free-roam is active (TIMELINES §5: tab visible, no modal, not paused), every 1 s × `timeScale` of accumulated time it dispatches one `FreeRoamTick`. Frame rate therefore never changes outcomes.
+- `app` keeps a real-time accumulator. While free-roam is active (TIMELINES §5: tab visible, no modal, not paused), every **1 s of accumulated real time** it dispatches one `FreeRoamTick` with `dTau = 1 s × timeScale` of the actor's proper time (TIMELINES §5). The scale changes how much proper time a tick spends, never how often ticks fire. Frame rate therefore never changes outcomes.
 - The result of an `Interrupted` or `Blocked` tick pauses free-roam and opens the decision prompt.
 - On `visibilitychange: hidden`, free-roam pauses and persistence autosaves. On `webglcontextlost`, `render` rebuilds the scene from the current state and the domain is untouched.
 
