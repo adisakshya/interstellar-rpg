@@ -133,6 +133,11 @@ describe("invalid content fails with a precise error", () => {
     ["an unknown field", (e) => (e.facts[0].colour = "red"), "facts[0]:"],
     ["a negative rate", (e) => (e.resources[0].rate = -1), "resources[0].rate:"],
     [
+      "a decision owned by an NPC",
+      (e) => (e.decisions[4].owner = "char.brand"),
+      'decisions[4].owner: "char.brand" is not playable',
+    ],
+    [
       "an inherited name as a rate key",
       (e) => (e.locations[0].rate = "constructor"),
       'locations[0].rate: unknown physics rate "constructor"',
