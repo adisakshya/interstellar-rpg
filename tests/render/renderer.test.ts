@@ -84,6 +84,58 @@ describe("scene choice follows the controlled character (SCENE-001)", () => {
   });
 });
 
+describe("failures and disposal", () => {
+  it("recovers after a scene fails to load, and reports the failure", async () => {
+    engine = new NullEngine();
+    const real = await import("../../src/render/scenes/endurance");
+    const surface = await import("../../src/render/scenes/surface");
+    const cockpit = await import("../../src/render/scenes/cockpit");
+    let failNext = true;
+    const errors: unknown[] = [];
+    renderer = createRenderer(engine, {
+      tier: "high",
+      fadeMs: 0,
+      onError: (e) => errors.push(e),
+      loaders: {
+        surface: async () => surface.createSurfaceScene,
+        cockpit: async () => cockpit.createCockpitScene,
+        endurance: async () => {
+          if (failNext) {
+            failNext = false;
+            throw new Error("offline");
+          }
+          return real.createEnduranceScene;
+        },
+      },
+    });
+    const game = newGame();
+    renderer.attach(game);
+    await renderer.show(game.getState());
+    // The switch triggers a load through attach(); it fails, is reported, and the surface stays up.
+    game.dispatch({ kind: "SwitchCharacter", commandId: "s1", targetId: "char.romilly" as never });
+    await new Promise((r) => setTimeout(r, 0));
+    expect(renderer.current).toBe("surface");
+    // The queue is not jammed: the next show retries and succeeds.
+    await renderer.show(game.getState());
+    expect(renderer.current).toBe("endurance");
+    expect(errors.map(String)).toContain("Error: offline");
+  });
+
+  it("builds nothing when disposed during the fade", async () => {
+    engine = new NullEngine();
+    renderer = createRenderer(engine, { tier: "high", fade: { set: () => undefined }, fadeMs: 30 });
+    const s = createInitialState(episode.initial);
+    await renderer.show(s);
+    const pending = renderer.show(at(s, "loc.endurance"));
+    await new Promise((r) => setTimeout(r, 5)); // inside the fade
+    renderer.dispose();
+    await pending;
+    expect(renderer.current).toBeNull();
+    expect(renderer.handle).toBeNull();
+    expect(engine.scenes).toHaveLength(0);
+  });
+});
+
 describe("quality tiers change visuals only", () => {
   it("draws water opaque on low and transparent on high", async () => {
     const waterAlpha = async (tier: "low" | "high") => {

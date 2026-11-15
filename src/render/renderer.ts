@@ -32,6 +32,8 @@ export interface RendererOptions {
   readonly fade?: { set(opacity: number): void };
   readonly fadeMs?: number;
   readonly loaders?: Readonly<Record<SceneKind, () => Promise<SceneFactory>>>;
+  /** Where scene-load failures go when following an engine (default: console.error). */
+  readonly onError?: (error: unknown) => void;
 }
 
 export interface Renderer {
@@ -67,15 +69,22 @@ export function createRenderer(engine: AbstractEngine, options: RendererOptions)
   async function swapTo(kind: SceneKind): Promise<void> {
     const factory = await loaders[kind]();
     if (disposed) return;
-    if (options.fade && handle) {
-      options.fade.set(1);
-      await wait(fadeMs);
+    try {
+      if (options.fade && handle) {
+        options.fade.set(1);
+        await wait(fadeMs);
+        // dispose() may have run during the fade: build nothing on a disposed renderer.
+        if (disposed) return;
+      }
+      handle?.dispose();
+      handle = null;
+      current = null;
+      handle = factory(engine, TIERS[options.tier]);
+      current = kind;
+      if (latest) handle.update({ characterId: latest.controlled });
+    } finally {
+      options.fade?.set(0);
     }
-    handle?.dispose();
-    handle = factory(engine, TIERS[options.tier]);
-    current = kind;
-    if (latest) handle.update({ characterId: latest.controlled });
-    options.fade?.set(0);
   }
 
   function show(state: GameState): Promise<void> {
@@ -83,20 +92,26 @@ export function createRenderer(engine: AbstractEngine, options: RendererOptions)
     const kind = sceneFor(state) ?? current;
     if (kind === null) return swapping;
     wanted = kind;
-    swapping = swapping.then(async () => {
+    const run = swapping.then(async () => {
       if (disposed || wanted === current || wanted === null) {
         if (latest && handle) handle.update({ characterId: latest.controlled });
         return;
       }
       await swapTo(wanted);
     });
-    return swapping;
+    // One failed load (e.g. a dropped connection) must not jam later swaps: the queue always moves on, and the
+    // failure is reported to the caller of this show().
+    swapping = run.catch(() => undefined);
+    return run;
   }
 
   return {
     attach(game) {
-      void show(game.getState());
-      return game.subscribe((state: GameState) => void show(state));
+      const report = (error: unknown) => (options.onError ?? console.error)(error);
+      show(game.getState()).catch(report);
+      return game.subscribe((state: GameState) => {
+        show(state).catch(report);
+      });
     },
     show,
     get current() {
