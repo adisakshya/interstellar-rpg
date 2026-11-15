@@ -25,6 +25,7 @@ interface Probe {
   };
   freeRoam: { setPaused(paused: boolean): void };
   hash(): Promise<string>;
+  flushSave(): Promise<void>;
   slots: {
     listCheckpoints(): Promise<{ key: string }[]>;
     restoreCheckpoint(key: string): Promise<unknown>;
@@ -136,7 +137,7 @@ test("W4: reload at a pending decision keeps it pending; it resolves once; a che
   const pending = await page.evaluate(() => window.__irpg.game.getState().decisions["decision.recall"]?.status);
   expect(pending).toBe("pending");
   const before = await page.evaluate(() => window.__irpg.hash());
-  await page.waitForTimeout(2600); // the autosave is written about 2 s after the last commit
+  await page.evaluate(() => window.__irpg.flushSave()); // write the owed autosave now instead of guessing the debounce
   await page.goto("./?debug&frozen"); // a plain reload resumes the saved game
   await page.waitForSelector(".irpg-prompt");
   expect(await page.evaluate(() => window.__irpg.hash())).toBe(before);
@@ -155,7 +156,7 @@ test("W4: reload at a pending decision keeps it pending; it resolves once; a che
   // The checkpoint taken when the warning became pending still has it pending, so the other choice can be tried. Let the
   // autosave of the resolved game land first (about 2 s after the last commit), so it cannot overwrite the restore. The
   // app's own replay button guards against that race; this test calls the slots directly.
-  await page.waitForTimeout(2600);
+  await page.evaluate(() => window.__irpg.flushSave());
   const keys = await page.evaluate(async () => (await window.__irpg.slots.listCheckpoints()).map((c) => c.key));
   expect(keys).toHaveLength(1);
   await page.evaluate(async (key) => {

@@ -27,16 +27,22 @@ export function createAutosaver(options: AutosaverOptions): Autosaver {
   let timer: unknown = null;
   let dirty = false;
 
-  const write = async () => {
+  // Writes run one after another: a flush that arrives while a timed write is still in flight must not race it, or the
+  // older state could land last and replace the newer one.
+  let chain: Promise<void> = Promise.resolve();
+  const write = (): Promise<void> => {
     timer = null;
-    if (!dirty) return;
-    dirty = false;
-    try {
-      await options.save();
-    } catch (error) {
-      dirty = true; // keep it owed, so the next change or flush tries again
-      report(error);
-    }
+    chain = chain.then(async () => {
+      if (!dirty) return;
+      dirty = false;
+      try {
+        await options.save();
+      } catch (error) {
+        dirty = true; // keep it owed, so the next change or flush tries again
+        report(error);
+      }
+    });
+    return chain;
   };
 
   return {

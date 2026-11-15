@@ -228,6 +228,8 @@ if (new URLSearchParams(location.search).has("debug")) {
     onAction,
     freeRoam,
     slots,
+    /** Writes any owed autosave now, so a test does not have to guess how long the debounce takes. */
+    flushSave: () => autosaver.flush(),
     /** What the renderer is actually drawing at, for performance reports. */
     resolution: () => ({
       scalingLevel: engine.getHardwareScalingLevel(),

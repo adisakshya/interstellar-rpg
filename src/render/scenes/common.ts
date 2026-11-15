@@ -7,6 +7,10 @@ import type { TierSettings } from "../quality";
 /** What a scene shows for the current game state. Derived from domain state; never written back. */
 export interface SceneView {
   readonly characterId: string;
+  /** Reference time, for things that follow the timeline. */
+  readonly T: number;
+  /** Characters who are dead: they are no longer in the scene. */
+  readonly dead: readonly string[];
 }
 
 export interface SceneHandle {

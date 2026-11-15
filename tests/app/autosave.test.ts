@@ -66,6 +66,35 @@ describe("autosave after committed commands (TIMELINES §8)", () => {
     expect(t.saved).toHaveBeenCalledTimes(1);
   });
 
+  it("never runs two writes at once: a flush during a slow timed write waits for it, so the newer state lands last", async () => {
+    const order: string[] = [];
+    let release: () => void = () => undefined;
+    let first = true;
+    const t = setup(() => {
+      const label = first ? "timed" : "flush";
+      first = false;
+      order.push(`${label} start`);
+      if (label === "timed") {
+        return new Promise<void>((resolve) => {
+          release = () => {
+            order.push("timed end");
+            resolve();
+          };
+        });
+      }
+      order.push("flush end");
+    });
+    t.saver.changed();
+    await t.advance(2000); // the timed write starts and stays in flight
+    t.saver.changed(); // a newer state is owed
+    const flushed = t.saver.flush();
+    await Promise.resolve();
+    expect(order).toEqual(["timed start"]); // the flush has not started its own write yet
+    release();
+    await flushed;
+    expect(order).toEqual(["timed start", "timed end", "flush start", "flush end"]);
+  });
+
   it("reports a failed save and tries again on the next change", async () => {
     let fail = true;
     const t = setup(() => {
