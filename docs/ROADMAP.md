@@ -7,7 +7,7 @@ Status: plan version 0.3.0 · M0 gate passed 2026-11-15 (see DECISIONS) · No ca
 | Milestone | Goal | Exit gate (evidence) | Depends on | State |
 | --- | --- | --- | --- | --- |
 | **M0** Design and feasibility | Approved contracts and a ready M1 backlog | TIMELINES, PHYSICS, ARCHITECTURE + ADRs, VISION + GDD, PRD + VALIDATION, COOP_POLICY merged; SPIKE-001 report; M1 issues ready or explicitly blocked | — | **Gate passed** for docs; SPIKE-001 (#14) still open and carried into M1 |
-| **M1** End-to-end prototype | Cooper (surface) and Romilly (orbit) slice with switching, saves, touch | Playable Pages build; INV tests green; walkthroughs 1, 2, 4, 6 automated; desktop + iPhone 16e measurements; one creator playthrough recording | M0 | **In progress**: SETUP-001 done (#38); CI-001, DOM-001, SPIKE-001 ready |
+| **M1** End-to-end prototype | Cooper (surface) and Romilly (orbit) slice with switching, saves, touch | Playable Pages build; INV tests green; walkthroughs 1, 2, 4, 6 automated; desktop + iPhone 16e measurements; one creator playthrough recording | M0 | **Build complete, gate open**: all M1 build issues done. Open: CI-001 (Pages not enabled), SPIKE-001 (iPhone 16e numbers), creator playthrough. See [evidence/m1](evidence/m1/README.md) |
 | **M2** Miller's planet episode | Full GDD beat sheet, Brand and Murph playable, audio, codex | Two outcome playtests; asset inventory; creator can explain the time cost unaided | M1 validated | Epic only |
 | **M3** Public release candidate | Reliable, accessible, public | VALIDATION §7 evidence | M2 | Epic only |
 | **M4** Campaign expansion | More episodes | Each episode passes regression + playtest | M3 | Epic only |

@@ -9,7 +9,7 @@ import {
   mountTouchControls,
   type InputAction,
 } from "../input";
-import { IndexedDbBackend, MemoryBackend, SaveSlots } from "../persistence";
+import { IndexedDbBackend, MemoryBackend, SaveSlots, stateHash } from "../persistence";
 import { createAdaptiveScaler, createRenderer, detectTier, scalingLevel, TIERS } from "../render";
 import { buildHudModel, isFinished, mountHud, mountNotice } from "../ui";
 import { actionToCommand } from "./actions";
@@ -211,7 +211,18 @@ attachLifecycle({
   rebuildScene: () => renderer.rebuild(),
 });
 
-// Test hook for Playwright and screenshots only (`?debug`); not a game feature.
+// Test hook for Playwright and screenshots only (`?debug`); not a game feature. `?debug&frozen` also stops real-time
+// free-roam from the start, so a scripted run issues exactly the commands it sends and nothing else (QA-001).
 if (new URLSearchParams(location.search).has("debug")) {
-  (window as unknown as { __irpg: unknown }).__irpg = { game, renderer, tier, onAction, freeRoam, slots };
+  if (new URLSearchParams(location.search).has("frozen")) freeRoam.setPaused(true);
+  (window as unknown as { __irpg: unknown }).__irpg = {
+    game,
+    renderer,
+    tier,
+    onAction,
+    freeRoam,
+    slots,
+    /** Hash of the game state without the random command ids, so runs on any device can be compared (QA-001). */
+    hash: () => stateHash({ ...game.getState(), processedCommandIds: [] }),
+  };
 }

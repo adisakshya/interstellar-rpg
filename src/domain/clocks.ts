@@ -173,7 +173,9 @@ export function createClockHandlers(
       // The snapshot is a full state at this moment, including how far the activity has got (§8).
       s = withProgress(s, progressAt(at));
       events.push({ kind: "DecisionPending", T: at, decisionId: d.id });
-      if (d.checkpoint) {
+      // No checkpoint inside a choice's own time cost: a snapshot there would hold the choice already made but its
+      // remaining cost unpaid, so restoring it would let the player skip that cost. The decision still opens normally.
+      if (d.checkpoint && !wholly) {
         events.push({ kind: "CheckpointCreated", T: at, decisionId: d.id });
         checkpoints.push({ decisionId: d.id, state: s, afterEvents: events.length });
       }

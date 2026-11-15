@@ -372,17 +372,6 @@ describe("a choice that costs its owner time (SpendTime)", () => {
     expect(out.state.characters[doyle]).toMatchObject({ unavailable: null });
   });
 
-  it("keeps the checkpoint ordering when the spend opens a checkpointed decision", () => {
-    const lateHard: DecisionDef = { ...D_HIB, id: dHib, owner: cooper, triggerT: 3 * YEAR, deadlineT: null };
-    const hh = createHandlers(tables(false, [WAVE, lateHard]));
-    const out = apply(withDoyle(), resolve("r0", dWave, "stay"), hh);
-    const r = committed(out.result);
-    expect(r.checkpoints.map((c) => c.decisionId)).toEqual([dWave, dHib]);
-    // Each snapshot's seq lands inside its own command's event range, in order.
-    expect(r.checkpoints[0]!.state.seq).toBeLessThan(r.checkpoints[1]!.state.seq);
-    expect(r.checkpoints[1]!.state.decisions[dHib]?.status).toBe("pending");
-  });
-
   it("never stops half-way: a hard deadline inside the spend blocks the whole choice, and the cost is paid in full later", () => {
     const wall: DecisionDef = { ...D_HIB, id: dHib, owner: cooper, triggerT: 2.5 * YEAR, deadlineT: 3 * YEAR };
     const hh = createHandlers(tables(false, [WAVE, wall]));
@@ -398,6 +387,19 @@ describe("a choice that costs its owner time (SpendTime)", () => {
     expect(committed(done.result).kind).toBe("Ok");
     near(done.state.characters[cooper]!.tau, H, 1e-6);
     expect(done.state.characters[doyle]).toMatchObject({ unavailable: "DEAD" });
+  });
+
+  it("takes no checkpoint for a decision that opens inside the spend, so no restore can skip the cost", () => {
+    // A checkpointed decision triggers 30 s into a 3600 s spend (Cooper's time; 30 s there is 30 x 61 362 s of T).
+    const early: DecisionDef = { ...D_HIB, id: dHib, owner: cooper, triggerT: 30 * 61362, deadlineT: null };
+    const hh = createHandlers(tables(false, [WAVE, early]));
+    const out = apply(withDoyle(), resolve("r0", dWave, "stay"), hh);
+    const r = committed(out.result);
+    // The wave's own checkpoint (taken before the choice, at its early resolution) is kept; none is taken for the other.
+    expect(r.checkpoints.map((c) => c.decisionId)).toEqual([dWave]);
+    expect(r.events.filter((e) => e.kind === "CheckpointCreated")).toHaveLength(1);
+    expect(out.state.decisions[dHib]?.status).toBe("pending");
+    near(out.state.characters[cooper]!.tau, H, 1e-6); // the whole cost was paid
   });
 
   it("is all-or-nothing: if the time cannot pass, the choice is not recorded", () => {

@@ -95,6 +95,7 @@ When an advance would pass an unresolved hard deadline:
 
 - A snapshot contains: schema version, content version, `T`, every `τ[c]`, location, availability, resources, knowledge, pending decisions, the active-activity progress, processed command ids, the RNG seed, the controlled character, and a bounded tail of the event history (debugging only, not required to rebuild state).
 - **Loading a checkpoint** is the only way to undo committed history. It asks for confirmation and replaces the autosave. Switching characters and reloading the page never rewind anything.
+- No checkpoint is taken for a decision that becomes pending inside a choice's own time cost (`SpendTime`): the snapshot would hold the choice made and its cost unpaid. That decision still opens normally.
 - Command ids are generated fresh per player action (UUID), so ids from a timeline abandoned by a checkpoint load never collide with new ones.
 - Export and import of saves, and handling of corrupt or incompatible saves, are covered in SAVE-001. A bad save is never silently discarded.
 

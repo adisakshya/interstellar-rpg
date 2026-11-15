@@ -10,7 +10,9 @@ const layer = (names) => ({
 });
 
 export default tseslint.config(
-  { ignores: ["dist/**", "node_modules/**", "coverage/**", ".spike-out/**"] },
+  {
+    ignores: ["dist/**", "node_modules/**", "coverage/**", ".spike-out/**", "test-results/**", "playwright-report/**"],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   { languageOptions: { globals: { ...globals.browser, ...globals.node } } },
