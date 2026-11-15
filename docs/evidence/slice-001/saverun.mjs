@@ -1,0 +1,22 @@
+import { createRequire } from "node:module";
+import http from "node:http"; import fs from "node:fs"; import path from "node:path";
+const { chromium } = createRequire(import.meta.url)("playwright");
+const root = process.argv[2];
+const types = { ".js": "text/javascript", ".css": "text/css", ".html": "text/html", ".json": "application/json" };
+const srv = http.createServer((q, r) => { let p = path.join(root, decodeURIComponent(new URL(q.url, "http://x").pathname).replace(/^\/interstellar-rpg/, "")); try { if (fs.statSync(p).isDirectory()) p = path.join(p, "index.html"); r.writeHead(200, { "content-type": types[path.extname(p)] || "application/octet-stream" }); r.end(fs.readFileSync(p)); } catch { r.writeHead(404).end(); } }).listen(0, async () => {
+  const b = await chromium.launch({ args: ["--use-gl=swiftshader", "--enable-unsafe-swiftshader"] });
+  const ctx = await b.newContext({ viewport: { width: 1280, height: 720 }, acceptDownloads: true });
+  const pg = await ctx.newPage();  const base = `http://127.0.0.1:${srv.address().port}/interstellar-rpg/`;
+  await pg.goto(base + "?debug&fresh"); await pg.waitForSelector(".irpg-btn"); await pg.waitForTimeout(800);
+  await pg.evaluate(() => new Promise((res, rej) => { const rq = indexedDB.open("interstellar-rpg", 1); rq.onupgradeneeded = () => rq.result.createObjectStore("saves"); rq.onsuccess = () => { const tx = rq.result.transaction("saves", "readwrite"); tx.objectStore("saves").put("{ garbage", "autosave"); tx.oncomplete = res; tx.onerror = rej; }; }));
+  await pg.goto(base + "?debug"); await pg.waitForSelector(".irpg-btn");
+  const out = {};
+  out.alert = await pg.evaluate(() => document.querySelector('[role="alert"]')?.textContent);
+  const [dl] = await Promise.all([pg.waitForEvent("download"), pg.getByText("Save a copy of the old save").click()]);
+  out.download = { name: dl.suggestedFilename(), content: fs.readFileSync(await dl.path(), "utf8") };
+  await pg.screenshot({ path: process.argv[3] + "/save-error.png" });
+  await new Promise((r) => setTimeout(r, 2500));
+  out.slotAfter = await pg.evaluate(async () => { const t = await window.__irpg.slots.exportSlot("autosave"); return t ? "fresh autosave written" : null; });
+  out.quarantine = await pg.evaluate(async () => (await window.__irpg.slots.listQuarantine()).map((q) => ({ code: q.code, raw: q.raw })));
+  console.log(JSON.stringify(out, null, 1)); await b.close(); srv.close();
+});

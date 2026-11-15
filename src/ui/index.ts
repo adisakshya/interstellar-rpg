@@ -5,3 +5,5 @@ export type { Hud, HudHandlers } from "./hud";
 export { buildHudModel } from "./model";
 export type { CharacterRow, DecisionPrompt, HudContext, HudModel, WaitingNote } from "./model";
 export { REASON_TEXT, reasonLine } from "./reasons";
+export { mountNotice } from "./notice";
+export type { Notice, NoticeAction } from "./notice";
