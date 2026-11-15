@@ -29,6 +29,22 @@ describe("module boundaries", () => {
     expect(msgs.some((m) => m.ruleId === "no-restricted-imports")).toBe(true);
   });
 
+  it("rejects render importing anything that can change domain state", async () => {
+    const msgs = await lint(
+      "src/render/__probe__.ts",
+      'import { apply, createEngine } from "../domain";\nexport { apply, createEngine };\n',
+    );
+    expect(msgs.filter((m) => m.ruleId === "no-restricted-imports")).toHaveLength(2);
+  });
+
+  it("allows render to read domain types and pure queries", async () => {
+    const msgs = await lint(
+      "src/render/__probe__.ts",
+      'import { switchView, type GameState } from "../domain";\nexport const f = (s: GameState) => switchView(s);\n',
+    );
+    expect(msgs.filter((m) => m.ruleId === "no-restricted-imports")).toEqual([]);
+  });
+
   it("allows Babylon imports in src/render", async () => {
     const msgs = await lint(
       "src/render/__probe__.ts",
