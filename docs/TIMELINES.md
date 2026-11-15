@@ -121,7 +121,7 @@ Results: `Ok`, `Interrupted{decisionId}`, `Blocked{decisionId, T_dead}`, `Duplic
 | INV-01 | One committed history: `seq` strictly increases, and `T` never decreases along `seq` |
 | INV-02 | Every `τ[c]` never decreases. Per event, `Δτ[c] = r(loc_c) × ΔT` (or the transit table value) within tolerance |
 | INV-03 | `SwitchCharacter` changes only the controlled character: no clock, resource, knowledge, availability or history change, for any sequence of switches |
-| INV-04 | A command whose id was already processed produces no events and returns `Duplicate` |
+| INV-04 | A command whose id is among the last 1 024 processed ids ([ADR-002](adr/0002-domain-command-event-model.md)) produces no events and returns `Duplicate` |
 | INV-05 | A `Blocked` or `Rejected` command commits nothing |
 | INV-06 | `T` never passes the deadline of an unresolved hard decision |
 | INV-07 | An event that depends on a pending decision is not committed until that decision resolves |
