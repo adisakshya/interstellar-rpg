@@ -30,6 +30,7 @@ export interface MessageState {
   readonly factIds: readonly FactId[];
   readonly sentT: number;
   readonly deliverT: number;
+  readonly delivered: boolean;
 }
 
 export interface ActivityProgress {

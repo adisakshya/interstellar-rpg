@@ -1,5 +1,6 @@
 import { switchRejection } from "./availability";
 import { createClockHandlers, createForecaster } from "./clocks";
+import { createKnowledgeHandlers } from "./knowledge";
 import type { EngineRules, Handler, HandlerMap } from "./engine";
 import type { ActivityDef, TimeTables } from "./rules";
 
@@ -25,7 +26,11 @@ export const defaultHandlers: HandlerMap = { SwitchCharacter: createSwitchHandle
 
 /** All production handlers for the given content-derived tables. */
 export function createHandlers(tables: TimeTables): HandlerMap {
-  return { SwitchCharacter: createSwitchHandler(tables.activities), ...createClockHandlers(tables) };
+  return {
+    SwitchCharacter: createSwitchHandler(tables.activities),
+    ...createClockHandlers(tables),
+    ...createKnowledgeHandlers(tables),
+  };
 }
 
 /** Handlers plus the forecast query, ready for `createEngine`. */

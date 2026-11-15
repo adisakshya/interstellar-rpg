@@ -1,8 +1,9 @@
 import type { DecisionForecast, EventDraft } from "./commands";
 import type { CheckpointCapture, Forecaster, HandlerMap, HandlerOutcome } from "./engine";
 import type { CharacterId, DecisionId, LocationId } from "./ids";
+import { deliver, learn } from "./knowledge";
 import type { ActivityDef, DecisionDef, DecisionEffect, TimeTables } from "./rules";
-import type { CharacterState, GameState } from "./state";
+import type { CharacterState, GameState, MessageState } from "./state";
 
 export type { RateTable } from "./rules";
 
@@ -42,10 +43,9 @@ function effectsOf(state: GameState, def: DecisionDef, optionId: string): { stat
       s = { ...s, characters: { ...s.characters, [c.id]: { ...c, unavailable: effect.reason } } };
       events.push({ kind: "AvailabilityChanged", T: s.T, characterId: c.id, reason: effect.reason });
     } else {
-      const known = s.knowledge[effect.characterId] ?? [];
-      if (known.includes(effect.factId)) continue;
-      s = { ...s, knowledge: { ...s.knowledge, [effect.characterId]: [...known, effect.factId] } };
-      events.push({ kind: "FactLearned", T: s.T, characterId: effect.characterId, factId: effect.factId });
+      const out = learn(s, effect.characterId, effect.factId);
+      s = out.state;
+      events.push(...out.events);
     }
   }
   return { state: s, events };
@@ -106,21 +106,37 @@ export function createClockHandlers(
         : g;
     const progressAt = (T: number) => kept + ((T - T0) / (T1 - T0)) * (1 - kept);
 
-    // Decisions not yet triggered whose trigger is at or before Tend, in T order then id order.
-    const triggers = decisions
-      .filter((d) => state.decisions[d.id] === undefined && d.triggerT <= Tend)
-      .sort((a, b) => a.triggerT - b.triggerT || (a.id < b.id ? -1 : 1));
+    // Everything due in the span, in T order: message deliveries first (news can inform a decision at the same
+    // moment), then decision triggers, each by id. Not-yet-triggered decisions due at or before Tend fire.
+    type Step = { T: number; order: 0; message: MessageState } | { T: number; order: 1; decision: DecisionDef };
+    const steps: Step[] = [
+      ...state.messages
+        .filter((m) => !m.delivered && m.deliverT <= Tend)
+        .map((message): Step => ({ T: message.deliverT, order: 0, message })),
+      ...decisions
+        .filter((d) => state.decisions[d.id] === undefined && d.triggerT <= Tend)
+        .map((decision): Step => ({ T: decision.triggerT, order: 1, decision })),
+    ];
+    const idOf = (x: Step) => (x.order === 0 ? x.message.id : x.decision.id);
+    steps.sort((a, b) => a.T - b.T || a.order - b.order || (idOf(a) < idOf(b) ? -1 : idOf(a) > idOf(b) ? 1 : 0));
 
     const events: EventDraft[] = [];
     const checkpoints: CheckpointCapture[] = [];
     let s = state;
-    for (const d of triggers) {
-      const at = d.triggerT > s.T ? d.triggerT : s.T;
+    for (const step of steps) {
+      const at = step.T > s.T ? step.T : s.T;
       if (at > s.T) {
         const dT = at - s.T;
         s = clocksAt(state, s, rateOf, actorId, at, tauAt(at));
         events.push({ kind: "ClockAdvanced", T: at, dT });
       }
+      if (step.order === 0) {
+        const out = deliver(s, step.message);
+        s = out.state;
+        events.push(...out.events);
+        continue;
+      }
+      const d = step.decision;
       s = { ...s, decisions: { ...s.decisions, [d.id]: { status: "pending", optionId: null } } };
       // The snapshot is a full state at this moment, including how far the activity has got (§8).
       s = withProgress(s, progressAt(at));
@@ -149,6 +165,11 @@ export function createClockHandlers(
       const rest = Object.fromEntries(Object.entries(state.activities).filter(([id]) => id !== actorId));
       s = { ...s, activities: resumed ? rest : state.activities };
       events.push({ kind: "ActivityCompleted", T: Tend, activityId: activity.id, progress: 1 });
+      for (const factId of tables.activities?.[activity.id]?.learns ?? []) {
+        const out = learn(s, actorId, factId);
+        s = out.state;
+        events.push(...out.events);
+      }
     }
     return { kind: "commit", state: s, events, checkpoints };
   }
