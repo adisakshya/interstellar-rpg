@@ -18,15 +18,21 @@ Priority: **P0** blocks the milestone, **P1** expected, **P2** nice to have.
 | FR-08 | Autosave plus ≤3 automatic checkpoints; loading a checkpoint is the only rewind | P0 | M1 | D-08 | TIMELINES §8, ADR-003 | INV-14; W4 |
 | FR-09 | Permanent deaths; the story continues while any playable character can | P1 | M1 | D-09 | TIMELINES §4, GDD §8 | INV-12; W5 |
 | FR-10 | Save export/import; corrupt saves are quarantined, never deleted | P1 | M1 | C-13 | ADR-003 | Corruption tests (SAVE-001) |
-| FR-11 | Hybrid 3D: first-person cockpit, third-person surface, Endurance interior | P0 | M1 | C-09 | ARCHITECTURE §7 | SCENE-001 |
+| FR-11 | Hybrid 3D: first-person cockpit, third-person surface, Endurance interior, in the cinematic-realism style | P0 | M1 | C-09, D-14 | ARCHITECTURE §7, ART_DIRECTION §4 | SCENE-001 to SCENE-004; creator sign-off of the Miller scene |
 | FR-12 | Keyboard/mouse and touch both complete every authored path | P0 | M1 | C-10 | ARCHITECTURE §8 | W6 |
-| FR-13 | Episode 1 vertical slice: descent → beacon → recorder decision → wave → Romilly → outcome | P0 | M1 | C-08, D-01, D-02 | GDD §4 | SLICE-001 |
+| FR-13 | Episode 1 story slice: all 12 M1 beats (GDD §4) with original dialogue in the film's voice, from the cockpit above Miller to the outcome | P0 | M1 | C-08, D-01, D-02, D-19, D-20 | GDD §4 | SLICE-001 (mechanics), STORY-001 (beats and dialogue) |
 | FR-14 | Scientific problem with evidence and a shown confidence level | P1 | M2 | C-07, D-03 | GDD §6 | Two evidence paths reach different confidence |
 | FR-15 | Relationship (trust) values that change NPC behaviour | P1 | M2 | D-03 | GDD §7 | Brand-lingering rule (GDD §5) |
 | FR-16 | Brand playable on the surface; Murph playable on Earth | P1 | M2 | D-02 | GDD §3 | — |
-| FR-17 | Adaptive music and SFX, with captions for critical sounds | P2 | M2 | brief §6.4 | — | — |
+| FR-17 | Adaptive music and SFX, with captions for critical sounds (the time tick, FR-21, comes earlier) | P2 | M2 | brief §6.4 | — | — |
 | FR-18 | In-game codex that discloses speculative physics (spin, wormhole) | P2 | M2 | C-11, D-12 | PHYSICS §1 | Every "speculative" row has a codex entry |
 | FR-19 | Live co-op in one shared campaign; player count is an **open creator decision** (DECISIONS: Open) | P1 | M5 | C-04 | COOP_POLICY | — |
+| FR-20 | Unofficial fan-project notice on the title screen and in the credits; no film footage, stills, score or logos | P0 | M1 | D-21 | ART_DIRECTION §2 | FAN-001 |
+| FR-21 | An original tick, one per day of Romilly's time, driven by the simulation (fast run when time is skipped) | P1 | M1 | D-18 | ART_DIRECTION §6 | AUDIO-001; tick interval on Miller 1.43 s ± 1% |
+| FR-22 | Heavy gravity on Miller (≈ 1.3 g, film figure) felt in movement and wading | P1 | M1 | D-18 | ART_DIRECTION §6 | MOVE-001 |
+| FR-23 | The tidal wave is a visible object that arrives exactly at the recall deadline | P0 | M1 | D-18 | ART_DIRECTION §6, TIMELINES §11 W5 | WAVE-001 |
+| FR-24 | Physically simulated, assisted flight for descent, ascent and docking (thrust, fuel, orbit) | P1 | M2 | D-18 | ART_DIRECTION §6 | M2 flight issue |
+| FR-25 | Time passed is visible in the world: Endurance ages with years passed; a title card on every switch says how long it has been | P0 | M1 | D-18 | ART_DIRECTION §6 | SCENE-004 |
 
 ## Non-functional requirements
 

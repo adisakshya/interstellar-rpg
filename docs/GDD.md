@@ -118,13 +118,13 @@ trust:      trust.cooper_brand trust.cooper_romilly
 
 ## 10. Content volume estimate
 
-| | M1 (placeholder art) | M2 additions |
+| | M1 (cinematic look, simple geometry: ART_DIRECTION) | M2 additions |
 | --- | --- | --- |
 | Beats | 12 | ~8 (Brand's surface beats, Murph's Earth scene) |
 | Decisions | 6 | ~3 |
 | Facts | 5 | ~4 |
-| Dialogue lines | ~120–180, placeholder text | ~200–250 |
+| Dialogue lines | ~120–180, original wording in the film's voice (D-20) | ~200–250 |
 | Scenes | 3 (cockpit, surface, Endurance) | +1 (Earth farmhouse) |
-| Audio | none | music states, SFX, captions |
+| Audio | the time tick only (FR-21) | music states, SFX, captions |
 
 M1's vertical slice (SLICE-001) uses B1, B3–B8 and B12 with the "run now" and "finish the search" branches. B6 (sending the beacon readings) is in the slice because Romilly's analysis in B8 needs those readings delivered in-world first (INV-08). The rest of the table lands in M2.
