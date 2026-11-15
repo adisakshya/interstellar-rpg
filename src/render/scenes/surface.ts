@@ -71,8 +71,18 @@ export const createSurfaceScene: SceneFactory = (engine, tier, assets) => {
   const profile = MOVEMENT.miller;
   const cooper = createSuitedFigure(scene, CREW["char.cooper"]!);
   const followers = [
-    { figure: createSuitedFigure(scene, CREW["char.brand"]!), offset: new Vector3(-2.2, 0, 1.2), v: { x: 0, y: 0 } },
-    { figure: createSuitedFigure(scene, CREW["char.doyle"]!), offset: new Vector3(2.4, 0, 2.2), v: { x: 0, y: 0 } },
+    {
+      id: "char.brand",
+      figure: createSuitedFigure(scene, CREW["char.brand"]!),
+      offset: new Vector3(-2.2, 0, 1.2),
+      v: { x: 0, y: 0 },
+    },
+    {
+      id: "char.doyle",
+      figure: createSuitedFigure(scene, CREW["char.doyle"]!),
+      offset: new Vector3(2.4, 0, 2.2),
+      v: { x: 0, y: 0 },
+    },
   ];
   const WATER = -0.3; // the water is knee-deep: the feet are below the surface line
   const body = cooper.root;
@@ -127,7 +137,10 @@ export const createSurfaceScene: SceneFactory = (engine, tier, assets) => {
 
   return {
     scene,
-    update: () => undefined,
+    update(view) {
+      // Someone who has died is no longer in the scene (a rebuilt scene starts from the same state, so reloads agree).
+      for (const f of followers) f.figure.root.setEnabled(!view.dead.includes(f.id));
+    },
     setMove(x, y) {
       move.x = x;
       move.y = y;

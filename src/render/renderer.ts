@@ -1,7 +1,7 @@
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import type { GameEngine, GameState } from "../domain";
 import { TIERS, type Tier } from "./quality";
-import type { SceneAssets, SceneFactory, SceneHandle } from "./scenes/common";
+import type { SceneAssets, SceneFactory, SceneHandle, SceneView } from "./scenes/common";
 
 export type SceneKind = "cockpit" | "surface" | "endurance";
 
@@ -58,6 +58,15 @@ export interface Renderer {
   dispose(): void;
 }
 
+/** What a scene is told about the game: read-only values derived from state. */
+const viewOf = (state: GameState): SceneView => ({
+  characterId: state.controlled,
+  T: state.T,
+  dead: Object.values(state.characters)
+    .filter((c) => c.unavailable === "DEAD")
+    .map((c) => c.id as string),
+});
+
 /**
  * The renderer only reads game state: it is handed frozen states and never calls `dispatch` (ARCHITECTURE §1-2).
  * Scene swaps are serialised and bounded by a short fade; a newer state always wins over one still loading.
@@ -92,7 +101,7 @@ export function createRenderer(engine: AbstractEngine, options: RendererOptions)
       handle = factory(engine, TIERS[options.tier], options.assets);
       handle.setMove(move.x, move.y);
       current = kind;
-      if (latest) handle.update({ characterId: latest.controlled });
+      if (latest) handle.update(viewOf(latest));
     } finally {
       options.fade?.set(0);
     }
@@ -105,7 +114,7 @@ export function createRenderer(engine: AbstractEngine, options: RendererOptions)
     wanted = kind;
     const run = swapping.then(async () => {
       if (disposed || wanted === current || wanted === null) {
-        if (latest && handle) handle.update({ characterId: latest.controlled });
+        if (latest && handle) handle.update(viewOf(latest));
         return;
       }
       await swapTo(wanted);
@@ -154,7 +163,7 @@ export function createRenderer(engine: AbstractEngine, options: RendererOptions)
         handle.setMove(move.x, move.y);
         current = kind;
         wanted = kind;
-        handle.update({ characterId: latest.controlled });
+        handle.update(viewOf(latest));
       });
       swapping = run.catch(() => undefined);
       return run;

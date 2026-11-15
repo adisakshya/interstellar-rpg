@@ -101,6 +101,26 @@ describe("the crew is on Miller's surface (CHAR-001)", () => {
   });
 });
 
+describe("the dead leave the scene (CHAR-001)", () => {
+  it("hides a follower who has died, and shows him again if the scene is rebuilt from a state where he lives", async () => {
+    engine = new NullEngine();
+    renderer = createRenderer(engine, { tier: "high", fadeMs: 0 });
+    const base = createInitialState(episode.initial);
+    const doyle = base.characters["char.doyle" as never]!;
+    const node = (name: string) => renderer!.handle!.scene.transformNodes.find((n) => n.name === name)!;
+    await renderer.show({
+      ...base,
+      characters: { ...base.characters, ["char.doyle" as never]: { ...doyle, unavailable: "DEAD" } },
+    });
+    expect(node("doyle.figure").isEnabled()).toBe(false);
+    expect(node("brand.figure").isEnabled()).toBe(true);
+    await renderer.show(base); // a checkpoint restore: he is not dead in this state
+    expect(node("doyle.figure").isEnabled()).toBe(true);
+    await renderer.rebuild();
+    expect(node("doyle.figure").isEnabled()).toBe(true);
+  });
+});
+
 describe("held movement", () => {
   it("carries over into a replacement scene, including a press made during the swap", async () => {
     engine = new NullEngine();
