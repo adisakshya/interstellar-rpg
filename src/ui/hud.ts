@@ -47,6 +47,20 @@ const CSS = `
 .irpg-options>li{flex:1 1 8rem}
 .irpg-note{margin:0;font-size:.875rem}
 .irpg-sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+/* Narrow or touch screens (UI-002): the world is the point, so the HUD shrinks to a strip. Headings stay for screen
+   readers but are not drawn, the roster becomes a row of chips, and nothing loses its text or its focus ring. */
+@media (max-width:40rem),(pointer:coarse) and (max-height:34rem){
+  .irpg-hud{padding:.375rem;font-size:.875rem}
+  .irpg-scroll{gap:.25rem;max-height:calc(100% - 9rem)}
+  .irpg-panel{padding:.25rem .5rem;border-radius:.375rem}
+  .irpg-panel>h2{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  .irpg-prompt>h2{position:static;width:auto;height:auto;margin:0 0 .25rem;clip:auto;overflow:visible;white-space:normal}
+  .irpg-clock{font-size:.8125rem}
+  .irpg-btn{min-height:2.5rem;padding:.25rem .5rem;gap:0 .375rem}
+  .irpg-list{flex-direction:row;flex-wrap:wrap;gap:.25rem}
+  .irpg-list>li{flex:1 1 8rem}
+  .irpg-meta{font-size:.8125rem}
+}
 `;
 
 type Attrs = Record<string, string>;
