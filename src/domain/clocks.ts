@@ -19,7 +19,9 @@ function advance(
   const actor = state.characters[actorId];
   if (!actor) return { kind: "rejected", code: "INVALID", detail: `unknown character ${actorId}` };
   if (actorId !== state.controlled) return { kind: "rejected", code: "NOT_CONTROLLED" };
-  if (actor.unavailable !== null) return { kind: "rejected", code: "CHARACTER_UNAVAILABLE", detail: actor.unavailable };
+  // A locked sequence only stops switching away (TIMELINES §4); the controlled actor still acts.
+  if (actor.unavailable !== null && actor.unavailable !== "LOCKED_SEQUENCE")
+    return { kind: "rejected", code: "CHARACTER_UNAVAILABLE", detail: actor.unavailable };
   if (!Number.isFinite(dTau) || dTau <= 0)
     return { kind: "rejected", code: "INVALID", detail: `dTau must be > 0, got ${dTau}` };
 

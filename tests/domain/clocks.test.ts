@@ -137,6 +137,23 @@ describe("rejections commit nothing (INV-05)", () => {
     expect(out.state).toBe(s);
   });
 
+  it("lets a controlled actor in a locked sequence keep spending time", () => {
+    const base = state();
+    const s: GameState = {
+      ...base,
+      characters: { ...base.characters, [cooper]: { ...base.characters[cooper]!, unavailable: "LOCKED_SEQUENCE" } },
+    };
+    const out = apply(s, advance("l1", 60), createHandlers({ rates: SYNTHETIC_10X }));
+    expect(out.result.kind).toBe("Ok");
+    expect(out.state.T).toBe(600);
+    const away = apply(
+      out.state,
+      { kind: "SwitchCharacter", commandId: "l2", targetId: romilly },
+      createHandlers({ rates: SYNTHETIC_10X }),
+    );
+    expect(away.result).toEqual({ kind: "Rejected", code: "LOCKED_SEQUENCE" });
+  });
+
   it("rejects an unavailable actor with its reason", () => {
     const base = state();
     const s: GameState = {
