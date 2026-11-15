@@ -328,8 +328,8 @@ issues:
     priority: P0
     milestone: M1
     epic: EPIC-M1
-    agent: codex
-    status: ready
+    agent: claude-code  # taken over 2026-11-15: Codex had no environment for this repo
+    status: done
     size: M
     review_effort: 1h
     requirements: [C-05, C-08, C-11, FR-01, FR-07]
@@ -353,7 +353,7 @@ issues:
     milestone: M1
     epic: EPIC-M1
     agent: codex
-    status: blocked
+    status: ready
     size: M
     review_effort: 1h
     requirements: [C-06, D-10, FR-04]
@@ -379,7 +379,7 @@ issues:
     milestone: M1
     epic: EPIC-M1
     agent: codex
-    status: blocked
+    status: ready
     size: M
     review_effort: 0.5h
     requirements: [C-05, FR-02, FR-03]
@@ -400,7 +400,7 @@ issues:
     milestone: M1
     epic: EPIC-M1
     agent: codex
-    status: blocked
+    status: ready
     size: M
     review_effort: 0.5h
     requirements: [C-05, C-11, FR-05]
@@ -421,7 +421,7 @@ issues:
     milestone: M1
     epic: EPIC-M1
     agent: codex
-    status: blocked
+    status: ready
     size: M
     review_effort: 0.5h
     requirements: [C-07, C-08, FR-06]
