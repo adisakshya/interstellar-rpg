@@ -1,6 +1,6 @@
 # Timeline, Switching and Causality Contract
 
-Status: **Draft for creator review** (DOCS-001, #7) · Plan version 0.2.0 · Decisions: [DECISIONS.md](DECISIONS.md)
+Status: **Approved** (DOCS-001, #7) · Plan version 0.2.0 · Decisions: [DECISIONS.md](DECISIONS.md)
 
 This is the rulebook the game-domain code implements (DOM-001, TIME-001..004, RES-001, SAVE-001). Each rule is numbered `INV-xx` and can be tested on its own. The physical time ratios come from [PHYSICS.md](PHYSICS.md) (DOCS-002). Numbers below marked **placeholder** only illustrate the rules; they are not physics claims.
 
@@ -44,7 +44,7 @@ When an advance would pass an unresolved hard deadline:
 - **Interruptible activity** (the default): it commits up to `T_dead` as `ActivityInterrupted` (progress kept), and the result is `Interrupted{decisionId}`. This is a complete, defined outcome, not a partial commit.
 - **Atomic activity** (flagged in content, e.g. a docking burn): nothing commits, and the result is `Blocked{decisionId, T_dead}`. The blocking decision may then be resolved early, even if its trigger has not been reached yet, because the domain is deterministic and the decision can be forecast. An early `ResolveDecision` commits, in order, `DecisionPending`, then `CheckpointCreated` if the decision is flagged (the snapshot is taken before the choice), then `DecisionResolved`. So early resolution still gets its checkpoint (D-08), and the `Blocked` command itself still commits nothing.
 
-*Proposed (P-05): this soft/hard split. The alternative, stopping all time at every pending decision, would make the cost of waiting invisible.*
+*Confirmed as D-10. The alternative, stopping all time at every pending decision, would have made the cost of waiting invisible.*
 
 ## 4. Availability and switching
 
@@ -68,7 +68,7 @@ When an advance would pass an unresolved hard deadline:
 ## 5. Real time, pause and suspension (D-07)
 
 - Real time advances the simulation **only** while the controlled character is in active free-roam: tab visible, no menu or modal, not paused.
-- Free-roam is committed as `FreeRoamTick` commands in fixed quanta of 1 s of the actor's proper time × `timeScale` (content parameter, default 1.0, **Proposed P-06**). The quanta do not depend on frame rate. On Miller one tick is ~17 hours of `T`, so wandering around costs Romilly days.
+- Free-roam is committed as `FreeRoamTick` commands in fixed quanta of 1 s of the actor's proper time × `timeScale` (content parameter, default 1.0, confirmed as D-11). The quanta do not depend on frame rate. On Miller one tick is ~17 hours of `T`, so wandering around costs Romilly days.
 - Hidden tab, closed browser or phone lock: nothing advances, and an autosave is written on `visibilitychange: hidden`. The UI shows "Paused", never something like "time has stopped".
 - WebGL context loss and renderer restarts never touch domain state.
 
