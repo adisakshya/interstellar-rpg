@@ -8,6 +8,8 @@ export interface HudHandlers {
 
 export interface Hud {
   update(model: HudModel): void;
+  /** Show "Paused" while the game is paused by the UI (hidden tab, lost graphics context). Not a physical time stop. */
+  setPaused(paused: boolean): void;
   dispose(): void;
 }
 
@@ -81,7 +83,8 @@ export function mountHud(root: HTMLElement, handlers: HudHandlers): Hud {
   timePanel.append(make(doc, "h2", { id: "irpg-time-h" }, "Time"));
   const clock = make(doc, "p", { class: "irpg-clock" });
   const clockSpoken = make(doc, "span", { class: "irpg-sr" });
-  timePanel.append(clock, clockSpoken);
+  const pausedNote = make(doc, "p", { class: "irpg-note irpg-paused", hidden: "" }, "Paused");
+  timePanel.append(clock, clockSpoken, pausedNote);
 
   const roster = make(doc, "nav", { class: "irpg-panel", "aria-labelledby": "irpg-who-h" });
   roster.append(make(doc, "h2", { id: "irpg-who-h" }, "Characters"));
@@ -189,6 +192,11 @@ export function mountHud(root: HTMLElement, handlers: HudHandlers): Hud {
   }
 
   return {
+    setPaused(paused) {
+      if (pausedNote.hidden === !paused) return;
+      pausedNote.hidden = !paused;
+      announce(paused ? "Paused" : "Resumed");
+    },
     update(model) {
       // Roster: keyed, in place.
       const seen = new Set<string>();

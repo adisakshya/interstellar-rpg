@@ -1,7 +1,7 @@
 import { Engine } from "@babylonjs/core/Engines/engine";
 import m1 from "../content/episodes/m1.json";
 import { loadEpisode } from "../content";
-import { createEngine, createInitialState, createRules } from "../domain";
+import { createEngine, createInitialState, createRules, type Command, type DomainEvent, type Result } from "../domain";
 import {
   createKeyboardAdapter,
   createMouseAdapter,
@@ -9,9 +9,12 @@ import {
   mountTouchControls,
   type InputAction,
 } from "../input";
-import { createRenderer, detectTier, scalingLevel, TIERS } from "../render";
+import { IndexedDbBackend, MemoryBackend, SaveSlots } from "../persistence";
+import { createAdaptiveScaler, createRenderer, detectTier, scalingLevel, TIERS } from "../render";
 import { buildHudModel, mountHud } from "../ui";
 import { actionToCommand, type Interaction } from "./actions";
+import { createFreeRoam } from "./freeroam";
+import { attachLifecycle } from "./lifecycle";
 
 // Composition root (ARCHITECTURE §2): content → domain engine → renderer. Input and HUD arrive in INPUT-001/UI-001.
 const canvas = document.getElementById("game");
@@ -21,7 +24,33 @@ if (!(canvas instanceof HTMLCanvasElement) || !fade) throw new Error("Missing #g
 const loaded = loadEpisode(m1);
 if (!loaded.ok) throw new Error(`Episode content is invalid:\n${loaded.errors.join("\n")}`);
 const episode = loaded.episode;
-const game = createEngine(createInitialState(episode.initial), createRules(episode.tables));
+
+// Saves (SAVE-001): autosave when the tab is hidden, checkpoints as decisions open. A browser without IndexedDB
+// (some private modes) falls back to memory, so the game still runs but will not survive a reload.
+const slots = new SaveSlots(typeof indexedDB === "undefined" ? new MemoryBackend() : new IndexedDbBackend(), {
+  contentVersion: episode.contentVersion,
+});
+const params = new URLSearchParams(location.search);
+// `?fresh` ignores the autosave (it stays on disk until the next autosave overwrites it).
+const resumed = params.has("fresh") ? null : await slots.loadAutosave().catch(() => null);
+const game = createEngine(
+  resumed?.ok ? resumed.save.state : createInitialState(episode.initial),
+  createRules(episode.tables),
+);
+const eventTail: DomainEvent[] = [];
+game.subscribe((_state, events) => {
+  eventTail.push(...events);
+  if (eventTail.length > 400) eventTail.splice(0, eventTail.length - 200);
+});
+const nowIso = () => new Date().toISOString();
+/** Every command goes through here, so checkpoints the domain captures are always stored (TIMELINES §8). */
+const dispatch = (command: Command): Result => {
+  const result = game.dispatch(command);
+  if (result.kind === "Ok" || result.kind === "Interrupted") {
+    for (const snapshot of result.checkpoints) void slots.addCheckpoint(snapshot, nowIso()).catch(console.error);
+  }
+  return result;
+};
 
 const tier = detectTier({ matchMedia: (q) => window.matchMedia(q), devicePixelRatio, search: location.search });
 const engine = new Engine(canvas, TIERS[tier].antialias, {
@@ -51,19 +80,21 @@ const onAction = (action: InputAction) => {
     interactions,
     activities: episode.tables.activities,
   });
-  if (command) game.dispatch(command);
+  if (command) dispatch(command);
 };
 createKeyboardAdapter(window, onAction);
 createMouseAdapter(canvas, onAction, undefined, window);
 const hud = document.getElementById("hud");
+let hudView: ReturnType<typeof mountHud> | null = null;
 if (hud) {
   // HUD first, so the touch controls sit on top of it. Both only read state or send commands (ARCHITECTURE §8).
   const view = mountHud(hud, {
     onSwitch: (targetId) =>
-      game.dispatch({ kind: "SwitchCharacter", commandId: crypto.randomUUID(), targetId: targetId as never }),
+      dispatch({ kind: "SwitchCharacter", commandId: crypto.randomUUID(), targetId: targetId as never }),
     onResolve: (decisionId, optionId) =>
-      game.dispatch({ kind: "ResolveDecision", commandId: crypto.randomUUID(), decisionId, optionId }),
+      dispatch({ kind: "ResolveDecision", commandId: crypto.randomUUID(), decisionId, optionId }),
   });
+  hudView = view;
   const paint = (state: ReturnType<typeof game.getState>) =>
     view.update(
       buildHudModel(state, {
@@ -78,10 +109,32 @@ if (hud) {
   createTouchAdapter(mountTouchControls(hud).controls, onAction);
 }
 
-engine.runRenderLoop(() => renderer.render());
+// Real-time free-roam (D-11): fixed 1 s quanta from accumulated real time, never from frame rate.
+const freeRoam = createFreeRoam({ getState: game.getState, dispatch, newId: () => crypto.randomUUID() });
+const baseLevel = scalingLevel(tier, devicePixelRatio);
+const scaler = createAdaptiveScaler(baseLevel, { min: baseLevel, max: baseLevel + 1 });
+engine.runRenderLoop(() => {
+  freeRoam.frame(engine.getDeltaTime());
+  const level = scaler.frame(engine.getDeltaTime());
+  if (level !== null) {
+    engine.setHardwareScalingLevel(level);
+    engine.resize();
+  }
+  renderer.render();
+});
 window.addEventListener("resize", () => engine.resize());
+attachLifecycle({
+  document,
+  canvas,
+  setPaused: (paused) => {
+    freeRoam.setPaused(paused);
+    hudView?.setPaused(paused);
+  },
+  autosave: async () => slots.writeAutosave(game.getState(), eventTail.slice(-200), nowIso()),
+  rebuildScene: () => renderer.rebuild(),
+});
 
 // Test hook for Playwright and screenshots only (`?debug`); not a game feature.
 if (new URLSearchParams(location.search).has("debug")) {
-  (window as unknown as { __irpg: unknown }).__irpg = { game, renderer, tier, onAction };
+  (window as unknown as { __irpg: unknown }).__irpg = { game, renderer, tier, onAction, freeRoam, slots };
 }

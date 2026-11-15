@@ -46,6 +46,11 @@ export interface Renderer {
   readonly handle: SceneHandle | null;
   /** Presentation-only movement for the visible character. */
   setMove(x: number, y: number): void;
+  /**
+   * Throw away the visible scene and build it again from the latest state, e.g. after WebGL context loss. Game
+   * state is not touched (TIMELINES §5).
+   */
+  rebuild(): Promise<void>;
   /** Draw one frame; call from `engine.runRenderLoop`. */
   render(): void;
   dispose(): void;
@@ -127,6 +132,30 @@ export function createRenderer(engine: AbstractEngine, options: RendererOptions)
     setMove(x, y) {
       move = { x, y };
       handle?.setMove(x, y);
+    },
+    rebuild() {
+      const run = swapping.then(async () => {
+        if (disposed || !latest) return;
+        const kind = sceneFor(latest) ?? current;
+        if (kind === null) return;
+        // The old scene's GPU resources died with the context: drop it without a fade and build it afresh.
+        const factory = await loaders[kind]();
+        if (disposed) return;
+        try {
+          handle?.dispose();
+        } catch {
+          // Disposing against a lost context can fail; the scene is being replaced either way.
+        }
+        handle = null;
+        current = null;
+        handle = factory(engine, TIERS[options.tier]);
+        handle.setMove(move.x, move.y);
+        current = kind;
+        wanted = kind;
+        handle.update({ characterId: latest.controlled });
+      });
+      swapping = run.catch(() => undefined);
+      return run;
     },
     render: () => handle?.scene.render(),
     dispose() {
