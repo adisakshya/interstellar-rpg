@@ -1,15 +1,28 @@
 import { describe, expect, it } from "vitest";
 import m1 from "../../src/content/episodes/m1.json";
 import { loadEpisode } from "../../src/content";
-import { createEngine, createInitialState, createRules, type Command } from "../../src/domain";
+import { createEngine, createInitialState, createRules, type Command, type DecisionId } from "../../src/domain";
 import { createFreeRoam, MAX_FRAME_MS, TICK_MS } from "../../src/app/freeroam";
 
 const loaded = loadEpisode(m1);
 if (!loaded.ok) throw new Error(loaded.errors.join("\n"));
 const episode = loaded.episode;
 
-function setup(timeScale?: number) {
-  const game = createEngine(createInitialState(episode.initial), createRules(episode.tables));
+const ownerOf = (id: DecisionId) => episode.tables.decisions?.[id]?.owner;
+const newGame = () => createEngine(createInitialState(episode.initial), createRules(episode.tables));
+
+function setup(timeScale?: number, settled = true) {
+  const game = newGame();
+  if (settled) {
+    // decision.descent opens on the very first tick; the player answers it before roaming (see the modal test below).
+    game.dispatch({ kind: "FreeRoamTick", commandId: "warm", actorId: "char.cooper" as never, dTau: 1 });
+    game.dispatch({
+      kind: "ResolveDecision",
+      commandId: "descent",
+      decisionId: "decision.descent" as never,
+      optionId: "direct",
+    });
+  }
   const log: Command[] = [];
   let n = 0;
   const freeRoam = createFreeRoam({
@@ -19,6 +32,7 @@ function setup(timeScale?: number) {
       return game.dispatch(c);
     },
     newId: () => `tick-${++n}`,
+    ownerOf,
     ...(timeScale === undefined ? {} : { timeScale }),
   });
   return { game, log, freeRoam };
@@ -89,22 +103,52 @@ describe("free-roam accumulator (D-11, ARCHITECTURE §4)", () => {
     expect(log).toHaveLength(1);
   });
 
+  it("waits for the player whenever the controlled character has a prompt open, soft or hard", () => {
+    const { game, log, freeRoam } = setup(undefined, false);
+    run(freeRoam, TICK_MS, 100); // the first tick makes decision.descent (soft) pending
+    expect(game.getState().decisions["decision.descent" as never]?.status).toBe("pending");
+    expect(freeRoam.active).toBe(false);
+    const T = game.getState().T;
+    run(freeRoam, 20_000, 100);
+    expect(log).toHaveLength(1);
+    expect(game.getState().T).toBe(T);
+    game.dispatch({
+      kind: "ResolveDecision",
+      commandId: "d",
+      decisionId: "decision.descent" as never,
+      optionId: "efficient",
+    });
+    expect(freeRoam.active).toBe(true);
+    run(freeRoam, TICK_MS, 100);
+    expect(log).toHaveLength(2);
+  });
+
+  it("does not wait for a prompt that belongs to someone else", () => {
+    const { game, freeRoam } = setup();
+    // decision.hibernate is Romilly's; it never blocks Cooper's roaming just by being pending.
+    expect(ownerOf("decision.hibernate" as never)).toBe("char.romilly");
+    expect(game.getState().controlled).toBe("char.cooper");
+    expect(freeRoam.active).toBe(true);
+  });
+
   it("opens the prompt and waits when a hard deadline interrupts, then resumes once it is resolved", () => {
     const { game, log, freeRoam } = setup();
-    // Jump close to the recall decision, so the next tick crosses its trigger.
-    const trigger = 130_542_616;
-    game.dispatch({
-      kind: "AdvanceTime",
-      commandId: "adv",
-      actorId: "char.cooper" as never,
-      activityId: "scan.beacon",
-      dTau: 600,
-    });
-    expect(game.getState().T).toBeLessThan(trigger);
+    // Roam on, answering the soft prompts that open on the way, until the hard recall decision becomes pending.
     let guard = 0;
-    while (freeRoam.active && guard++ < 5000) run(freeRoam, TICK_MS, 100);
-    const decision = game.getState().decisions["decision.recall" as never];
-    expect(decision?.status).toBe("pending");
+    while (game.getState().decisions["decision.recall" as never]?.status !== "pending" && guard++ < 20_000) {
+      if (freeRoam.active) {
+        run(freeRoam, TICK_MS, 100);
+        continue;
+      }
+      const open = (Object.entries(game.getState().decisions) as unknown as [DecisionId, { status: string }][]).find(
+        ([id, d]) =>
+          d.status === "pending" && ownerOf(id) === "char.cooper" && id !== ("decision.recall" as DecisionId),
+      );
+      if (!open) break;
+      const option = Object.keys(episode.tables.decisions![open[0]]!.options)[0]!;
+      game.dispatch({ kind: "ResolveDecision", commandId: `r-${guard}`, decisionId: open[0], optionId: option });
+    }
+    expect(game.getState().decisions["decision.recall" as never]?.status).toBe("pending");
     expect(freeRoam.active).toBe(false);
     const ticks = log.length;
     run(freeRoam, 10_000, 100);

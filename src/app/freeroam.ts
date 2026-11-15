@@ -1,4 +1,4 @@
-import type { Command, GameState, Result } from "../domain";
+import type { CharacterId, Command, DecisionId, GameState, Result } from "../domain";
 
 /** One free-roam quantum is 1 s of accumulated real time (TIMELINES §5, ARCHITECTURE §4). */
 export const TICK_MS = 1000;
@@ -12,6 +12,8 @@ export interface FreeRoamOptions {
   readonly getState: () => GameState;
   readonly dispatch: (command: Command) => Result;
   readonly newId: () => string;
+  /** Who owns a decision (from the content tables), so a prompt the player can see counts as an open modal. */
+  readonly ownerOf: (id: DecisionId) => CharacterId | undefined;
   /** Proper seconds spent per real second (content parameter, default 1.0; D-11). */
   readonly timeScale?: number;
 }
@@ -39,6 +41,11 @@ export function createFreeRoam(options: FreeRoamOptions): FreeRoam {
   let waitingOn: string | null = null;
 
   const modalOpen = (state: GameState): boolean => {
+    // The HUD shows a prompt for every pending decision the controlled character owns (soft or hard), and TIMELINES §5
+    // says no menu or modal: time waits for the player's choice however the decision became pending.
+    for (const [id, entry] of Object.entries(state.decisions) as [DecisionId, GameState["decisions"][DecisionId]][]) {
+      if (entry.status === "pending" && options.ownerOf(id) === state.controlled) return true;
+    }
     if (waitingOn !== null) {
       if (state.decisions[waitingOn as never]?.status === "pending") return true;
       waitingOn = null;

@@ -13,6 +13,7 @@ import { IndexedDbBackend, MemoryBackend, SaveSlots } from "../persistence";
 import { createAdaptiveScaler, createRenderer, detectTier, scalingLevel, TIERS } from "../render";
 import { buildHudModel, mountHud } from "../ui";
 import { actionToCommand, type Interaction } from "./actions";
+import { createAutosaver } from "./autosave";
 import { createFreeRoam } from "./freeroam";
 import { attachLifecycle } from "./lifecycle";
 
@@ -43,6 +44,11 @@ game.subscribe((_state, events) => {
   if (eventTail.length > 400) eventTail.splice(0, eventTail.length - 200);
 });
 const nowIso = () => new Date().toISOString();
+// Autosave within ~2 s of any committed change, and at once when the tab is hidden (TIMELINES §8).
+const autosaver = createAutosaver({
+  save: () => slots.writeAutosave(game.getState(), eventTail.slice(-200), nowIso()),
+});
+game.subscribe(() => autosaver.changed());
 /** Every command goes through here, so checkpoints the domain captures are always stored (TIMELINES §8). */
 const dispatch = (command: Command): Result => {
   const result = game.dispatch(command);
@@ -110,7 +116,12 @@ if (hud) {
 }
 
 // Real-time free-roam (D-11): fixed 1 s quanta from accumulated real time, never from frame rate.
-const freeRoam = createFreeRoam({ getState: game.getState, dispatch, newId: () => crypto.randomUUID() });
+const freeRoam = createFreeRoam({
+  getState: game.getState,
+  dispatch,
+  newId: () => crypto.randomUUID(),
+  ownerOf: (id) => episode.tables.decisions?.[id]?.owner,
+});
 const baseLevel = scalingLevel(tier, devicePixelRatio);
 const scaler = createAdaptiveScaler(baseLevel, { min: baseLevel, max: baseLevel + 1 });
 engine.runRenderLoop(() => {
@@ -130,7 +141,7 @@ attachLifecycle({
     freeRoam.setPaused(paused);
     hudView?.setPaused(paused);
   },
-  autosave: async () => slots.writeAutosave(game.getState(), eventTail.slice(-200), nowIso()),
+  autosave: () => autosaver.flush(),
   rebuildScene: () => renderer.rebuild(),
 });
 
