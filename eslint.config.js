@@ -60,7 +60,29 @@ export default tseslint.config(
   {
     files: ["src/render/**/*.ts"],
     rules: {
-      "no-restricted-imports": ["error", { patterns: [layer(["persistence", "input", "ui", "audio", "app"])] }],
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            layer(["persistence", "input", "ui", "audio", "app"]),
+            {
+              // The renderer reads state only; anything that can change it lives in app (SCENE-001).
+              group: ["**/domain", "**/domain/**"],
+              importNames: [
+                "apply",
+                "createEngine",
+                "createHandlers",
+                "createRules",
+                "createClockHandlers",
+                "createKnowledgeHandlers",
+                "defaultHandlers",
+                "createInitialState",
+              ],
+              message: "render reads domain state only; it must not run commands (ARCHITECTURE §1).",
+            },
+          ],
+        },
+      ],
     },
   },
   ...["input", "ui", "audio"].map((self) => ({
