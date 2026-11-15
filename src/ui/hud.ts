@@ -6,12 +6,20 @@ export interface HudHandlers {
   onResolve(decisionId: DecisionId, optionId: string): void;
   /** The player chose the offered interaction (same as pressing E or the Act button). */
   onAct(): void;
+  /** The player pressed the sound switch. When absent, no switch is drawn. */
+  onToggleSound?(): void;
 }
 
 export interface Hud {
   update(model: HudModel): void;
   /** A spot at the top of the HUD column where narrow screens put the subtitles, so they never cover a decision. */
   readonly slot: HTMLElement;
+  /** Update the sound switch's label. */
+  setSound(on: boolean): void;
+  /** Flash the tick dot: the visual cue for the time tick, for players without sound. */
+  pulse(): void;
+  /** Say something through the polite live region (for example "12 days passed for Romilly"). */
+  announce(text: string): void;
   /** Show "Paused" while the game is paused by the UI (hidden tab, lost graphics context). Not a physical time stop. */
   setPaused(paused: boolean): void;
   dispose(): void;
@@ -46,6 +54,10 @@ const CSS = `
 .irpg-options{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:.375rem}
 .irpg-options>li{flex:1 1 8rem}
 .irpg-note{margin:0;font-size:.875rem}
+.irpg-timerow{display:flex;align-items:center;justify-content:space-between;gap:.5rem}
+.irpg-timerow .irpg-btn{width:auto;flex:none;align-items:center}
+.irpg-tick{display:inline-block;width:.5rem;height:.5rem;margin-right:.5rem;border-radius:50%;background:#ffd166;opacity:.2;transition:opacity .35s ease-out}
+.irpg-tick.irpg-on{opacity:1;transition:none}
 .irpg-sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 /* Narrow or touch screens (UI-002): the world is the point, so the HUD shrinks to a strip. Headings stay for screen
    readers but are not drawn, the roster becomes a row of chips, and nothing loses its text or its focus ring. */
@@ -102,7 +114,22 @@ export function mountHud(root: HTMLElement, handlers: HudHandlers): Hud {
   const clock = make(doc, "p", { class: "irpg-clock" });
   const clockSpoken = make(doc, "span", { class: "irpg-sr" });
   const pausedNote = make(doc, "p", { class: "irpg-note irpg-paused", hidden: "" }, "Paused");
-  timePanel.append(clock, clockSpoken, pausedNote);
+  const tickDot = make(doc, "span", { class: "irpg-tick", "aria-hidden": "true" });
+  const soundButton = make(doc, "button", { type: "button", class: "irpg-btn", "aria-pressed": "true" });
+  soundButton.textContent = "Sound on";
+  const timeRow = make(doc, "div", { class: "irpg-timerow" });
+  const clockBox = make(doc, "div");
+  clockBox.append(clock, clockSpoken);
+  const rowEnd = make(doc, "div");
+  rowEnd.style.display = "flex";
+  rowEnd.style.alignItems = "center";
+  rowEnd.append(tickDot);
+  if (handlers.onToggleSound) {
+    soundButton.addEventListener("click", () => handlers.onToggleSound?.());
+    rowEnd.append(soundButton);
+  }
+  timeRow.append(clockBox, rowEnd);
+  timePanel.append(timeRow, pausedNote);
 
   const actionPanel = make(doc, "section", { class: "irpg-panel", "aria-labelledby": "irpg-act-h", hidden: "" });
   actionPanel.append(make(doc, "h2", { id: "irpg-act-h" }, "Action"));
@@ -225,6 +252,15 @@ export function mountHud(root: HTMLElement, handlers: HudHandlers): Hud {
 
   return {
     slot,
+    setSound(on) {
+      soundButton.textContent = on ? "Sound on" : "Sound off";
+      soundButton.setAttribute("aria-pressed", String(on));
+    },
+    pulse() {
+      tickDot.classList.add("irpg-on");
+      setTimeout(() => tickDot.classList.remove("irpg-on"), 90);
+    },
+    announce,
     setPaused(paused) {
       if (pausedNote.hidden === !paused) return;
       pausedNote.hidden = !paused;

@@ -40,6 +40,7 @@ const CSS = `
   background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.5);border-radius:.375rem}
 .irpg-sub-ctl button:focus-visible,.irpg-sub-ctl input:focus-visible{outline:3px solid #ffd166;outline-offset:2px}
 .irpg-sub-ctl label{display:flex;align-items:center;gap:.375rem;margin-left:auto}
+.irpg-sub-ctl [hidden]{display:none}
 .irpg-sub-log{margin:.5rem 0 0;padding:0 0 0 1.25rem;max-height:9rem;overflow-y:auto;font-size:.875rem;opacity:.9}
 `;
 

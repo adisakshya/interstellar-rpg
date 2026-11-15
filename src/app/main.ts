@@ -29,6 +29,7 @@ import { createAutosaver } from "./autosave";
 import { loadStartup, startupNotice } from "./startup";
 import { createFreeRoam } from "./freeroam";
 import { createStory } from "./story";
+import { createAudio } from "../audio";
 import { attachLifecycle } from "./lifecycle";
 
 // Composition root (ARCHITECTURE §2): content → domain engine → renderer. Input and HUD arrive in INPUT-001/UI-001.
@@ -180,6 +181,10 @@ if (hud) {
     onResolve: (decisionId, optionId) =>
       dispatch({ kind: "ResolveDecision", commandId: crypto.randomUUID(), decisionId, optionId }),
     onAct: () => onAction({ kind: "Interact" }),
+    onToggleSound: () => {
+      audio.setEnabled(!audio.enabled);
+      view.setSound(audio.enabled);
+    },
   });
   hudView = view;
   const paint = (state: ReturnType<typeof game.getState>) =>
@@ -208,6 +213,36 @@ const freeRoam = createFreeRoam({
   halted: () => isFinished(game.getState(), episode.ending),
   holding: () => titleOpen || (hud !== null && story.current() !== null),
 });
+// The time tick (AUDIO-001, D-18): one tick per day of Romilly's time, silent while he is controlled. Browsers only
+// allow sound after a gesture, so the context is made on the first one; before that the beat and its visual cue run.
+const AUDIO_KEY = "irpg.audio";
+const audio = createAudio({
+  getState: game.getState,
+  rates: episode.tables.rates,
+  watcher: "char.romilly" as never,
+  active: () => freeRoam.active,
+  onTick: () => hudView?.pulse(),
+  onSkip: (days) => hudView?.announce(`${days} ${days === 1 ? "day" : "days"} passed for Romilly`),
+  preference: {
+    get: () => {
+      try {
+        return localStorage.getItem(AUDIO_KEY) !== "off";
+      } catch {
+        return true;
+      }
+    },
+    set: (value) => {
+      try {
+        localStorage.setItem(AUDIO_KEY, value ? "on" : "off");
+      } catch {
+        /* the choice is only not remembered */
+      }
+    },
+  },
+});
+hudView?.setSound(audio.enabled);
+game.subscribe((state) => audio.observe(state));
+for (const type of ["pointerdown", "keydown"] as const) window.addEventListener(type, () => audio.unlock());
 const baseLevel = scalingLevel(tier, devicePixelRatio);
 const scaler = createAdaptiveScaler(baseLevel, { min: baseLevel, max: baseLevel + 1 });
 // `?debug&fixedres` keeps the resolution fixed, so a measurement is taken at one known pixel count (QA-001).
