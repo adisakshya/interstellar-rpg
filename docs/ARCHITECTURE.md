@@ -141,6 +141,7 @@ The domain is a **pure reducer** underneath: `apply(state, command, content) →
 - `@babylonjs/core` with ES-module imports only, so tree-shaking keeps the bundle small (measured in SPIKE-001). WebGL2 is the baseline; WebGPU is not required.
 - Three scenes for M1: Ranger cockpit (first person), Miller surface (third person), Endurance interior. They load lazily with dynamic `import()`.
 - **Quality tiers:** `low` (iPhone default: hardware scaling 1.5–2, no post-processing, baked lighting), `high` (desktop: scaling 1, light post-processing). Tiers change visuals only and never game rules.
+- **Assign materials explicitly.** With deep ES-module imports, Babylon does not register its default material, so a mesh without one renders invisible. Found while building SETUP-001.
 - No black-hole lensing renderer, floating origin or logarithmic depth in M1: the scenes are local and small (PHYSICS §1). Revisit only against a measured need.
 
 ## 8. Input and UI (ADR-005)
