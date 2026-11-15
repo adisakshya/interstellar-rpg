@@ -4,7 +4,7 @@
 #   blocked = waiting on a dependency or a creator decision (named in blockers/depends_on).
 # Requirement IDs: C-xx (brief §2), D-xx (DECISIONS.md). FR/NFR IDs are assigned by DOCS-005 and back-filled.
 # Size heuristic: S <= 0.5 day, M <= 1 day, L <= 2 days human-equivalent. Review = creator hours.
-plan_version: 0.3.0
+plan_version: 0.4.0
 repository: adisakshya/interstellar-rpg
 
 epics:
@@ -14,13 +14,13 @@ epics:
     exit: [Approved compact docs (TIMELINES, PHYSICS, ARCHITECTURE+ADRs, VISION/GDD, PRD/VALIDATION, co-op policy), Babylon mobile spike result, all M1 issues ready or explicitly blocked]
     depends_on: [creator review]
   - key: EPIC-M1
-    title: "M1 — End-to-end prototype (Cooper + Romilly)"
-    outcome: Placeholder Cooper (Miller surface) and Romilly (Endurance orbit); cockpit-to-surface transition; one shared time consequence; switching; touch; save/load.
-    exit: [Playable Pages build, timeline invariant tests green, desktop + mobile measurements, one recorded creator playthrough]
+    title: "M1 — End-to-end story slice (Cooper + Romilly)"
+    outcome: All 12 M1 beats with original dialogue in the film's voice, in the cinematic look (docs/ART_DIRECTION.md); cockpit and assisted landing; Brand and Doyle in the scene; Gargantua sky; the visible wave; heavy gravity; the time tick; switching; touch; save/load. Scope revised by D-19.
+    exit: [Playable Pages build, timeline invariant tests green, art direction and the Miller scene signed off, desktop + iPhone 16e measurements, one recorded creator playthrough]
     depends_on: [EPIC-M0]
   - key: EPIC-M2
     title: "M2 — Miller's planet episode"
-    outcome: Scientific problem, mission trade-offs, dialogue/relationship consequences, Brand + Murph playable, alternative outcome, adaptive audio, progression per D-03.
+    outcome: Scientific problem, mission trade-offs, dialogue/relationship consequences, Brand + Murph playable, Earth farmhouse, physically simulated assisted flight (D-18), alternative outcome, adaptive audio, codex, art polish pass, progression per D-03.
     exit: [Complete episode, two outcome playtests, asset inventory, understandable time feedback]
     depends_on: [EPIC-M1 validated]
   - key: EPIC-M3
@@ -601,3 +601,255 @@ issues:
     interfaces: []
     acceptance: [Walkthroughs 1, 2, 4, 6 automated and green in CI; physical device results recorded or listed as remaining gate]
     validation: CI link + creator playthrough recording.
+
+  - key: ART-001
+    title: "Art direction approved: mood board page and an in-engine lighting test of Miller"
+    type: docs
+    area: art
+    priority: P0
+    milestone: M1
+    epic: EPIC-M1
+    agent: claude-code
+    status: draft  # plan v0.4.0 (D-19); published to GitHub once the creator approves the revised plan
+    size: M
+    review_effort: 1h
+    requirements: [D-14, D-22]
+    depends_on: []
+    blockers: [Creator sign-off]
+    rationale: "Agree the look before building scenes (D-22)."
+    scope: ["docs/ART_DIRECTION.md approved", "Reference page: palette, lighting rules, chosen CC0 assets, written shot list", "Quick in-engine lighting test of Miller (fog, sky, water, scale) with desktop and phone screenshots", "docs/ASSETS.md created (source, author, licence per asset)"]
+    exclusions: ["Final scene dressing"]
+    interfaces: []
+    acceptance: ["Creator signs off the art direction and the lighting test"]
+    validation: "Screenshots + reference page link"
+
+  - key: FAN-001
+    title: "Title screen with the unofficial fan-project notice and credits"
+    type: feature
+    area: ui
+    priority: P0
+    milestone: M1
+    epic: EPIC-M1
+    agent: claude-code
+    status: draft  # plan v0.4.0 (D-19); published to GitHub once the creator approves the revised plan
+    size: S
+    review_effort: 0.25h
+    requirements: [FR-20, D-21]
+    depends_on: []
+    blockers: []
+    rationale: "Make the fan status and licences visible from the first screen."
+    scope: ["Title screen: New game, Continue, notice, credits", "Credits list generated from docs/ASSETS.md"]
+    exclusions: ["Menus beyond these"]
+    interfaces: []
+    acceptance: ["Notice visible before play starts and in credits", "No film footage, stills, score or logos in the build"]
+    validation: "Screenshots"
+
+  - key: GARG-001
+    title: "Offline physically based Gargantua render for the sky"
+    type: feature
+    area: render
+    priority: P0
+    milestone: M1
+    epic: EPIC-M1
+    agent: claude-code
+    status: draft  # plan v0.4.0 (D-19); published to GitHub once the creator approves the revised plan
+    size: L
+    review_effort: 0.5h
+    requirements: [D-16, FR-11]
+    depends_on: []
+    blockers: []
+    rationale: "Gargantua visible from M1, rendered by our own Kerr ray tracer (after James et al. 2015)."
+    scope: ["Offline ray tracer script (Kerr metric, thin disk) committed with parameters", "Equirectangular sky images for low and high tiers, KTX2", "Sky used on Miller, outside Endurance and in cockpit windows"]
+    exclusions: ["Real-time lensing"]
+    interfaces: []
+    acceptance: ["Spin and mass match PHYSICS §4; artistic choices (disk colour, brightness) labelled", "Within the sky budget in ART_DIRECTION §8"]
+    validation: "Images + script output log"
+
+  - key: STORY-001
+    title: "All 12 M1 beats with original dialogue in the film's voice"
+    type: feature
+    area: content
+    priority: P0
+    milestone: M1
+    epic: EPIC-M1
+    agent: claude-code
+    status: draft  # plan v0.4.0 (D-19); published to GitHub once the creator approves the revised plan
+    size: L
+    review_effort: 2h
+    requirements: [FR-13, D-19, D-20]
+    depends_on: [ART-001]
+    blockers: [Creator dialogue review]
+    rationale: "The slice needs a story: who, where, why, and what it costs."
+    scope: ["Restore descent, recorder and share-data decisions (GDD §4) on the existing domain", "~120-180 original lines (no verbatim film dialogue), subtitle-style UI with speaker names", "Intro, beat narration, wave warning, Romilly scenes, reunion and outcome text"]
+    exclusions: ["Voice acting", "Brand and Murph playable (M2)"]
+    interfaces: []
+    acceptance: ["Both outcome paths complete from the cockpit to the outcome", "Creator approves the dialogue before merge", "Golden replay and e2e tests updated for the new beats"]
+    validation: "Recorded desktop and phone playthrough"
+
+  - key: CHAR-001
+    title: "Suited 3D figures for Cooper, Brand, Doyle and Romilly"
+    type: feature
+    area: art
+    priority: P1
+    milestone: M1
+    epic: EPIC-M1
+    agent: claude-code
+    status: draft  # plan v0.4.0 (D-19); published to GitHub once the creator approves the revised plan
+    size: M
+    review_effort: 0.5h
+    requirements: [D-15]
+    depends_on: [ART-001]
+    blockers: []
+    rationale: "People must read as people in suits, not capsules."
+    scope: ["One CC0 humanoid rig; suits built in code or from CC0 parts; per-character markings", "Animations: idle, walk, heavy wade, turn, kneel, radio gesture"]
+    exclusions: ["Faces", "Lip sync"]
+    interfaces: []
+    acceptance: ["Within the scene budget", "Screenshots desktop and phone"]
+    validation: "Screenshots"
+
+  - key: MOVE-001
+    title: "Heavy gravity and wading on Miller"
+    type: feature
+    area: gameplay
+    priority: P1
+    milestone: M1
+    epic: EPIC-M1
+    agent: claude-code
+    status: draft  # plan v0.4.0 (D-19); published to GitHub once the creator approves the revised plan
+    size: S
+    review_effort: 0.25h
+    requirements: [FR-22, D-18]
+    depends_on: [CHAR-001]
+    blockers: []
+    rationale: "Make 1.3 g and knee-deep water felt."
+    scope: ["Slower acceleration and walk, shorter strides, no jump, heavier camera bob, water drag and spray"]
+    exclusions: ["Physics engine dependency"]
+    interfaces: []
+    acceptance: ["Movement differs measurably from Endurance; presentation only (no rule changes)"]
+    validation: "Screen recording"
+
+  - key: WAVE-001
+    title: "The tidal wave as a visible event on the episode timeline"
+    type: feature
+    area: render
+    priority: P0
+    milestone: M1
+    epic: EPIC-M1
+    agent: claude-code
+    status: draft  # plan v0.4.0 (D-19); published to GitHub once the creator approves the revised plan
+    size: M
+    review_effort: 0.5h
+    requirements: [FR-23, D-18]
+    depends_on: [ART-001]
+    blockers: []
+    rationale: "The wave is the scene's threat; it must be real, not a cut."
+    scope: ["Wave rises on the horizon at the warning and arrives exactly at the hard deadline", "Domain and content change, not rendering only: option effects that depend on the wave (Doyle's death, the flooded-engine cost) become scheduled effects that apply when T reaches the decision's deadline, including when the choice is made early (TIMELINES §3 early resolution) and when the choice's own time cost spans the deadline", "Until arrival the world shows the wave approaching and nobody is dead"]
+    exclusions: ["Fluid simulation"]
+    interfaces: []
+    acceptance: ["Arrival time equals the recall deadline in every path (test)", "Choosing early (before the deadline) kills Doyle at the deadline, not at the choice (test)", "Never faked by a cut"]
+    validation: "Screen recording"
+
+  - key: SCENE-002
+    title: "Miller's surface dressed to the art direction (sign-off scene)"
+    type: feature
+    area: art
+    priority: P0
+    milestone: M1
+    epic: EPIC-M1
+    agent: claude-code
+    status: draft  # plan v0.4.0 (D-19); published to GitHub once the creator approves the revised plan
+    size: L
+    review_effort: 1h
+    requirements: [FR-11, D-14, D-22]
+    depends_on: [ART-001, GARG-001, CHAR-001]
+    blockers: [Creator sign-off]
+    rationale: "One scene finished properly before the others (D-22)."
+    scope: ["Water, fog, Gargantua sky, the Ranger, beacon, wreck, Brand and Doyle, waves on the horizon, low and high tiers"]
+    exclusions: ["Cockpit and Endurance dressing"]
+    interfaces: []
+    acceptance: ["Creator signs off", "Phone tier holds the frame budget in emulation; physical number recorded when available"]
+    validation: "Screenshots + preview link"
+
+  - key: SCENE-003
+    title: "Ranger cockpit and assisted landing and ascent sequences"
+    type: feature
+    area: render
+    priority: P0
+    milestone: M1
+    epic: EPIC-M1
+    agent: claude-code
+    status: draft  # plan v0.4.0 (D-19); published to GitHub once the creator approves the revised plan
+    size: M
+    review_effort: 0.5h
+    requirements: [FR-11, D-19]
+    depends_on: [SCENE-002]
+    blockers: []
+    rationale: "Start where the film does: in the cockpit above Miller."
+    scope: ["Cockpit dressed; instruments show real fuel and time; assisted descent, landing, ascent and docking as in-engine sequences"]
+    exclusions: ["Simulated flight (M2)"]
+    interfaces: []
+    acceptance: ["Game starts in the cockpit; transition to the surface and back works on desktop and phone"]
+    validation: "Screen recording"
+
+  - key: SCENE-004
+    title: "Endurance interior and time made visible"
+    type: feature
+    area: render
+    priority: P0
+    milestone: M1
+    epic: EPIC-M1
+    agent: claude-code
+    status: draft  # plan v0.4.0 (D-19); published to GitHub once the creator approves the revised plan
+    size: M
+    review_effort: 0.5h
+    requirements: [FR-11, FR-25, D-18]
+    depends_on: [SCENE-002]
+    blockers: []
+    rationale: "Romilly's years must be seen, not just counted."
+    scope: ["Ring corridor, window with Gargantua, workstation", "World ages with years passed: dust, tally marks, logs, a growing plant, message queue", "Switch title card with time passed"]
+    exclusions: ["Faces"]
+    interfaces: []
+    acceptance: ["Visible differences between the two outcome paths"]
+    validation: "Screenshots of both paths"
+
+  - key: AUDIO-001
+    title: "The time tick: one per day of Romilly's time"
+    type: feature
+    area: audio
+    priority: P1
+    milestone: M1
+    epic: EPIC-M1
+    agent: claude-code
+    status: draft  # plan v0.4.0 (D-19); published to GitHub once the creator approves the revised plan
+    size: S
+    review_effort: 0.25h
+    requirements: [FR-21, D-18]
+    depends_on: [STORY-001]
+    blockers: []
+    rationale: "Make dilation audible, as the film does, with original sound."
+    scope: ["Original tick sound; interval from the simulation (≈1.43 s on Miller); fast run when time is skipped; silent while Romilly is controlled; mute toggle"]
+    exclusions: ["Music"]
+    interfaces: []
+    acceptance: ["Interval on Miller within 1% of 86 400 s x r(Miller) (test)", "Caption or visual cue for players without sound"]
+    validation: "Screen recording with audio"
+
+  - key: QA-002
+    title: "M1 evidence refresh and creator playthrough"
+    type: test
+    area: qa
+    priority: P0
+    milestone: M1
+    epic: EPIC-M1
+    agent: claude-code
+    status: draft  # plan v0.4.0 (D-19); published to GitHub once the creator approves the revised plan
+    size: S
+    review_effort: 1h
+    requirements: [NFR-01, NFR-02]
+    depends_on: [STORY-001, SCENE-003, SCENE-004, AUDIO-001, WAVE-001]
+    blockers: [Creator playthrough, SPIKE-001 physical numbers]
+    rationale: "Close the M1 gate on the revised scope."
+    scope: ["Update golden logs and e2e for the full slice", "Frame-time on all scenes", "docs/evidence/m1 updated"]
+    exclusions: ["Physical-device automation"]
+    interfaces: []
+    acceptance: ["All M1 exit criteria met or listed as the remaining gate"]
+    validation: "CI link + creator recording"

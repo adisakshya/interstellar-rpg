@@ -1,6 +1,6 @@
 {
   "repository": "adisakshya/interstellar-rpg",
-  "plan_version": "0.3.0",
+  "plan_version": "0.4.0",
   "published": "2026-10-18",
   "note": "Publication record only; requirements live in planning/issues.yaml. Sub-issue links are native; blocked-by is written as body sections (native dependency API not available to the publishing tool). A body whose current hash differs from managed_hash has been edited outside the publisher: surface it, do not overwrite.",
   "issues": {
@@ -153,6 +153,54 @@
       "number": 30,
       "url": "https://github.com/adisakshya/interstellar-rpg/issues/30",
       "managed_hash": "sha256:de4ea9441263b26db8176f4c3a3f69e345469244831bea4bb4238ad64517819f"
+    },
+    "ART-001": {
+      "number": 57,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/57"
+    },
+    "FAN-001": {
+      "number": 58,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/58"
+    },
+    "GARG-001": {
+      "number": 59,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/59"
+    },
+    "STORY-001": {
+      "number": 60,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/60"
+    },
+    "CHAR-001": {
+      "number": 61,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/61"
+    },
+    "MOVE-001": {
+      "number": 62,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/62"
+    },
+    "WAVE-001": {
+      "number": 63,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/63"
+    },
+    "SCENE-002": {
+      "number": 64,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/64"
+    },
+    "SCENE-003": {
+      "number": 65,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/65"
+    },
+    "SCENE-004": {
+      "number": 66,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/66"
+    },
+    "AUDIO-001": {
+      "number": 67,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/67"
+    },
+    "QA-002": {
+      "number": 68,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/68"
     }
   },
   "hash_scope": "sha256 of the issue body as published, excluding the trailing attribution footer, trailing whitespace stripped"
