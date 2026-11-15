@@ -5,6 +5,7 @@ import { loadEpisode } from "../../src/content";
 import { createEngine, createInitialState, createRules, type GameState } from "../../src/domain";
 import { stateHash } from "../../src/persistence";
 import { createRenderer, detectTier, scalingLevel, sceneFor, TIERS, type Renderer } from "../../src/render";
+import type { SceneFactory } from "../../src/render/scenes/common";
 
 const loaded = loadEpisode(m1);
 if (!loaded.ok) throw new Error(loaded.errors.join("\n"));
@@ -81,6 +82,47 @@ describe("scene choice follows the controlled character (SCENE-001)", () => {
     renderer.setMove(1, 0);
     for (let i = 0; i < 5; i++) renderer.render();
     expect(Object.isFrozen(game.getState())).toBe(true);
+  });
+});
+
+describe("held movement", () => {
+  it("carries over into a replacement scene, including a press made during the swap", async () => {
+    engine = new NullEngine();
+    const { createSurfaceScene } = await import("../../src/render/scenes/surface");
+    const { createEnduranceScene } = await import("../../src/render/scenes/endurance");
+    const { createCockpitScene } = await import("../../src/render/scenes/cockpit");
+    const received: Array<[string, number, number]> = [];
+    const recording =
+      (name: string, factory: SceneFactory): (() => Promise<SceneFactory>) =>
+      async () =>
+      (eng, tier) => {
+        const h = factory(eng, tier);
+        return {
+          ...h,
+          setMove: (x, y) => {
+            received.push([name, x, y]);
+            h.setMove(x, y);
+          },
+        };
+      };
+    renderer = createRenderer(engine, {
+      tier: "high",
+      fade: { set: () => undefined },
+      fadeMs: 20,
+      loaders: {
+        surface: recording("surface", createSurfaceScene),
+        endurance: recording("endurance", createEnduranceScene),
+        cockpit: recording("cockpit", createCockpitScene),
+      },
+    });
+    const s = createInitialState(episode.initial);
+    await renderer.show(s);
+    renderer.setMove(1, 0); // stick held on the surface
+    const swap = renderer.show(at(s, "loc.endurance"));
+    renderer.setMove(0, -1); // changed again during the fade
+    await swap;
+    expect(renderer.current).toBe("endurance");
+    expect(received.filter(([n]) => n === "endurance")).toEqual([["endurance", 0, -1]]);
   });
 });
 

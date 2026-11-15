@@ -65,6 +65,9 @@ export function createRenderer(engine: AbstractEngine, options: RendererOptions)
   let latest: GameState | null = null;
   let swapping: Promise<void> = Promise.resolve();
   let disposed = false;
+  // The latest movement vector, so a held direction carries over into a replacement scene (and a press made during
+  // the fade is not lost).
+  let move = { x: 0, y: 0 };
 
   async function swapTo(kind: SceneKind): Promise<void> {
     const factory = await loaders[kind]();
@@ -80,6 +83,7 @@ export function createRenderer(engine: AbstractEngine, options: RendererOptions)
       handle = null;
       current = null;
       handle = factory(engine, TIERS[options.tier]);
+      handle.setMove(move.x, move.y);
       current = kind;
       if (latest) handle.update({ characterId: latest.controlled });
     } finally {
@@ -120,7 +124,10 @@ export function createRenderer(engine: AbstractEngine, options: RendererOptions)
     get handle() {
       return handle;
     },
-    setMove: (x, y) => handle?.setMove(x, y),
+    setMove(x, y) {
+      move = { x, y };
+      handle?.setMove(x, y);
+    },
     render: () => handle?.scene.render(),
     dispose() {
       disposed = true;
