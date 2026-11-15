@@ -1,3 +1,4 @@
+import { createClockHandlers, type RateTable } from "./clocks";
 import type { HandlerMap } from "./engine";
 
 /**
@@ -20,3 +21,8 @@ export const defaultHandlers: HandlerMap = {
     return { kind: "commit", state: { ...state, controlled: command.targetId }, events: [], recordId: false };
   },
 };
+
+/** All production handlers for the given content-derived tables. */
+export function createHandlers(tables: { rates: RateTable }): HandlerMap {
+  return { ...defaultHandlers, ...createClockHandlers(tables.rates) };
+}

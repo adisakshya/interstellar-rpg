@@ -9,4 +9,6 @@ export * from "./state";
 export * from "./commands";
 export { apply, createEngine, deepFreeze, PROCESSED_ID_WINDOW } from "./engine";
 export type { EngineRules, Forecaster, GameEngine, Handler, HandlerMap, HandlerOutcome } from "./engine";
-export { defaultHandlers } from "./handlers";
+export { createHandlers, defaultHandlers } from "./handlers";
+export { createClockHandlers } from "./clocks";
+export type { RateTable } from "./clocks";
