@@ -2,6 +2,7 @@ import type { DecisionForecast, EventDraft } from "./commands";
 import type { CheckpointCapture, Forecaster, HandlerMap, HandlerOutcome } from "./engine";
 import type { CharacterId, DecisionId, LocationId } from "./ids";
 import { deliver, learn } from "./knowledge";
+import { decisionTimes, depletionTimes, resourcesAt } from "./resources";
 import type { ActivityDef, DecisionDef, DecisionEffect, TimeTables } from "./rules";
 import type { CharacterState, GameState, MessageState } from "./state";
 
@@ -15,6 +16,7 @@ const reject = (code: Rejected["code"], detail?: string): Rejected =>
 function clocksAt(
   start: GameState,
   current: GameState,
+  tables: TimeTables,
   rateOf: (loc: LocationId) => number,
   actorId: CharacterId,
   T: number,
@@ -25,7 +27,7 @@ function clocksAt(
   for (const [id, c] of Object.entries(start.characters) as [CharacterId, CharacterState][]) {
     characters[id] = { ...c, tau: id === actorId ? actorTau : c.tau + rateOf(c.location) * dT };
   }
-  return { ...current, T, characters };
+  return { ...current, T, characters, resources: resourcesAt(start, tables, T, rateOf) };
 }
 
 const isAtomic = (def: ActivityDef | undefined) =>
@@ -82,18 +84,26 @@ export function createClockHandlers(
     const T0 = state.T;
     const T1 = T0 + dTau / actorRate;
 
+    // Effective trigger and deadline of every decision, from the state at T0 (rates are constant in the span).
+    const times = new Map(decisions.map((d) => [d.id, decisionTimes(state, tables, d, rateOf)]));
+    const deadlineOf = (d: DecisionDef) => times.get(d.id)!.deadline;
+
     // The first unresolved hard deadline strictly inside the span stops T (INV-06).
     let barrier: DecisionDef | null = null;
+    let barrierT = Number.POSITIVE_INFINITY;
     for (const d of decisions) {
-      if (d.deadlineT === null || !isOpen(state, d) || d.deadlineT >= T1) continue;
-      if (!barrier || d.deadlineT < barrier.deadlineT! || (d.deadlineT === barrier.deadlineT && d.id < barrier.id))
+      const dl = deadlineOf(d);
+      if (dl === null || !isOpen(state, d) || dl >= T1) continue;
+      if (!barrier || dl < barrierT || (dl === barrierT && d.id < barrier.id)) {
         barrier = d;
+        barrierT = dl;
+      }
     }
-    if (barrier && (activity?.atomic || barrier.deadlineT! <= T0)) {
+    if (barrier && (activity?.atomic || barrierT <= T0)) {
       // Atomic, or already held at the deadline: nothing commits (INV-05).
-      return { kind: "blocked", decisionId: barrier.id, deadlineT: barrier.deadlineT! };
+      return { kind: "blocked", decisionId: barrier.id, deadlineT: barrierT };
     }
-    const Tend = barrier ? barrier.deadlineT! : T1;
+    const Tend = barrier ? barrierT : T1;
     const tauAt = (T: number) => (T === T1 ? actor.tau + dTau : actor.tau + (T - T0) * actorRate);
     // A resumed activity's Δτ covers what was left, so progress accumulates on top of what was kept (§3).
     // Each character keeps their own interrupted work, so switching never loses another character's progress.
@@ -107,18 +117,23 @@ export function createClockHandlers(
     const progressAt = (T: number) => kept + ((T - T0) / (T1 - T0)) * (1 - kept);
 
     // Everything due in the span, in T order: message deliveries first (news can inform a decision at the same
-    // moment), then decision triggers, each by id. Not-yet-triggered decisions due at or before Tend fire.
-    type Step = { T: number; order: 0; message: MessageState } | { T: number; order: 1; decision: DecisionDef };
+    // moment), then resources running out, then decision triggers, each by id.
+    type Step =
+      | { T: number; order: 0; id: string; message: MessageState }
+      | { T: number; order: 1; id: string }
+      | { T: number; order: 2; id: string; decision: DecisionDef };
     const steps: Step[] = [
       ...state.messages
         .filter((m) => !m.delivered && m.deliverT <= Tend)
-        .map((message): Step => ({ T: message.deliverT, order: 0, message })),
+        .map((message): Step => ({ T: message.deliverT, order: 0, id: message.id, message })),
+      ...depletionTimes(state, tables, rateOf)
+        .filter((r) => r.T <= Tend)
+        .map((r): Step => ({ T: r.T, order: 1, id: r.id })),
       ...decisions
-        .filter((d) => state.decisions[d.id] === undefined && d.triggerT <= Tend)
-        .map((decision): Step => ({ T: decision.triggerT, order: 1, decision })),
+        .filter((d) => state.decisions[d.id] === undefined && times.get(d.id)!.trigger <= Tend)
+        .map((decision): Step => ({ T: times.get(decision.id)!.trigger, order: 2, id: decision.id, decision })),
     ];
-    const idOf = (x: Step) => (x.order === 0 ? x.message.id : x.decision.id);
-    steps.sort((a, b) => a.T - b.T || a.order - b.order || (idOf(a) < idOf(b) ? -1 : idOf(a) > idOf(b) ? 1 : 0));
+    steps.sort((a, b) => a.T - b.T || a.order - b.order || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 
     const events: EventDraft[] = [];
     const checkpoints: CheckpointCapture[] = [];
@@ -127,13 +142,18 @@ export function createClockHandlers(
       const at = step.T > s.T ? step.T : s.T;
       if (at > s.T) {
         const dT = at - s.T;
-        s = clocksAt(state, s, rateOf, actorId, at, tauAt(at));
+        s = clocksAt(state, s, tables, rateOf, actorId, at, tauAt(at));
         events.push({ kind: "ClockAdvanced", T: at, dT });
       }
       if (step.order === 0) {
         const out = deliver(s, step.message);
         s = out.state;
         events.push(...out.events);
+        continue;
+      }
+      if (step.order === 1) {
+        s = { ...s, resources: { ...s.resources, [step.id]: { amount: 0 } } };
+        events.push({ kind: "ResourceDepleted", T: at, resourceId: step.id, amount: 0 });
         continue;
       }
       const d = step.decision;
@@ -148,8 +168,14 @@ export function createClockHandlers(
     }
     if (Tend > s.T) {
       const dT = Tend - s.T;
-      s = clocksAt(state, s, rateOf, actorId, Tend, tauAt(Tend));
+      s = clocksAt(state, s, tables, rateOf, actorId, Tend, tauAt(Tend));
       events.push({ kind: "ClockAdvanced", T: Tend, dT });
+    }
+    for (const [id, r] of Object.entries(s.resources)) {
+      const before = state.resources[id]?.amount;
+      if (before !== undefined && r.amount !== before) {
+        events.push({ kind: "ResourceChanged", T: Tend, resourceId: id, amount: r.amount });
+      }
     }
 
     if (barrier) {
@@ -198,7 +224,9 @@ export function createClockHandlers(
       if (current === undefined) {
         // Early resolution of a forecast decision (TIMELINES §3): only hard decisions can block, so only they
         // may be resolved before their trigger. The checkpoint is taken before the choice.
-        if (def.deadlineT === null) return reject("INVALID", `decision ${def.id} is not pending`);
+        if (def.deadlineT === null && def.deadlineWhen === undefined) {
+          return reject("INVALID", `decision ${def.id} is not pending`);
+        }
         s = { ...s, decisions: { ...s.decisions, [def.id]: { status: "pending", optionId: null } } };
         events.push({ kind: "DecisionPending", T: s.T, decisionId: def.id });
         if (def.checkpoint) {
@@ -214,11 +242,17 @@ export function createClockHandlers(
   };
 }
 
-/** Forecast for the UI and early resolution: when a decision triggers and its deadline, if still open. */
+/** Forecast for the UI and early resolution: when a decision triggers and its deadline if play continues as now. */
 export function createForecaster(tables: TimeTables): Forecaster {
+  const rateOf = (loc: LocationId) => {
+    const r = tables.rates[loc];
+    return r !== undefined && Number.isFinite(r) && r > 0 ? r : undefined;
+  };
+  const finite = (t: number) => (Number.isFinite(t) ? t : null);
   return (state: GameState, decisionId: DecisionId): DecisionForecast | null => {
     const def = tables.decisions?.[decisionId];
     if (!def || !isOpen(state, def)) return null;
-    return { decisionId, triggerT: def.triggerT, deadlineT: def.deadlineT };
+    const t = decisionTimes(state, tables, def, rateOf);
+    return { decisionId, triggerT: finite(t.trigger), deadlineT: t.deadline === null ? null : finite(t.deadline) };
   };
 }

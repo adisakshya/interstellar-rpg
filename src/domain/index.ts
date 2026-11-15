@@ -22,4 +22,13 @@ export { createClockHandlers, createForecaster } from "./clocks";
 export { switchRejection, switchView } from "./availability";
 export { createKnowledgeHandlers, playerOnlyFacts } from "./knowledge";
 export type { Handoff, SwitchOption, SwitchView } from "./availability";
-export type { ActivityDef, DecisionDef, DecisionEffect, LinkDef, RateTable, TimeTables } from "./rules";
+export type {
+  ActivityDef,
+  DecisionDef,
+  DecisionEffect,
+  LinkDef,
+  RateTable,
+  ResourceDef,
+  ResourceLevel,
+  TimeTables,
+} from "./rules";
