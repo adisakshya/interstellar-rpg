@@ -122,4 +122,4 @@ trust:      trust.cooper_brand trust.cooper_romilly
 | Scenes | 3 (cockpit, surface, Endurance) | +1 (Earth farmhouse) |
 | Audio | none | music states, SFX, captions |
 
-M1's vertical slice (SLICE-001) uses B1, B3–B5, B7, B8 and B12 with the "run now" and "finish the search" branches. The rest of the table lands in M2.
+M1's vertical slice (SLICE-001) uses B1, B3–B8 and B12 with the "run now" and "finish the search" branches. B6 (sending the beacon readings) is in the slice because Romilly's analysis in B8 needs those readings delivered in-world first (INV-08). The rest of the table lands in M2.
