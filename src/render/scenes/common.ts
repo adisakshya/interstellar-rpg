@@ -18,7 +18,13 @@ export interface SceneHandle {
   dispose(): void;
 }
 
-export type SceneFactory = (engine: AbstractEngine, tier: TierSettings) => SceneHandle;
+/** Where a scene finds its image files. Omitted in tests, where scenes build without textures. */
+export interface SceneAssets {
+  /** Base URL that `public/` is served under, ending in a slash (Vite's `BASE_URL`). */
+  readonly baseUrl: string;
+}
+
+export type SceneFactory = (engine: AbstractEngine, tier: TierSettings, assets?: SceneAssets) => SceneHandle;
 
 /** With deep imports Babylon registers no default material, so every mesh gets one explicitly (ARCHITECTURE §7). */
 export function material(

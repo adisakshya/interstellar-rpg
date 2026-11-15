@@ -82,7 +82,11 @@ const engine = new Engine(canvas, TIERS[tier].antialias, {
   canvasTabIndex: -1,
 });
 engine.setHardwareScalingLevel(scalingLevel(tier, devicePixelRatio));
-const renderer = createRenderer(engine, { tier, fade: { set: (o) => (fade.style.opacity = String(o)) } });
+const renderer = createRenderer(engine, {
+  tier,
+  assets: { baseUrl: import.meta.env.BASE_URL },
+  fade: { set: (o) => (fade.style.opacity = String(o)) },
+});
 renderer.attach(game);
 
 // Input → actions → commands. Movement is presentation only (free-roam ticks come with the frame loop, PERF-001);
