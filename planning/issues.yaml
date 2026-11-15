@@ -4,7 +4,7 @@
 #   blocked = waiting on a dependency or a creator decision (named in blockers/depends_on).
 # Requirement IDs: C-xx (brief §2), D-xx (DECISIONS.md). FR/NFR IDs are assigned by DOCS-005 and back-filled.
 # Size heuristic: S <= 0.5 day, M <= 1 day, L <= 2 days human-equivalent. Review = creator hours.
-plan_version: 0.2.0
+plan_version: 0.3.0
 repository: adisakshya/interstellar-rpg
 
 epics:
@@ -49,7 +49,7 @@ issues:
     milestone: M0
     epic: EPIC-M0
     agent: claude-code
-    status: review
+    status: done
     size: L
     review_effort: 2h
     requirements: [C-04, C-05, C-06, C-11, P-04, D-10, D-11]
@@ -80,7 +80,7 @@ issues:
     milestone: M0
     epic: EPIC-M0
     agent: claude-code
-    status: review
+    status: done
     size: M
     review_effort: 1.5h
     requirements: [C-02, C-11]
@@ -108,7 +108,7 @@ issues:
     milestone: M0
     epic: EPIC-M0
     agent: claude-code
-    status: review
+    status: done
     size: L
     review_effort: 1.5h
     requirements: [C-09, C-10, C-13, D-04]
@@ -136,7 +136,7 @@ issues:
     milestone: M0
     epic: EPIC-M0
     agent: claude-code
-    status: review
+    status: done
     size: L
     review_effort: 2h
     requirements: [C-01, C-02, C-07, C-08, D-01, D-02, D-03, P-01, P-02]
@@ -165,7 +165,7 @@ issues:
     milestone: M0
     epic: EPIC-M0
     agent: claude-code
-    status: review
+    status: done
     size: M
     review_effort: 1h
     requirements: [C-10, C-12, C-13, P-03]
@@ -191,10 +191,10 @@ issues:
     milestone: M1
     epic: EPIC-M1
     agent: claude-code  # taken over 2026-11-15: Codex had no environment for this repo
-    status: review
+    status: done
     size: M
     review_effort: 0.5h
-    requirements: [D-04, C-13]
+    requirements: [D-04, C-13, NFR-06, NFR-07]
     depends_on: []
     blockers: []
     rationale: Stack is confirmed (D-04); every implementation issue needs a working toolchain.
@@ -220,7 +220,7 @@ issues:
     milestone: M0
     epic: EPIC-M0
     agent: claude-code
-    status: review
+    status: done
     size: M
     review_effort: 1h
     requirements: [C-04, C-05, C-06]
@@ -241,10 +241,10 @@ issues:
     milestone: M0
     epic: EPIC-M0
     agent: codex
-    status: blocked
+    status: ready
     size: M
     review_effort: 1h
-    requirements: [C-09, C-10, P-03]
+    requirements: [C-09, C-10, P-03, NFR-02, NFR-03]
     depends_on: [SETUP-001]
     blockers: []  # reference phone resolved as D-06 (iPhone 16e)
     rationale: Budgets (P-03) are unmeasured targets; ADR-001 stays provisional until measured.
@@ -265,7 +265,7 @@ issues:
     milestone: M0
     epic: EPIC-M0
     agent: claude-code
-    status: blocked
+    status: review
     size: S
     review_effort: 1h
     requirements: [C-12, C-14, C-15]
@@ -287,14 +287,14 @@ issues:
     milestone: M1
     epic: EPIC-M1
     agent: codex
-    status: blocked
+    status: ready
     size: S
     review_effort: 0.5h
-    requirements: [C-13]
+    requirements: [C-13, NFR-06]
     depends_on: [SETUP-001]
     blockers: []
     rationale: Every milestone ends in a playable build the creator can open on a phone.
-    scope: [GitHub Actions Pages workflow on push to main, correct base path and asset URLs, refresh on deep link does not 404]
+    scope: [GitHub Actions Pages workflow on push to master, correct base path and asset URLs, refresh on deep link does not 404]
     exclusions: [Service worker, custom domain]
     interfaces: []
     acceptance: [Site loads at https://adisakshya.github.io/interstellar-rpg/ on desktop and mobile; no secrets in bundle]
@@ -308,10 +308,10 @@ issues:
     milestone: M1
     epic: EPIC-M1
     agent: codex
-    status: blocked
+    status: ready
     size: L
     review_effort: 1h
-    requirements: [C-04, D-04]
+    requirements: [C-04, D-04, FR-02, NFR-01]
     depends_on: [SETUP-001, DOCS-003]
     blockers: []
     rationale: Single authority for state changes; later co-op attaches here.
@@ -332,7 +332,7 @@ issues:
     status: blocked
     size: M
     review_effort: 1h
-    requirements: [C-05, C-08, C-11]
+    requirements: [C-05, C-08, C-11, FR-01, FR-07]
     depends_on: [DOM-001, DOCS-001, DOCS-002]
     blockers: []
     rationale: Core mechanic - local time on Miller costs time elsewhere.
@@ -356,7 +356,7 @@ issues:
     status: blocked
     size: M
     review_effort: 1h
-    requirements: [C-06]
+    requirements: [C-06, D-10, FR-04]
     depends_on: [TIME-001]
     blockers: []
     rationale: Uncontrolled expeditions advance to decision points and wait (C-06).
@@ -382,11 +382,11 @@ issues:
     status: blocked
     size: M
     review_effort: 0.5h
-    requirements: [C-05]
+    requirements: [C-05, FR-02, FR-03]
     depends_on: [TIME-001]
     blockers: []
     rationale: Free switching requires explicit availability (C-05).
-    scope: [Availability states from DOCS-001, SwitchCharacter command, reason codes for UI, assist hand-off flag for piloting]
+    scope: [Availability states from TIMELINES section 4, SwitchCharacter command, reason codes for UI, assist hand-off flag for piloting]
     exclusions: [HUD rendering]
     interfaces: [SwitchCharacter command, AvailabilityChanged event]
     acceptance: [Switching to unavailable character returns reason code; repeated switching changes no clocks/resources (walkthrough 2)]
@@ -403,7 +403,7 @@ issues:
     status: blocked
     size: M
     review_effort: 0.5h
-    requirements: [C-05, C-11]
+    requirements: [C-05, C-11, FR-05]
     depends_on: [TIME-001]
     blockers: []
     rationale: Player sees facts through one character that another character must not know without in-world cause.
@@ -424,7 +424,7 @@ issues:
     status: blocked
     size: M
     review_effort: 0.5h
-    requirements: [C-07, C-08]
+    requirements: [C-07, C-08, FR-06]
     depends_on: [TIME-001]
     blockers: []
     rationale: Time spent on Miller must cost Endurance resources (walkthrough 1).
@@ -445,7 +445,7 @@ issues:
     status: blocked
     size: L
     review_effort: 1h
-    requirements: [C-13, P-04]
+    requirements: [C-13, D-08, FR-08, FR-10]
     depends_on: [DOM-001, TIME-002, RES-001, TIME-004]
     blockers: []
     rationale: Saves must preserve pending decisions and clocks without duplicate effects.
@@ -466,7 +466,7 @@ issues:
     status: blocked
     size: M
     review_effort: 0.5h
-    requirements: [C-07, D-01, D-02]
+    requirements: [C-07, D-01, D-02, FR-09, FR-13]
     depends_on: [DOM-001, DOCS-004]
     blockers: []
     rationale: Authored content drives the domain via commands; schema must be validated at load.
@@ -487,7 +487,7 @@ issues:
     status: blocked
     size: L
     review_effort: 1h
-    requirements: [C-09, C-10]
+    requirements: [C-09, C-10, FR-11]
     depends_on: [SETUP-001, SPIKE-001, DOM-001]
     blockers: []
     rationale: Hybrid presentation (C-09) with placeholder art; renderer reads state, never mutates it.
@@ -508,7 +508,7 @@ issues:
     status: blocked
     size: M
     review_effort: 0.5h
-    requirements: [C-10]
+    requirements: [C-10, FR-12]
     depends_on: [SCENE-001]
     blockers: []
     rationale: Mobile must reach the same game-domain outcomes (walkthrough 6).
@@ -529,7 +529,7 @@ issues:
     status: blocked
     size: M
     review_effort: 1h
-    requirements: [C-05, C-06, C-10]
+    requirements: [C-05, C-06, C-10, FR-03, NFR-04]
     depends_on: [TIME-002, TIME-003, INPUT-001]
     blockers: []
     rationale: Players must read time consequences and why a character is unavailable.
@@ -550,7 +550,7 @@ issues:
     status: blocked
     size: M
     review_effort: 0.5h
-    requirements: [C-10, P-03]
+    requirements: [C-10, P-03, NFR-02, NFR-05]
     depends_on: [SCENE-001, SPIKE-001]
     blockers: []
     rationale: Mobile keeps gameplay with simpler graphics (C-10).
@@ -571,7 +571,7 @@ issues:
     status: blocked
     size: L
     review_effort: 2h
-    requirements: [C-05, C-06, C-07, C-08, D-01, D-02]
+    requirements: [C-05, C-06, C-07, C-08, D-01, D-02, FR-13]
     depends_on: [CONT-001, SAVE-001, UI-001, PERF-001, RES-001]
     blockers: []
     rationale: Proves the core promise end to end before deepening systems.
@@ -592,7 +592,7 @@ issues:
     status: blocked
     size: M
     review_effort: 2h
-    requirements: [C-10, C-12]
+    requirements: [C-10, C-12, NFR-01, NFR-02, NFR-03]
     depends_on: [SLICE-001, CI-001]
     blockers: [Reference devices from DOCS-005 for physical gate]
     rationale: M1 exit needs evidence, not a compiling build.
