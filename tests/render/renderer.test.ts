@@ -85,6 +85,22 @@ describe("scene choice follows the controlled character (SCENE-001)", () => {
   });
 });
 
+describe("the crew is on Miller's surface (CHAR-001)", () => {
+  it("builds Cooper, Brand and Doyle as suited figures, and disposes them with the scene", async () => {
+    engine = new NullEngine();
+    renderer = createRenderer(engine, { tier: "high", fadeMs: 0 });
+    await renderer.show(createInitialState(episode.initial));
+    const names = renderer.handle!.scene.meshes.map((m) => m.name);
+    for (const who of ["cooper", "brand", "doyle"]) expect(names).toContain(`${who}.helmet`);
+    expect(names).not.toContain("romilly.helmet"); // Romilly is on Endurance
+    for (let i = 0; i < 3; i++) renderer.render();
+    const scene = renderer.handle!.scene;
+    renderer.dispose();
+    expect(scene.isDisposed).toBe(true);
+    renderer = null;
+  });
+});
+
 describe("held movement", () => {
   it("carries over into a replacement scene, including a press made during the swap", async () => {
     engine = new NullEngine();
