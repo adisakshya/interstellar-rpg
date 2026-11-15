@@ -52,7 +52,7 @@ issues:
     status: review
     size: L
     review_effort: 2h
-    requirements: [C-04, C-05, C-06, C-11, P-04, P-05]
+    requirements: [C-04, C-05, C-06, C-11, P-04, D-10, D-11]
     depends_on: []
     blockers: []  # resolved 2026-11-14 as D-07, D-08, D-09
     rationale: Free switching without explicit causality rules allows contradictory state, knowledge leaks, and cost evasion. Every M1 domain issue implements this contract.
@@ -80,7 +80,7 @@ issues:
     milestone: M0
     epic: EPIC-M0
     agent: claude-code
-    status: ready
+    status: review
     size: M
     review_effort: 1.5h
     requirements: [C-02, C-11]
@@ -360,7 +360,7 @@ issues:
     depends_on: [TIME-001]
     blockers: []
     rationale: Uncontrolled expeditions advance to decision points and wait (C-06).
-    scope: [PendingDecision entity, soft/hard barrier policy per TIMELINES.md §3 (P-05), Interrupted and Blocked result types, early resolution of forecast decisions, resolve command]
+    scope: [PendingDecision entity, soft/hard barrier policy per TIMELINES.md §3 (D-10), Interrupted and Blocked result types, early resolution of forecast decisions, resolve command]
     exclusions: [Dialogue UI]
     interfaces: [ResolveDecision command, DecisionPending/DecisionResolved events]
     acceptance:

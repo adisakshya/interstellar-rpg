@@ -1,0 +1,57 @@
+{
+  "generated_by": "docs/physics/kerr_fixtures.py",
+  "units": "geometric (G=c=M=1) unless a field says otherwise",
+  "tolerance_relative": 1e-09,
+  "parameters": {
+    "mass_solar": 100000000.0,
+    "spin_delta_1_minus_a_over_M": 1.3326656201525393e-14,
+    "miller_r_over_M": 1.0000376363960513,
+    "miller_orbit": "prograde circular equatorial at the ISCO (marginally stable)",
+    "endurance_r_over_M": 100.0,
+    "earth_clock": "assumed equal to a distant Gargantua observer (speculative wormhole assumption)"
+  },
+  "derived": {
+    "miller_dt_dtau_vs_distant": 61362.0,
+    "endurance_dt_dtau_vs_distant": 1.0153153334493912,
+    "game_rates_dtau_dT": {
+      "_comment": "T = Endurance proper time (docs/TIMELINES.md section 1)",
+      "endurance": 1.0,
+      "miller_surface": 1.6546320743283974e-05,
+      "earth": 1.0153153334493912
+    },
+    "miller_hours_to_endurance_years": 6.894409814750342,
+    "miller_orbital_period_distant_hours": 1.7193692182788058,
+    "miller_orbital_period_own_seconds": 0.10087235073504287
+  },
+  "reference_isco_table": [
+    {
+      "spin": "0",
+      "r_isco_over_M": 6.0,
+      "dt_dtau_at_isco": 1.4142135623730951
+    },
+    {
+      "spin": "0.9",
+      "r_isco_over_M": 2.320883041761887,
+      "dt_dtau_at_isco": 2.6963775519113082
+    },
+    {
+      "spin": "0.998",
+      "r_isco_over_M": 1.2369706551751842,
+      "dt_dtau_at_isco": 10.7909428342175
+    },
+    {
+      "spin": "1-1e-6",
+      "r_isco_over_M": 1.0160954381957468,
+      "dt_dtau_at_isco": 144.62521529383233
+    },
+    {
+      "spin": "1-1e-10",
+      "r_isco_over_M": 1.0007372814165796,
+      "dt_dtau_at_isco": 3133.473830238707
+    }
+  ],
+  "test_only": {
+    "synthetic_ratio": 10,
+    "_comment": "for unit tests only; no astrophysical validity"
+  }
+}
