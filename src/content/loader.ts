@@ -98,6 +98,9 @@ export function loadEpisode(json: unknown): LoadResult {
   ep.decisions.forEach((d, i) => {
     const at = (...rest: PropertyKey[]) => ["decisions", i, ...rest];
     ref(chars, "character", d.owner, at("owner"));
+    // Only a controlled owner can resolve a decision, so an NPC owner would leave it (and a hard deadline) stuck.
+    const owner = ep.characters.find((c) => c.id === d.owner);
+    if (owner && !owner.playable) err(at("owner"), `"${d.owner}" is not playable, so it cannot own a decision`);
     if (d.triggerT === undefined && d.triggerWhen === undefined) err(at(), "needs triggerT or triggerWhen");
     if (d.triggerT !== undefined && d.deadlineT !== null && d.deadlineT < d.triggerT) {
       err(at("deadlineT"), `deadline ${d.deadlineT} is before trigger ${d.triggerT}`);
