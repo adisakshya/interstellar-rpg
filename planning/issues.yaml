@@ -631,7 +631,7 @@ issues:
     milestone: M1
     epic: EPIC-M1
     agent: claude-code
-    status: draft  # plan v0.4.0 (D-19); published to GitHub once the creator approves the revised plan
+    status: done  # creator review pending (D-24); notice wording is a legal-tone choice for the creator
     size: S
     review_effort: 0.25h
     requirements: [FR-20, D-21]
