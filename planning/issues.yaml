@@ -673,7 +673,7 @@ issues:
     milestone: M1
     epic: EPIC-M1
     agent: claude-code
-    status: draft  # plan v0.4.0 (D-19); published to GitHub once the creator approves the revised plan
+    status: in-progress  # 001a merged (story layer, subtitles, 11 scenes); 001b: descent/recorder/share-data decisions, authored labels, cockpit scenes
     size: L
     review_effort: 2h
     requirements: [FR-13, D-19, D-20]
@@ -832,6 +832,27 @@ issues:
     interfaces: []
     acceptance: ["Interval on Miller within 1% of 86 400 s x r(Miller) (test)", "Caption or visual cue for players without sound"]
     validation: "Screen recording with audio"
+
+  - key: UI-002
+    title: "Compact HUD on phones"
+    type: feature
+    area: ui
+    priority: P1
+    milestone: M1
+    epic: EPIC-M1
+    agent: claude-code
+    status: done  # GitHub #75; creator review pending (D-24)
+    size: S
+    review_effort: 0.25h
+    requirements: [NFR-04, FR-20]
+    depends_on: []
+    blockers: []
+    rationale: "The HUD covered about 60% of a phone view and hid the world the art direction is built around."
+    scope: ["Compact styles under 40 rem and on short touch screens", "Headings kept for screen readers", "Evidence screenshots"]
+    exclusions: ["Redesign of the HUD"]
+    interfaces: []
+    acceptance: ["HUD under about 40% of an iPhone portrait view at the opening state", "Decision prompts stay fully readable"]
+    validation: "docs/evidence/ui-002 screenshots"
 
   - key: QA-002
     title: "M1 evidence refresh and creator playthrough"

@@ -36,7 +36,7 @@ const CSS = `
 .irpg-sub-card{text-align:center}
 .irpg-sub-card .irpg-sub-text{display:block;font-size:1.35rem;font-weight:300;letter-spacing:.04em;padding:.5rem 0}
 .irpg-sub-ctl{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;margin-top:.5rem;font-size:.875rem}
-.irpg-sub-ctl button{font:inherit;color:inherit;min-height:2.25rem;padding:.25rem .75rem;cursor:pointer;touch-action:manipulation;
+.irpg-sub-ctl button{font:inherit;color:inherit;min-height:2.75rem;padding:.25rem .75rem;cursor:pointer;touch-action:manipulation;
   background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.5);border-radius:.375rem}
 .irpg-sub-ctl button:focus-visible,.irpg-sub-ctl input:focus-visible{outline:3px solid #ffd166;outline-offset:2px}
 .irpg-sub-ctl label{display:flex;align-items:center;gap:.375rem;margin-left:auto}

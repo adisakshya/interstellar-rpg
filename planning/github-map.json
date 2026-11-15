@@ -201,6 +201,10 @@
     "QA-002": {
       "number": 68,
       "url": "https://github.com/adisakshya/interstellar-rpg/issues/68"
+    },
+    "UI-002": {
+      "number": 75,
+      "url": "https://github.com/adisakshya/interstellar-rpg/issues/75"
     }
   },
   "hash_scope": "sha256 of the issue body as published, excluding the trailing attribution footer, trailing whitespace stripped"
