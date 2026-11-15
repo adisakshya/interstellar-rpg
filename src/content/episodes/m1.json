@@ -326,6 +326,276 @@
       "before": ["decision.docking"]
     }
   ],
+  "story": [
+    {
+      "id": "story.arrival",
+      "when": {
+        "start": true
+      },
+      "lines": [
+        {
+          "speaker": "card",
+          "text": "Miller's planet"
+        },
+        {
+          "speaker": "narrator",
+          "text": "The planet circles Gargantua, a spinning black hole. Down here an hour passes for every seven years aboard Endurance."
+        },
+        {
+          "speaker": "narrator",
+          "text": "Romilly waits in orbit. Every minute you spend on this surface is weeks of his life."
+        },
+        {
+          "speaker": "char.cooper",
+          "text": "Knee-deep water, and a sky that is mostly one enormous black hole. Fine. We keep this short."
+        },
+        {
+          "speaker": "char.brand",
+          "text": "The beacon is a short walk ahead. If it is still transmitting, this world may be habitable."
+        },
+        {
+          "speaker": "char.doyle",
+          "text": "The gravity is heavy. The suit fights every step, so walk, don't run."
+        },
+        {
+          "speaker": "narrator",
+          "text": "Move with WASD or the arrow keys, or the touch pad. Press E or the Act button when something can be done."
+        }
+      ]
+    },
+    {
+      "id": "story.beacon_read",
+      "when": {
+        "knows": [
+          {
+            "by": "char.cooper",
+            "fact": "fact.beacon_local_age"
+          }
+        ]
+      },
+      "lines": [
+        {
+          "speaker": "char.cooper",
+          "text": "It is live. And by this planet's own clock, it has only been on for a few hours."
+        },
+        {
+          "speaker": "char.brand",
+          "text": "Hours here, years up there. A signal this young tells us the planet looked good a moment ago, not that it still does."
+        },
+        {
+          "speaker": "char.doyle",
+          "text": "So the beacon proves very little. We should look around before we believe it."
+        },
+        {
+          "speaker": "char.cooper",
+          "text": "Agreed. Search the surface."
+        }
+      ]
+    },
+    {
+      "id": "story.surface_searched",
+      "when": {
+        "knows": [
+          {
+            "by": "char.cooper",
+            "fact": "fact.surface_searched"
+          }
+        ]
+      },
+      "lines": [
+        {
+          "speaker": "char.brand",
+          "text": "Debris in every direction, and the wreck of the first lander is out there, half under the water."
+        },
+        {
+          "speaker": "char.cooper",
+          "text": "Nothing living. Nothing standing."
+        }
+      ]
+    },
+    {
+      "id": "story.wave_warning",
+      "when": {
+        "decision": [
+          {
+            "id": "decision.recall",
+            "status": "pending"
+          }
+        ]
+      },
+      "lines": [
+        {
+          "speaker": "char.doyle",
+          "text": "Cooper, that ridge on the horizon is moving."
+        },
+        {
+          "speaker": "char.brand",
+          "text": "It is not a ridge. It is water, and it is coming this way."
+        },
+        {
+          "speaker": "char.cooper",
+          "text": "How long do we have?"
+        },
+        {
+          "speaker": "char.brand",
+          "text": "Minutes. We can run for the Ranger now, or use the time to pull the recorder from that wreck. The engines will be wet if we wait."
+        },
+        {
+          "speaker": "narrator",
+          "text": "Time is held until you choose."
+        }
+      ]
+    },
+    {
+      "id": "story.ran",
+      "when": {
+        "decision": [
+          {
+            "id": "decision.recall",
+            "status": "resolved",
+            "option": "leave_now"
+          }
+        ]
+      },
+      "lines": [
+        {
+          "speaker": "char.cooper",
+          "text": "Back to the Ranger, both of you. Now."
+        },
+        {
+          "speaker": "char.doyle",
+          "text": "Strapped in. Go, go."
+        },
+        {
+          "speaker": "narrator",
+          "text": "When you are ready, lift off."
+        }
+      ]
+    },
+    {
+      "id": "story.stayed",
+      "when": {
+        "decision": [
+          {
+            "id": "decision.recall",
+            "status": "resolved",
+            "option": "stay_longer"
+          }
+        ]
+      },
+      "lines": [
+        {
+          "speaker": "char.cooper",
+          "text": "Brand, the recorder. Doyle, get the Ranger ready."
+        },
+        {
+          "speaker": "char.brand",
+          "text": "I have it. Move, move."
+        },
+        {
+          "speaker": "narrator",
+          "text": "When you are ready, lift off."
+        }
+      ]
+    },
+    {
+      "id": "story.doyle_lost",
+      "when": {
+        "dead": ["char.doyle"]
+      },
+      "lines": [
+        {
+          "speaker": "char.brand",
+          "text": "Doyle? Doyle, answer me."
+        },
+        {
+          "speaker": "narrator",
+          "text": "The wave took Doyle in the dark. It did not slow."
+        },
+        {
+          "speaker": "char.cooper",
+          "text": "Lift off. Everyone who can still go."
+        }
+      ]
+    },
+    {
+      "id": "story.romilly_years",
+      "when": {
+        "controlled": "char.romilly"
+      },
+      "lines": [
+        {
+          "speaker": "card",
+          "text": "Romilly. {tau:char.romilly} since Cooper left."
+        },
+        {
+          "speaker": "char.romilly",
+          "text": "Another entry in the log, another line on the wall. Nobody has called."
+        },
+        {
+          "speaker": "char.romilly",
+          "text": "I will keep the lights on and keep counting."
+        }
+      ]
+    },
+    {
+      "id": "story.supplies_low",
+      "when": {
+        "decision": [
+          {
+            "id": "decision.hibernate",
+            "status": "pending"
+          }
+        ]
+      },
+      "lines": [
+        {
+          "speaker": "char.romilly",
+          "text": "Supplies are down to a third. At this rate I will not see the end of the wait awake."
+        },
+        {
+          "speaker": "narrator",
+          "text": "Hibernating stops his ageing and almost all use of supplies. Only a docking can wake him."
+        }
+      ]
+    },
+    {
+      "id": "story.hibernated",
+      "when": {
+        "decision": [
+          {
+            "id": "decision.hibernate",
+            "status": "resolved",
+            "option": "hibernate"
+          }
+        ]
+      },
+      "lines": [
+        {
+          "speaker": "char.romilly",
+          "text": "Timer set. Wake me when someone knocks."
+        }
+      ]
+    },
+    {
+      "id": "story.awake",
+      "when": {
+        "decision": [
+          {
+            "id": "decision.hibernate",
+            "status": "resolved",
+            "option": "stay_awake"
+          }
+        ]
+      },
+      "lines": [
+        {
+          "speaker": "char.romilly",
+          "text": "Awake, then. Every day I stay up is a day of rations, and I know it."
+        }
+      ]
+    }
+  ],
   "ending": {
     "fact": "fact.lifted_off",
     "knownBy": "char.cooper"

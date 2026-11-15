@@ -16,6 +16,8 @@ export interface FreeRoamOptions {
   readonly ownerOf: (id: DecisionId) => CharacterId | undefined;
   /** True once the episode is over, so time stops for good. */
   readonly halted?: () => boolean;
+  /** True while something the player is reading owns the screen (story subtitles), so time waits for them. */
+  readonly holding?: () => boolean;
   /** Proper seconds spent per real second (content parameter, default 1.0; D-11). */
   readonly timeScale?: number;
 }
@@ -56,7 +58,7 @@ export function createFreeRoam(options: FreeRoamOptions): FreeRoam {
   };
 
   const runnable = (): boolean => {
-    if (paused || options.halted?.() === true) return false;
+    if (paused || options.halted?.() === true || options.holding?.() === true) return false;
     const state = options.getState();
     const me = state.characters[state.controlled];
     if (!me || me.unavailable !== null) return false;

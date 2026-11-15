@@ -10,6 +10,8 @@ export interface HudHandlers {
 
 export interface Hud {
   update(model: HudModel): void;
+  /** A spot at the top of the HUD column where narrow screens put the subtitles, so they never cover a decision. */
+  readonly slot: HTMLElement;
   /** Show "Paused" while the game is paused by the UI (hidden tab, lost graphics context). Not a physical time stop. */
   setPaused(paused: boolean): void;
   dispose(): void;
@@ -110,7 +112,8 @@ export function mountHud(root: HTMLElement, handlers: HudHandlers): Hud {
   const status = make(doc, "div", { class: "irpg-sr", role: "status", "aria-live": "polite" });
 
   const column = make(doc, "div", { class: "irpg-scroll" });
-  column.append(timePanel, actionPanel, roster, prompts, notes);
+  const slot = make(doc, "div", { hidden: "" });
+  column.append(slot, timePanel, actionPanel, roster, prompts, notes);
   wrap.append(column, status);
   root.append(style, wrap);
 
@@ -207,6 +210,7 @@ export function mountHud(root: HTMLElement, handlers: HudHandlers): Hud {
   }
 
   return {
+    slot,
     setPaused(paused) {
       if (pausedNote.hidden === !paused) return;
       pausedNote.hidden = !paused;

@@ -48,3 +48,15 @@ export function labelFromId(id: string): string {
     .trim();
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
+
+/** A long span in the words a title card uses: "23 years 4 months", "5 months", "9 days". */
+export function livedPhrase(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds < 0) return "an unknown time";
+  const plural = (n: number, unit: string) => `${n} ${unit}${n === 1 ? "" : "s"}`;
+  const months = Math.floor(seconds / (YEAR / 12));
+  const years = Math.floor(months / 12);
+  const rest = months - years * 12;
+  if (years > 0) return rest === 0 ? plural(years, "year") : `${plural(years, "year")} ${plural(rest, "month")}`;
+  if (months > 0) return plural(months, "month");
+  return seconds >= DAY ? plural(Math.floor(seconds / DAY), "day") : "less than a day";
+}

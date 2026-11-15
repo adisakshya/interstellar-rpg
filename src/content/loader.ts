@@ -28,6 +28,8 @@ export interface LoadedEpisode {
   readonly interactions: EpisodeFile["interactions"];
   readonly ending: EpisodeFile["ending"];
   readonly outcomeNotes: EpisodeFile["outcomeNotes"];
+  /** Subtitle text, each entry shown once when its condition first holds (STORY-001). */
+  readonly story: EpisodeFile["story"];
   /** Fact id → player-facing text, for the outcome screen. */
   readonly facts: Readonly<Record<string, string>>;
 }
@@ -144,6 +146,28 @@ export function loadEpisode(json: unknown): LoadResult {
         err(at("whenOption"), `decision "${d.id}" has no option "${h.whenOption}"`);
     }
     h.effects.forEach((e, j) => ref(chars, "character", e.characterId, at("effects", j, "characterId")));
+  });
+  ids(ep.story, "story", "story entry");
+  ep.story.forEach((x, i) => {
+    const at = (...rest: PropertyKey[]) => ["story", i, ...rest];
+    if (x.when.controlled !== undefined) ref(chars, "character", x.when.controlled, at("when", "controlled"));
+    x.when.knows?.forEach((k, j) => {
+      ref(chars, "character", k.by, at("when", "knows", j, "by"));
+      ref(facts, "fact", k.fact, at("when", "knows", j, "fact"));
+    });
+    x.when.dead?.forEach((c, j) => ref(chars, "character", c, at("when", "dead", j)));
+    x.when.decision?.forEach((d, j) => {
+      ref(decs, "decision", d.id, at("when", "decision", j, "id"));
+      const def = ep.decisions.find((y) => y.id === d.id);
+      if (d.option !== undefined && def && !Object.hasOwn(def.options, d.option))
+        err(at("when", "decision", j, "option"), `decision "${d.id}" has no option "${d.option}"`);
+      if (d.option !== undefined && d.status === "pending")
+        err(at("when", "decision", j, "option"), "an option only exists once the decision is resolved");
+    });
+    x.lines.forEach((l, j) => {
+      if (l.speaker.startsWith("char.")) ref(chars, "character", l.speaker, at("lines", j, "speaker"));
+      for (const m of l.text.matchAll(/\{tau:([^}]*)\}/g)) ref(chars, "character", m[1] ?? "", at("lines", j, "text"));
+    });
   });
   ref(facts, "fact", ep.ending.fact, ["ending", "fact"]);
   ref(chars, "character", ep.ending.knownBy, ["ending", "knownBy"]);
@@ -322,6 +346,7 @@ export function loadEpisode(json: unknown): LoadResult {
       interactions: ep.interactions,
       ending: ep.ending,
       outcomeNotes: ep.outcomeNotes,
+      story: ep.story,
       facts: Object.fromEntries(ep.facts.map((f) => [f.id, f.text])),
     },
   };
