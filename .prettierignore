@@ -5,3 +5,4 @@ package-lock.json
 docs
 planning
 *.md
+.spike-out
