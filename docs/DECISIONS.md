@@ -32,12 +32,13 @@ C-01 – C-15 are confirmed in [PROJECT_BRIEF.md §2](PROJECT_BRIEF.md). Do not 
 | P-03 | Budgets: 30 FPS phone / 60 FPS desktop; ≤15 MB initial, ≤75 MB episode (compressed). | Creator | DOCS-005 |
 | P-04 | Local versioned saves with export/import (checkpoint policy now confirmed as D-08). | Creator | SAVE-001 |
 | P-07 | Endurance parks at `r = 100 M`, so Romilly's clock is within 1.5% of Earth's (rate 1.0153). A closer orbit makes Ranger trips shorter but splits Romilly's and Earth's clocks further (18% at `10 M`). | Creator | DOCS-002 review |
+| P-12 | Reference desktop: an Apple-silicon Mac (M1 or newer) or a Windows laptop with integrated graphics from 2021 or later; browsers: latest stable Chrome and Safari (Mac) or Chrome and Edge (Windows), with Firefox as a smoke test. See [VALIDATION.md §1](VALIDATION.md). | Creator | M1 performance measurement |
 
 ## Open
 
 | Decision | Owner | Blocks |
 | --- | --- | --- |
-| Reference desktop and browser versions; Android device (if any) | Creator | DOCS-005, performance gates |
+| Android device for testing (if any); none means no Android claim | Creator | M3 release claims |
 | Co-op time-driver rule (who advances shared time) — see [TIMELINES.md W7](TIMELINES.md) | Creator | DOCS-006, M5 |
 | Co-op player count, authority/host, disconnect rules | Creator | DOCS-006, M5 |
 | Hosting beyond Pages for co-op and cost ceiling | Creator | M5 |
