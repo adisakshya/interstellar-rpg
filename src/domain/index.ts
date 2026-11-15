@@ -1,8 +1,8 @@
 // Game-domain public API. Pure TypeScript: no Babylon, DOM, Date or Math.random (ARCHITECTURE §2).
 // See docs/ARCHITECTURE.md §3 and docs/TIMELINES.md.
 
-/** Version of the domain state schema; bump with a migration (ADR-003). */
-export const SCHEMA_VERSION = 1;
+export { createInitialState, SCHEMA_VERSION } from "./initial";
+export type { InitialSpec } from "./initial";
 
 export * from "./ids";
 export * from "./state";

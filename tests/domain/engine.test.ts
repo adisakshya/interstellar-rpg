@@ -14,7 +14,7 @@ import {
 const cooper = asId("char", "char.cooper");
 const romilly = asId("char", "char.romilly");
 const brand = asId("char", "char.brand");
-const surface = asId("loc", "loc.miller.surface");
+const surface = asId("loc", "loc.miller_surface");
 const orbit = asId("loc", "loc.endurance");
 const recorder = asId("decision", "decision.recorder");
 

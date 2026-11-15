@@ -129,11 +129,11 @@ describe("rejections commit nothing (INV-05)", () => {
       ...base,
       characters: {
         ...base.characters,
-        [murph]: { id: murph, tau: 0, location: LOCATIONS.earth, unavailable: "NOT_INTRODUCED" },
+        [murph]: { id: murph, tau: 0, location: LOCATIONS.earthFarm, unavailable: "NOT_INTRODUCED" },
       },
     };
     const out = apply(s, advance("r8", 1), handlers);
-    expect(out.result).toEqual({ kind: "Rejected", code: "INVALID", detail: "no rate for loc.earth" });
+    expect(out.result).toEqual({ kind: "Rejected", code: "INVALID", detail: "no rate for loc.earth_farm" });
     expect(out.state).toBe(s);
   });
 
@@ -204,7 +204,7 @@ describe("physics fixture rates (PHYSICS §4)", () => {
       ...base,
       characters: {
         ...base.characters,
-        [murph]: { id: murph, tau: 0, location: LOCATIONS.earth, unavailable: "NOT_INTRODUCED" },
+        [murph]: { id: murph, tau: 0, location: LOCATIONS.earthFarm, unavailable: "NOT_INTRODUCED" },
       },
     };
     const out = apply(s, advance("e1", 1000), handlers).state;
