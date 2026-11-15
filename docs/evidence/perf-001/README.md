@@ -1,6 +1,6 @@
 # PERF-001 evidence
 
-Headless Chromium (software GL), production build, `perfrun.cjs` (run: `node perfrun.cjs dist <out-dir>`); output in `run.json`.
+Headless Chromium (software GL), production build, `perfrun.mjs` (run: `node perfrun.cjs dist <out-dir>`); output in `run.json`.
 
 | Acceptance | Result |
 | --- | --- |

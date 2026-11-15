@@ -1,5 +1,7 @@
-const { chromium } = require("playwright");
-const http = require("http"), fs = require("fs"), path = require("path");
+import { chromium } from "playwright";
+import http from "node:http";
+import fs from "node:fs";
+import path from "node:path";
 const root = process.argv[2];
 const types = { ".js": "text/javascript", ".css": "text/css", ".html": "text/html", ".json": "application/json" };
 const srv = http.createServer((q, r) => {
@@ -33,7 +35,6 @@ const srv = http.createServer((q, r) => {
   const c2 = await T(); await sleep(1500); const c3 = await T();
   out.contextRestored = { current: await pg.evaluate(() => window.__irpg.renderer.current), newScene: (await pg.evaluate(() => window.__irpg.renderer.handle.scene.uid)) !== scene0, advancing: c3 > c2, pausedHidden: await pg.evaluate(() => document.querySelector(".irpg-paused").hidden) };
   await pg.screenshot({ path: process.argv[3] + "/after-restore.png" });
-  const pixels = await pg.evaluate(() => { const c = document.createElement("canvas"); return null; });
   // reload resumes from autosave
   await setVis("hidden"); await sleep(300);
   const savedT = await T();
