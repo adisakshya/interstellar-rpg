@@ -220,12 +220,12 @@ issues:
     milestone: M0
     epic: EPIC-M0
     agent: claude-code
-    status: blocked
+    status: review
     size: M
     review_effort: 1h
     requirements: [C-04, C-05, C-06]
     depends_on: [DOCS-001, DOCS-003]
-    blockers: [Creator decides co-op player count and host/authority preference]
+    blockers: []  # proposed as P-08..P-11; creator approval due before M5
     rationale: Single-player pause rules do not automatically become fair multiplayer rules; constraints must enter M0 even though networking is M5.
     scope: [Session authority, character ownership, simultaneous inputs, shared choices, waiting at barriers, join/leave, reconnect, save ownership, walkthrough 7]
     exclusions: [Networking code, infrastructure selection]

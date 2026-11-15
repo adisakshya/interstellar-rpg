@@ -33,14 +33,16 @@ C-01 – C-15 are confirmed in [PROJECT_BRIEF.md §2](PROJECT_BRIEF.md). Do not 
 | P-04 | Local versioned saves with export/import (checkpoint policy now confirmed as D-08). | Creator | SAVE-001 |
 | P-07 | Endurance parks at `r = 100 M`, so Romilly's clock is within 1.5% of Earth's (rate 1.0153). A closer orbit makes Ranger trips shorter but splits Romilly's and Earth's clocks further (18% at `10 M`). | Creator | DOCS-002 review |
 | P-12 | Reference desktop: an Apple-silicon Mac (M1 or newer) or a Windows laptop with integrated graphics from 2021 or later; browsers: latest stable Chrome and Safari (Mac) or Chrome and Edge (Windows), with Firefox as a smoke test. See [VALIDATION.md §1](VALIDATION.md). | Creator | M1 performance measurement |
+| P-08 | First co-op release supports **2 players**, each owning one playable character. See [COOP_POLICY.md §2](COOP_POLICY.md). | Creator | M5 networking spike |
+| P-09 | Co-op authority runs in one player's browser (host), peer-to-peer through a signalling relay; the host owns the save. | Creator | M5 networking spike |
+| P-10 | Co-op uses **time-driver turns**: only the driver's actions move the shared clock. | Creator | M5 |
+| P-11 | On disconnect, the absent player's character holds and nothing is decided for them; their hard decision pauses the clock for 5 minutes, then the host may take it over. | Creator | M5 |
 
 ## Open
 
 | Decision | Owner | Blocks |
 | --- | --- | --- |
 | Android device for testing (if any); none means no Android claim | Creator | M3 release claims |
-| Co-op time-driver rule (who advances shared time) — see [TIMELINES.md W7](TIMELINES.md) | Creator | DOCS-006, M5 |
-| Co-op player count, authority/host, disconnect rules | Creator | DOCS-006, M5 |
 | Hosting beyond Pages for co-op and cost ceiling | Creator | M5 |
 | Audio/voiceover level, localisation scope | Creator | M2 content |
 
