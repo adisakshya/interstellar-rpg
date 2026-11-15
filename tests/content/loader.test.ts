@@ -46,6 +46,28 @@ describe("placeholder M1 episode", () => {
     expect(r.state.T / (365.25 * 86400)).toBeCloseTo(1.15, 2); // GDD B4: 10 min ≈ 1.15 yr for Romilly
   });
 
+  it("lets Romilly hibernate and wakes him at docking (TIMELINES §4 wake fallback)", () => {
+    const h = createHandlers(ep.tables);
+    let s = createInitialState(ep.initial);
+    s = apply(s, { kind: "SwitchCharacter", commandId: "s1", targetId: "char.romilly" as never }, h).state;
+    s = apply(
+      s,
+      { kind: "ResolveDecision", commandId: "r1", decisionId: "decision.hibernate" as never, optionId: "hibernate" },
+      h,
+    ).state;
+    expect(s.characters["char.romilly" as never]!.unavailable).toBe("HIBERNATING");
+    s = apply(s, { kind: "SwitchCharacter", commandId: "s2", targetId: "char.cooper" as never }, h).state;
+    // Play on until docking becomes pending (it triggers at the recall deadline, which holds T there).
+    s = apply(s, { kind: "FreeRoamTick", commandId: "t1", actorId: "char.cooper" as never, dTau: 3600 }, h).state;
+    expect(s.decisions["decision.docking" as never]?.status).toBe("pending");
+    s = apply(
+      s,
+      { kind: "ResolveDecision", commandId: "r2", decisionId: "decision.docking" as never, optionId: "dock" },
+      h,
+    ).state;
+    expect(s.characters["char.romilly" as never]!.unavailable).toBeNull();
+  });
+
   it("references only ids defined in the file", () => {
     const defined = new Set<string>([
       ...m1.characters.map((c) => c.id),
@@ -110,6 +132,26 @@ describe("invalid content fails with a precise error", () => {
     ["a wrong id prefix", (e) => (e.characters[0].id = "cooper"), "characters[0].id:"],
     ["an unknown field", (e) => (e.facts[0].colour = "red"), "facts[0]:"],
     ["a negative rate", (e) => (e.resources[0].rate = -1), "resources[0].rate:"],
+    [
+      "an inherited name as a rate key",
+      (e) => (e.locations[0].rate = "constructor"),
+      'locations[0].rate: unknown physics rate "constructor"',
+    ],
+    [
+      "an NPC that starts available",
+      (e) => (e.characters[2].availability = null),
+      'characters[2].availability: "char.brand" is not playable',
+    ],
+    [
+      "an effect that makes an NPC available",
+      (e) => e.decisions[0].options.direct.push({ kind: "SetAvailability", characterId: "char.brand", reason: null }),
+      'decisions[0].options.direct[0].reason: "char.brand" is not playable',
+    ],
+    [
+      "an incapacitation with no wake fallback",
+      (e) => (e.decisions[5].options.dock = []),
+      'decisions[4].options.hibernate[0].reason: HIBERNATING for "char.romilly" has no wake fallback',
+    ],
   ])("%s", (_name, mutate, expected) => {
     const e = clone();
     mutate(e);

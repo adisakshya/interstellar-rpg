@@ -4,8 +4,20 @@
   "seed": 1,
   "controlled": "char.cooper",
   "characters": [
-    { "id": "char.cooper", "name": "Cooper", "playable": true, "location": "loc.miller_surface", "availability": null },
-    { "id": "char.romilly", "name": "Romilly", "playable": true, "location": "loc.endurance", "availability": null },
+    {
+      "id": "char.cooper",
+      "name": "Cooper",
+      "playable": true,
+      "location": "loc.miller_surface",
+      "availability": null
+    },
+    {
+      "id": "char.romilly",
+      "name": "Romilly",
+      "playable": true,
+      "location": "loc.endurance",
+      "availability": null
+    },
     {
       "id": "char.brand",
       "name": "Brand",
@@ -29,38 +41,109 @@
     }
   ],
   "locations": [
-    { "id": "loc.endurance", "name": "Endurance", "rate": "endurance" },
-    { "id": "loc.ranger", "name": "Ranger", "rate": null },
-    { "id": "loc.miller_surface", "name": "Miller's planet", "rate": "miller_surface" },
-    { "id": "loc.miller_wreck", "name": "Miller's wreck", "rate": "miller_surface" },
-    { "id": "loc.earth_farm", "name": "The farm, Earth", "rate": "earth" }
+    {
+      "id": "loc.endurance",
+      "name": "Endurance",
+      "rate": "endurance"
+    },
+    {
+      "id": "loc.ranger",
+      "name": "Ranger",
+      "rate": null
+    },
+    {
+      "id": "loc.miller_surface",
+      "name": "Miller's planet",
+      "rate": "miller_surface"
+    },
+    {
+      "id": "loc.miller_wreck",
+      "name": "Miller's wreck",
+      "rate": "miller_surface"
+    },
+    {
+      "id": "loc.earth_farm",
+      "name": "The farm, Earth",
+      "rate": "earth"
+    }
   ],
   "facts": [
-    { "id": "fact.beacon_active", "text": "Miller's beacon is still transmitting." },
-    { "id": "fact.beacon_local_age", "text": "By Miller's own clock the beacon has only been on for hours." },
-    { "id": "fact.romilly_tidal_analysis", "text": "Tidally locked, shallow ocean, periodic giant waves." },
-    { "id": "fact.miller_died_on_landing", "text": "The flight recorder shows Miller died on landing." },
-    { "id": "fact.elapsed_years_on_return", "text": "How many years Romilly waited." }
+    {
+      "id": "fact.beacon_active",
+      "text": "Miller's beacon is still transmitting."
+    },
+    {
+      "id": "fact.beacon_local_age",
+      "text": "By Miller's own clock the beacon has only been on for hours."
+    },
+    {
+      "id": "fact.romilly_tidal_analysis",
+      "text": "Tidally locked, shallow ocean, periodic giant waves."
+    },
+    {
+      "id": "fact.miller_died_on_landing",
+      "text": "The flight recorder shows Miller died on landing."
+    },
+    {
+      "id": "fact.elapsed_years_on_return",
+      "text": "How many years Romilly waited."
+    }
   ],
   "activities": [
-    { "id": "scan.beacon", "atomic": false, "learns": ["fact.beacon_active", "fact.beacon_local_age"] },
-    { "id": "search.wreck", "atomic": false, "learns": ["fact.miller_died_on_landing"] },
-    { "id": "analysis.tidal", "atomic": false, "learns": ["fact.romilly_tidal_analysis"] },
-    { "id": "walk", "atomic": false }
+    {
+      "id": "scan.beacon",
+      "atomic": false,
+      "learns": ["fact.beacon_active", "fact.beacon_local_age"]
+    },
+    {
+      "id": "search.wreck",
+      "atomic": false,
+      "learns": ["fact.miller_died_on_landing"]
+    },
+    {
+      "id": "analysis.tidal",
+      "atomic": false,
+      "learns": ["fact.romilly_tidal_analysis"]
+    },
+    {
+      "id": "walk",
+      "atomic": false
+    }
   ],
   "links": [
-    { "a": "loc.miller_surface", "b": "loc.endurance", "latency": 0, "up": true },
-    { "a": "loc.miller_wreck", "b": "loc.endurance", "latency": 0, "up": true }
+    {
+      "a": "loc.miller_surface",
+      "b": "loc.endurance",
+      "latency": 0,
+      "up": true
+    },
+    {
+      "a": "loc.miller_wreck",
+      "b": "loc.endurance",
+      "latency": 0,
+      "up": true
+    }
   ],
   "resources": [
     {
       "id": "res.endurance_supplies",
-      "owner": { "character": "char.romilly" },
+      "owner": {
+        "character": "char.romilly"
+      },
       "rate": 3.168808781402895e-8,
-      "rateWhen": { "HIBERNATING": 3.168808781402895e-10 },
+      "rateWhen": {
+        "HIBERNATING": 3.168808781402895e-10
+      },
       "initial": 30
     },
-    { "id": "res.ranger_fuel", "owner": { "location": "loc.ranger" }, "rate": 0, "initial": 100 }
+    {
+      "id": "res.ranger_fuel",
+      "owner": {
+        "location": "loc.ranger"
+      },
+      "rate": 0,
+      "initial": 100
+    }
   ],
   "decisions": [
     {
@@ -69,7 +152,10 @@
       "triggerT": 0,
       "deadlineT": null,
       "checkpoint": false,
-      "options": { "direct": [], "efficient": [] },
+      "options": {
+        "direct": [],
+        "efficient": []
+      },
       "note": "Routes and fuel arrive with transit (later issue); placeholder choice only."
     },
     {
@@ -78,7 +164,10 @@
       "triggerT": 58018941,
       "deadlineT": null,
       "checkpoint": true,
-      "options": { "search": [], "leave": [] },
+      "options": {
+        "search": [],
+        "leave": []
+      },
       "note": "After about 16 min of Cooper's time on the surface (placeholder)."
     },
     {
@@ -87,7 +176,10 @@
       "triggerT": 58018941,
       "deadlineT": null,
       "checkpoint": false,
-      "options": { "send": [], "keep": [] },
+      "options": {
+        "send": [],
+        "keep": []
+      },
       "note": "Sending is a SendMessage command; this records the choice."
     },
     {
@@ -96,21 +188,53 @@
       "triggerT": 130542616,
       "deadlineT": 166804454,
       "checkpoint": true,
-      "options": { "run_now": [], "finish_search": [] },
+      "options": {
+        "run_now": [],
+        "finish_search": []
+      },
       "note": "Wave warning at about 36 min of Cooper's time; 10 min to decide (placeholder, GDD §5)."
     },
     {
       "id": "decision.hibernate",
       "owner": "char.romilly",
-      "triggerWhen": { "resourceId": "res.endurance_supplies", "atOrBelow": 10 },
+      "triggerWhen": {
+        "resourceId": "res.endurance_supplies",
+        "atOrBelow": 10
+      },
       "deadlineT": null,
-      "deadlineWhen": { "resourceId": "res.endurance_supplies", "atOrBelow": 5 },
+      "deadlineWhen": {
+        "resourceId": "res.endurance_supplies",
+        "atOrBelow": 5
+      },
       "checkpoint": true,
       "options": {
-        "hibernate": [{ "kind": "SetAvailability", "characterId": "char.romilly", "reason": "HIBERNATING" }],
+        "hibernate": [
+          {
+            "kind": "SetAvailability",
+            "characterId": "char.romilly",
+            "reason": "HIBERNATING"
+          }
+        ],
         "stay_awake": []
       },
       "note": "TIMELINES §11 D_hib."
+    },
+    {
+      "id": "decision.docking",
+      "owner": "char.cooper",
+      "triggerT": 166804454,
+      "deadlineT": null,
+      "checkpoint": false,
+      "options": {
+        "dock": [
+          {
+            "kind": "SetAvailability",
+            "characterId": "char.romilly",
+            "reason": null
+          }
+        ]
+      },
+      "note": "B10 ascent and docking (placeholder until transit routes exist): docking wakes Romilly from hibernation."
     }
   ],
   "beats": [
@@ -121,8 +245,18 @@
       "decision": "decision.descent",
       "requires": ["char.cooper"]
     },
-    { "id": "beat.b3", "title": "Walk to the beacon", "controlling": "char.cooper", "requires": ["char.cooper"] },
-    { "id": "beat.b4", "title": "Scan the beacon", "controlling": "char.cooper", "requires": ["char.cooper"] },
+    {
+      "id": "beat.b3",
+      "title": "Walk to the beacon",
+      "controlling": "char.cooper",
+      "requires": ["char.cooper"]
+    },
+    {
+      "id": "beat.b4",
+      "title": "Scan the beacon",
+      "controlling": "char.cooper",
+      "requires": ["char.cooper"]
+    },
     {
       "id": "beat.b5",
       "title": "The wreck and the recorder",
@@ -144,7 +278,24 @@
       "decision": "decision.recall",
       "requires": ["char.cooper"]
     },
-    { "id": "beat.b8", "title": "Romilly, years later", "controlling": "char.romilly", "requires": ["char.romilly"] },
-    { "id": "beat.b12", "title": "Outcome", "controlling": null, "requires": [] }
+    {
+      "id": "beat.b8",
+      "title": "Romilly, years later",
+      "controlling": "char.romilly",
+      "requires": ["char.romilly"]
+    },
+    {
+      "id": "beat.b10",
+      "title": "Ascent and docking",
+      "controlling": "char.cooper",
+      "decision": "decision.docking",
+      "requires": ["char.cooper"]
+    },
+    {
+      "id": "beat.b12",
+      "title": "Outcome",
+      "controlling": null,
+      "requires": []
+    }
   ]
 }
