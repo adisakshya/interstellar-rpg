@@ -44,8 +44,8 @@ export interface CheckpointSnapshot {
 /** What the domain can predict about a decision without committing anything (TIMELINES §3). */
 export interface DecisionForecast {
   readonly decisionId: DecisionId;
-  /** Reference time at which the decision becomes pending if play continues as now. */
-  readonly triggerT: number;
+  /** Reference time at which the decision becomes pending if play continues as now; null if it never would. */
+  readonly triggerT: number | null;
   /** Hard deadline on T, or null for a soft decision. */
   readonly deadlineT: number | null;
 }

@@ -9,15 +9,38 @@ export type DecisionEffect =
   | { readonly kind: "SetAvailability"; readonly characterId: CharacterId; readonly reason: UnavailableReason | null }
   | { readonly kind: "LearnFact"; readonly characterId: CharacterId; readonly factId: FactId };
 
+/** "When resource X is at or below this amount". */
+export interface ResourceLevel {
+  readonly resourceId: string;
+  readonly atOrBelow: number;
+}
+
+/**
+ * A resource and its owner (TIMELINES §7). Consumption is per second of the owner's proper time: a character's
+ * τ, or the proper time at a location (a ship parked there). Rates are piecewise constant, so depletion is exact.
+ */
+export interface ResourceDef {
+  readonly id: string;
+  readonly owner: { readonly character: CharacterId } | { readonly location: LocationId };
+  /** Units used per second of the owner's proper time. */
+  readonly rate: number;
+  /** Rate while a character owner is unavailable for a given reason (e.g. HIBERNATING); DEAD defaults to 0. */
+  readonly rateWhen?: Partial<Record<UnavailableReason, number>>;
+}
+
 /** A decision as content defines it (TIMELINES §3). */
 export interface DecisionDef {
   readonly id: DecisionId;
   /** The character who must be controlled to resolve it. */
   readonly owner: CharacterId;
   /** Reference time at which it becomes pending. */
-  readonly triggerT: number;
-  /** Hard deadline on T (≥ triggerT), or null for a soft decision. */
+  readonly triggerT?: number;
+  /** Or: becomes pending when a resource falls to this level, whichever comes first (TIMELINES §11 D_hib). */
+  readonly triggerWhen?: ResourceLevel;
+  /** Hard deadline on T (≥ trigger), or null for a soft decision. */
   readonly deadlineT: number | null;
+  /** Or: a hard deadline when a resource falls to this level, whichever comes first. */
+  readonly deadlineWhen?: ResourceLevel;
   /** Take an automatic checkpoint when it becomes pending (D-08). */
   readonly checkpoint: boolean;
   readonly options: Readonly<Record<string, readonly DecisionEffect[]>>;
@@ -48,6 +71,7 @@ export interface TimeTables {
   readonly decisions?: Readonly<Record<DecisionId, DecisionDef>>;
   readonly activities?: Readonly<Record<string, ActivityDef>>;
   readonly links?: readonly LinkDef[];
+  readonly resources?: Readonly<Record<string, ResourceDef>>;
   /** Fact registry; when given, messages may only carry these facts. */
   readonly facts?: readonly FactId[];
 }
