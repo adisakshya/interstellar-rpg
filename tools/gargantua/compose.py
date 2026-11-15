@@ -16,10 +16,10 @@ def read(path):
         ph = np.frombuffer(f.read(4 * n), dtype=np.float32).reshape(H, W)
     return int(W), int(H), meta, rgb, code, th, ph
 
-def star_map(w=4096, h=2048, seed=7):
+def star_map(w=8192, h=4096, seed=7):
     rng = np.random.default_rng(seed)
     img = np.zeros((h, w), np.float32)
-    n = 26000
+    n = 90000
     lon = rng.uniform(-np.pi, np.pi, n)
     z = rng.uniform(-1, 1, n)
     lat = np.arcsin(z)
@@ -78,8 +78,11 @@ def main():
     lin = (lin + glow) * exposure
     lin = lin / (1 + 0.35 * lin)   # soft knee: keeps the Doppler-bright side from clipping to flat white
     outs = []
-    for target in (2048, 1024):
-        k = W // target
+    for target in (4096, 2048):
+        if W < target:  # never label an upscaled image with a width it does not have
+            print(f"skipping {target}: the render is only {W} wide")
+            continue
+        k = max(1, W // target)
         small = lin.reshape(H // k, k, W // k, k, 3).mean(axis=(1, 3)) if k > 1 else lin
         out = (srgb(aces(small)) * 255 + 0.5).astype(np.uint8)
         img = Image.fromarray(out)
