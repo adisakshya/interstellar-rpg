@@ -10,7 +10,7 @@ import {
   type InputAction,
 } from "../input";
 import { IndexedDbBackend, MemoryBackend, SaveSlots, stateHash } from "../persistence";
-import { createAdaptiveScaler, createRenderer, detectTier, scalingLevel, TIERS } from "../render";
+import { createAdaptiveScaler, createRenderer, detectTier, scalingLevel, TIERS, waveScheduleOf } from "../render";
 import { buildHudModel, isFinished, mountHud, mountNotice } from "../ui";
 import { actionToCommand } from "./actions";
 import { watchEnding } from "./ending";
@@ -85,6 +85,7 @@ engine.setHardwareScalingLevel(scalingLevel(tier, devicePixelRatio));
 const renderer = createRenderer(engine, {
   tier,
   assets: { baseUrl: import.meta.env.BASE_URL },
+  content: { wave: waveScheduleOf(episode.tables) },
   fade: { set: (o) => (fade.style.opacity = String(o)) },
 });
 renderer.attach(game);

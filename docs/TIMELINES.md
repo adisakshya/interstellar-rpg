@@ -44,6 +44,8 @@ When an advance would pass an unresolved hard deadline:
 - **Interruptible activity** (the default): it commits up to `T_dead` as `ActivityInterrupted` (progress kept), and the result is `Interrupted{decisionId}`. This is a complete, defined outcome, not a partial commit.
 - **Atomic activity** (flagged in content, e.g. a docking burn): nothing commits, and the result is `Blocked{decisionId, T_dead}`. The blocking decision may then be resolved early, even if its trigger has not been reached yet, because the domain is deterministic and the decision can be forecast. An early `ResolveDecision` commits, in order, `DecisionPending`, then `CheckpointCreated` if the decision is flagged (the snapshot is taken before the choice), then `DecisionResolved`. So early resolution still gets its checkpoint (D-08), and the `Blocked` command itself still commits nothing.
 
+**Hazards (WAVE-001).** A consequence that belongs to a moment on the timeline, not to the choice (the wave killing Doyle), is a *hazard*: content gives it a decision, an option and effects, and it applies when `T` reaches that decision's deadline, if the decision was resolved with that option. So an early choice changes nothing until the moment arrives; a choice made while `T` is held at the deadline applies it at once; and a choice's own time cost that spans the deadline applies it part-way through, with the affected clocks stopping at that moment (the dead stop living). Hazards only set availability, and obey the same availability rules as choices.
+
 *Confirmed as D-10. The alternative, stopping all time at every pending decision, would have made the cost of waiting invisible.*
 
 ## 4. Availability and switching

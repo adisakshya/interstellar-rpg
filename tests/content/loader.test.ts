@@ -171,6 +171,40 @@ describe("invalid content fails with a precise error", () => {
 
   it.each<[string, (e: Json) => void, string]>([
     [
+      "a hazard on an unknown decision",
+      (e) => (e.hazards[0].atDeadlineOf = "decision.nope"),
+      'hazards[0].atDeadlineOf: unknown decision "decision.nope"',
+    ],
+    [
+      "a hazard for an option that does not exist",
+      (e) => (e.hazards[0].whenOption = "dither"),
+      'hazards[0].whenOption: decision "decision.recall" has no option "dither"',
+    ],
+    [
+      "a hazard on a decision with no fixed deadline",
+      (e) => (e.hazards[0].atDeadlineOf = "decision.docking"),
+      'hazards[0].atDeadlineOf: "decision.docking" has no fixed deadline',
+    ],
+    [
+      "a hazard that makes an NPC switchable",
+      (e) => (e.hazards[0].effects[0] = { kind: "SetAvailability", characterId: "char.doyle", reason: null }),
+      'hazards[0].effects[0].reason: "char.doyle" is not playable and cannot be made available',
+    ],
+    [
+      "a hazard that, with its choice, kills every playable character",
+      (e) =>
+        e.hazards[0].effects.push(
+          { kind: "SetAvailability", characterId: "char.cooper", reason: "DEAD", cause: "wave" },
+          { kind: "SetAvailability", characterId: "char.romilly", reason: "DEAD", cause: "x" },
+        ),
+      "hazards[0]: with its choice, kills every playable character",
+    ],
+    [
+      "a duplicate hazard id",
+      (e) => e.hazards.push({ ...e.hazards[0] }),
+      'hazards[1].id: duplicate hazard "hazard.wave"',
+    ],
+    [
       "an interaction at an unknown place",
       (e) => (e.interactions[0].location = "loc.nowhere"),
       'interactions[0].location: unknown location "loc.nowhere"',
@@ -197,8 +231,8 @@ describe("invalid content fails with a precise error", () => {
     ],
     [
       "time spent by someone other than the decision owner",
-      (e) => (e.decisions[0].options.stay_longer[2].characterId = "char.romilly"),
-      'decisions[0].options.stay_longer[2].characterId: "char.romilly" is not the decision owner "char.cooper"',
+      (e) => (e.decisions[0].options.stay_longer[1].characterId = "char.romilly"),
+      'decisions[0].options.stay_longer[1].characterId: "char.romilly" is not the decision owner "char.cooper"',
     ],
     [
       "supplies that can run out with no hard decision (INV-11)",

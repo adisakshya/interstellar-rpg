@@ -7,3 +7,6 @@ export { createAdaptiveScaler } from "./adaptive";
 export type { AdaptiveOptions, AdaptiveScaler } from "./adaptive";
 export type { SceneAssets } from "./scenes/common";
 export { addSky } from "./scenes/sky";
+export { waveAt, waveLook, waveProgress, waveScheduleOf } from "./wave";
+export type { WaveLook, WaveSchedule } from "./wave";
+export type { SceneContent } from "./scenes/common";

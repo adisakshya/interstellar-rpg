@@ -101,6 +101,46 @@ describe("the crew is on Miller's surface (CHAR-001)", () => {
   });
 });
 
+describe("the wave in Miller's scene (WAVE-001)", () => {
+  const schedule = { warnT: 1000, arriveT: 2000 };
+  const at = (T: number, extra: Partial<GameState> = {}): GameState => ({
+    ...createInitialState(episode.initial),
+    T,
+    ...extra,
+  });
+  const wave = () => renderer!.handle!.scene.getMeshByName("wave")!;
+  const frames = () => {
+    for (let i = 0; i < 4; i++) renderer!.render();
+  };
+
+  it("is hidden before the warning, on the horizon at the warning, and upon the crew exactly at the arrival", async () => {
+    engine = new NullEngine();
+    renderer = createRenderer(engine, { tier: "high", fadeMs: 0, content: { wave: schedule } });
+    await renderer.show(at(500));
+    frames();
+    expect(wave().isEnabled()).toBe(false);
+    await renderer.show(at(1000));
+    frames();
+    expect(wave().isEnabled()).toBe(true);
+    expect(wave().position.z).toBeGreaterThan(160);
+    await renderer.show(at(2000)); // a jump of more than half the way snaps instead of gliding
+    frames();
+    expect(wave().position.z).toBeLessThan(20);
+    expect(wave().scaling.y).toBeGreaterThan(35);
+    await renderer.show(at(5000)); // long past: it has gone by
+    frames();
+    expect(wave().isEnabled()).toBe(false);
+  });
+
+  it("is never shown in a story with no wave", async () => {
+    engine = new NullEngine();
+    renderer = createRenderer(engine, { tier: "high", fadeMs: 0 });
+    await renderer.show(at(1500));
+    frames();
+    expect(wave().isEnabled()).toBe(false);
+  });
+});
+
 describe("the dead leave the scene (CHAR-001)", () => {
   it("hides a follower who has died, and shows him again if the scene is rebuilt from a state where he lives", async () => {
     engine = new NullEngine();

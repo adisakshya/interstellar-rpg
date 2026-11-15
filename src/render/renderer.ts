@@ -1,7 +1,7 @@
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import type { GameEngine, GameState } from "../domain";
 import { TIERS, type Tier } from "./quality";
-import type { SceneAssets, SceneFactory, SceneHandle, SceneView } from "./scenes/common";
+import type { SceneAssets, SceneContent, SceneFactory, SceneHandle, SceneView } from "./scenes/common";
 
 export type SceneKind = "cockpit" | "surface" | "endurance";
 
@@ -33,6 +33,8 @@ export interface RendererOptions {
   readonly fadeMs?: number;
   /** Where scene images are served from; leave out to build scenes without them (tests). */
   readonly assets?: SceneAssets;
+  /** Story timing from content (the wave). */
+  readonly content?: SceneContent;
   readonly loaders?: Readonly<Record<SceneKind, () => Promise<SceneFactory>>>;
   /** Where scene-load failures go when following an engine (default: console.error). */
   readonly onError?: (error: unknown) => void;
@@ -98,7 +100,7 @@ export function createRenderer(engine: AbstractEngine, options: RendererOptions)
       handle?.dispose();
       handle = null;
       current = null;
-      handle = factory(engine, TIERS[options.tier], options.assets);
+      handle = factory(engine, TIERS[options.tier], options.assets, options.content);
       handle.setMove(move.x, move.y);
       current = kind;
       if (latest) handle.update(viewOf(latest));
@@ -159,7 +161,7 @@ export function createRenderer(engine: AbstractEngine, options: RendererOptions)
         }
         handle = null;
         current = null;
-        handle = factory(engine, TIERS[options.tier], options.assets);
+        handle = factory(engine, TIERS[options.tier], options.assets, options.content);
         handle.setMove(move.x, move.y);
         current = kind;
         wanted = kind;

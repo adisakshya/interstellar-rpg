@@ -5,7 +5,6 @@ import { DirectionalLight } from "@babylonjs/core/Lights/directionalLight";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { CreateGround } from "@babylonjs/core/Meshes/Builders/groundBuilder";
-import { CreateBox } from "@babylonjs/core/Meshes/Builders/boxBuilder";
 import { VertexBuffer } from "@babylonjs/core/Buffers/buffer";
 import { VertexData } from "@babylonjs/core/Meshes/mesh.vertexData";
 import { material, newScene, type SceneFactory } from "./common";
@@ -13,8 +12,10 @@ import { CREW } from "../figures/crew";
 import { createSuitedFigure } from "../figures/suit";
 import { gaitSpeed, MOVEMENT, stepVelocity, type Velocity } from "../movement";
 import { addSky } from "./sky";
+import { createWaveMesh } from "./wave-mesh";
+import { waveProgress } from "../wave";
 
-export const createSurfaceScene: SceneFactory = (engine, tier, assets) => {
+export const createSurfaceScene: SceneFactory = (engine, tier, assets, content) => {
   const scene = newScene(engine, new Color4(0.01, 0.012, 0.016, 1));
   // Gargantua fills part of the sky, a little above the horizon, ahead of the starting camera direction.
   if (assets) addSky(scene, assets.baseUrl + tier.skyFile, { yawDeg: 90, pitchDeg: 14 });
@@ -59,12 +60,11 @@ export const createSurfaceScene: SceneFactory = (engine, tier, assets) => {
       : { emissive: new Color3(0.04, 0.07, 0.09) },
   );
 
-  // Distant "mountains" that are really waves (GDD B7): low, hazy silhouettes on the horizon.
-  for (let i = 0; i < 5; i++) {
-    const wave = CreateBox(`wave${i}`, { width: 26, height: 6 + (i % 2) * 3, depth: 4 }, scene);
-    wave.position = new Vector3(-80 + i * 40, 3, 170);
-    wave.material = material(scene, `waveMat${i}`, new Color3(0.03, 0.04, 0.05));
-  }
+  // The "mountains" on the horizon are a wave (GDD B7). It is not there until the warning, rises as the clock runs on,
+  // and reaches the crew exactly when the rules say it does (WAVE-001).
+  const wave = createWaveMesh(scene);
+  let waveTarget: number | null = null;
+  let waveShown: number | null = null;
 
   // The crew in their suits (CHAR-001). Standing in knee-deep water on a 1.3 g planet, they wade rather than walk
   // (MOVE-001). Brand and Doyle follow Cooper at a distance (GDD B3).
@@ -109,6 +109,18 @@ export const createSurfaceScene: SceneFactory = (engine, tier, assets) => {
   };
   scene.onBeforeRenderObservable.add(() => {
     const dt = Math.min(engine.getDeltaTime() / 1000, 0.1);
+    // The wave follows the game clock, which moves in ticks; smooth its progress between them, and jump when the clock does.
+    if (waveTarget !== null) {
+      // Before the warning there is nothing to glide from; a jump of a quarter of the way or more (an action that
+      // skips time) snaps instead of gliding.
+      waveShown =
+        waveShown === null || waveTarget < 0 || Math.abs(waveTarget - waveShown) > 0.25
+          ? waveTarget
+          : waveShown + (waveTarget - waveShown) * Math.min(1, dt * 3);
+      wave.show(waveShown, WATER - 0.2);
+    } else {
+      wave.mesh.setEnabled(false);
+    }
     vel = stepVelocity(vel, move, profile, dt);
     // Screen "up" is +y on the stick and -z in the world.
     body.position.x += vel.x * dt;
@@ -138,7 +150,7 @@ export const createSurfaceScene: SceneFactory = (engine, tier, assets) => {
   return {
     scene,
     update(view) {
-      // Someone who has died is no longer in the scene (a rebuilt scene starts from the same state, so reloads agree).
+      waveTarget = content?.wave ? waveProgress(view.T, content.wave) : null;
       for (const f of followers) f.figure.root.setEnabled(!view.dead.includes(f.id));
     },
     setMove(x, y) {
@@ -146,6 +158,7 @@ export const createSurfaceScene: SceneFactory = (engine, tier, assets) => {
       move.y = y;
     },
     dispose: () => {
+      wave.dispose();
       cooper.dispose();
       for (const f of followers) f.figure.dispose();
       scene.dispose();
