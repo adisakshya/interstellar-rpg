@@ -82,6 +82,10 @@ export const episodeSchema = z.strictObject({
       checkpoint: z.boolean(),
       options: z.record(z.string().min(1), z.array(effect)),
       note: z.string().optional(),
+      /** Player-facing text for the prompt (TEXT-001): a title, a sentence of what is at stake, and a label per option. */
+      title: z.string().min(1).optional(),
+      prompt: z.string().min(1).optional(),
+      labels: z.record(z.string().min(1), z.string().min(1)).optional(),
     }),
   ),
   /**

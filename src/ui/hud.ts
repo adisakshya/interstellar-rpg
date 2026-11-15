@@ -54,6 +54,7 @@ const CSS = `
 .irpg-options{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:.375rem}
 .irpg-options>li{flex:1 1 8rem}
 .irpg-note{margin:0;font-size:.875rem}
+.irpg-stake{margin:.25rem 0 .5rem;font-size:.9375rem}
 .irpg-timerow{display:flex;align-items:center;justify-content:space-between;gap:.5rem}
 .irpg-timerow .irpg-btn{width:auto;flex:none;align-items:center}
 .irpg-tick{display:inline-block;width:.5rem;height:.5rem;margin-right:.5rem;border-radius:50%;background:#ffd166;opacity:.2;transition:opacity .35s ease-out}
@@ -225,6 +226,7 @@ export function mountHud(root: HTMLElement, handlers: HudHandlers): Hud {
       make(doc, "h2", { id: `irpg-d-${p.id}` }, p.hard ? "Decision (time stops at the deadline)" : "Decision"),
     );
     box.append(make(doc, "p", {}, p.title));
+    if (p.prompt) box.append(make(doc, "p", { class: "irpg-stake" }, p.prompt));
     const deadline = make(doc, "p", { class: "irpg-note" });
     paintDeadline(deadline, p);
     box.append(deadline);
@@ -306,7 +308,7 @@ export function mountHud(root: HTMLElement, handlers: HudHandlers): Hud {
           prompts.append(view.box);
           focusFirst ??= view.box.querySelector("button");
           announce(
-            `Decision for ${model.controlledName}: ${p.title}. ${p.deadlineSpoken ? `Deadline in ${p.deadlineSpoken}. ` : ""}Options: ${p.options.map((o) => o.label).join(", ")}.`,
+            `Decision for ${model.controlledName}: ${p.title}. ${p.prompt ? `${p.prompt} ` : ""}${p.deadlineSpoken ? `Deadline in ${p.deadlineSpoken}. ` : ""}Options: ${p.options.map((o) => o.label).join(", ")}.`,
           );
         }
       }

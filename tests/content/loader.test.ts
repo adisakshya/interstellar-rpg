@@ -317,3 +317,13 @@ describe("story entries (STORY-001)", () => {
     expect(out.ok && out.episode.story.length).toBeGreaterThan(8);
   });
 });
+
+describe("decision text (TEXT-001)", () => {
+  it("rejects a label for an option the decision does not have", () => {
+    const bad = clone();
+    bad.decisions[0].labels = { fly: "Fly" };
+    expect(errorsOf(bad).join("\n")).toContain(
+      'decisions[0].labels.fly: decision "decision.recall" has no option "fly"',
+    );
+  });
+});

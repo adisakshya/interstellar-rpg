@@ -30,6 +30,7 @@ const model = (over: Partial<HudModel> = {}): HudModel => ({
 const prompt = (over: Partial<HudModel["prompts"][number]> = {}): HudModel["prompts"][number] => ({
   id: "decision.hibernate" as never,
   title: "Hibernate",
+  prompt: null,
   options: [
     { id: "hibernate", label: "Hibernate" },
     { id: "stay_awake", label: "Stay awake" },
@@ -158,6 +159,13 @@ describe("the switcher", () => {
 });
 
 describe("decision prompts", () => {
+  it("shows the sentence on what is at stake, when the content has one, and reads it out", () => {
+    const { root } = setup();
+    hud!.update(model({ prompts: [prompt({ prompt: "Hibernating stops his ageing." })] }));
+    expect(root.querySelector(".irpg-stake")!.textContent).toBe("Hibernating stops his ageing.");
+    expect(live(root)).toContain("Hibernating stops his ageing.");
+  });
+
   it("shows options as buttons, moves focus to the first, and announces it", () => {
     const { root, handlers } = setup();
     hud!.update(model({ prompts: [prompt()] }));

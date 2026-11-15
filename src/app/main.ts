@@ -192,6 +192,7 @@ if (hud) {
       buildHudModel(state, {
         names: episode.names,
         decisions: episode.tables.decisions ?? {},
+        text: episode.decisionText,
         activities: episode.tables.activities,
         forecast: (id) => game.forecast(id),
         offer: offerFor(state, interactions, episode.tables.rates),
