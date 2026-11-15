@@ -12,7 +12,7 @@
         },
         "interact"
       ],
-      "hash": "dbd0b7478ddd2fcf651f245313fd18407262eb6997f396144ba2a5284c2268df"
+      "hash": "c633e25ad27e22d360a25a2c7c298f226521527bf4259e990b68cd48720c27eb"
     },
     "stay_longer": {
       "steps": [
@@ -25,7 +25,7 @@
         },
         "interact"
       ],
-      "hash": "75ad84dd724f26716d89c19311855f0ea1def8fecd76536f304897398b6b568f"
+      "hash": "fb5f5cadba249c8987a0579afbe5a80de7fcd273673de5644fe4fc202eb070eb"
     }
   }
 }

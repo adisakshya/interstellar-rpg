@@ -1,5 +1,5 @@
 {
-  "contentVersion": "m1-slice-1",
+  "contentVersion": "m1-slice-2",
   "episode": "Episode 1: Miller's planet (vertical slice)",
   "seed": 1,
   "controlled": "char.cooper",
@@ -185,19 +185,13 @@
             "factId": "fact.miller_died_on_landing"
           },
           {
-            "kind": "SetAvailability",
-            "characterId": "char.doyle",
-            "reason": "DEAD",
-            "cause": "wave"
-          },
-          {
             "kind": "SpendTime",
             "characterId": "char.cooper",
             "dTau": 3900
           }
         ]
       },
-      "note": "Wave warning; stay longer recovers the recorder (5 min) but Doyle dies and flooded engines cost 60 min (GDD §5, placeholder numbers)."
+      "note": "Wave warning at T = 60 000 000 s; the wave arrives at the deadline (hazard.wave). Staying longer recovers the recorder and costs an hour of Cooper's time for the flooded engines; Doyle dies when the wave arrives, not at the choice (GDD §5, placeholder numbers)."
     },
     {
       "id": "decision.hibernate",
@@ -356,6 +350,21 @@
       "decision": "decision.hibernate",
       "option": "stay_awake",
       "text": "Romilly stayed awake while his supplies ran down."
+    }
+  ],
+  "hazards": [
+    {
+      "id": "hazard.wave",
+      "atDeadlineOf": "decision.recall",
+      "whenOption": "stay_longer",
+      "effects": [
+        {
+          "kind": "SetAvailability",
+          "characterId": "char.doyle",
+          "reason": "DEAD",
+          "cause": "wave"
+        }
+      ]
     }
   ]
 }

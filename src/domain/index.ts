@@ -26,6 +26,7 @@ export type {
   ActivityDef,
   DecisionDef,
   DecisionEffect,
+  HazardDef,
   LinkDef,
   RateTable,
   ResourceDef,

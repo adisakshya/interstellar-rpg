@@ -101,6 +101,68 @@ describe("the crew is on Miller's surface (CHAR-001)", () => {
   });
 });
 
+describe("the wave in Miller's scene (WAVE-001)", () => {
+  const schedule = { warnT: 1000, arriveT: 2000 };
+  const at = (T: number, extra: Partial<GameState> = {}): GameState => ({
+    ...createInitialState(episode.initial),
+    T,
+    ...extra,
+  });
+  const wave = () => renderer!.handle!.scene.getMeshByName("wave")!;
+  // Each frame is 100 ms (the scene caps a step at that), so the wave's pace can be measured in frames.
+  const frames = (n = 4) => {
+    engine!.getDeltaTime = () => 100;
+    for (let i = 0; i < n; i++) renderer!.render();
+  };
+
+  it("is hidden before the warning, on the horizon at the warning, and upon the crew exactly at the arrival", async () => {
+    engine = new NullEngine();
+    renderer = createRenderer(engine, { tier: "high", fadeMs: 0, content: { wave: schedule } });
+    await renderer.show(at(500));
+    frames();
+    expect(wave().isEnabled()).toBe(false);
+    await renderer.show(at(1000));
+    frames();
+    expect(wave().isEnabled()).toBe(true);
+    expect(wave().position.z).toBeGreaterThan(160);
+    await renderer.show(at(2000)); // an action that skips the way: the wave still travels
+    frames(80);
+    expect(wave().position.z).toBeLessThan(20);
+    expect(wave().scaling.y).toBeGreaterThan(35);
+    await renderer.show(at(5000)); // long past: it has gone by
+    frames(40);
+    expect(wave().isEnabled()).toBe(false);
+  });
+
+  it("crosses the screen when one action skips past the arrival, and Doyle stays until it reaches him", async () => {
+    engine = new NullEngine();
+    renderer = createRenderer(engine, { tier: "high", fadeMs: 0, content: { wave: schedule } });
+    const base = at(5000);
+    const doyle = base.characters["char.doyle" as never]!;
+    const fatal = { characters: { ...base.characters, ["char.doyle" as never]: { ...doyle, unavailable: "DEAD" } } };
+    const node = (name: string) => renderer!.handle!.scene.transformNodes.find((n) => n.name === name)!;
+    await renderer.show(at(1000));
+    frames();
+    await renderer.show(at(5000, fatal)); // the clock jumps past the arrival in one command
+    frames(3);
+    expect(wave().isEnabled()).toBe(true); // not cut to the end: it is on its way
+    expect(wave().position.z).toBeGreaterThan(100);
+    expect(node("doyle.figure").isEnabled()).toBe(true);
+    frames(80); // arrived, then past
+    expect(node("doyle.figure").isEnabled()).toBe(false);
+    frames(40);
+    expect(wave().isEnabled()).toBe(false);
+  });
+
+  it("is never shown in a story with no wave", async () => {
+    engine = new NullEngine();
+    renderer = createRenderer(engine, { tier: "high", fadeMs: 0 });
+    await renderer.show(at(1500));
+    frames();
+    expect(wave().isEnabled()).toBe(false);
+  });
+});
+
 describe("the dead leave the scene (CHAR-001)", () => {
   it("hides a follower who has died, and shows him again if the scene is rebuilt from a state where he lives", async () => {
     engine = new NullEngine();

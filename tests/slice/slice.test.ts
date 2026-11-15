@@ -111,6 +111,35 @@ describe("vertical slice: Cooper on Miller, Romilly on Endurance (SLICE-001)", (
     expect(checkpoint.state.characters["char.doyle" as never]!.unavailable).toBe("NOT_INTRODUCED");
   });
 
+  it("WAVE-001: choosing early kills Doyle when the wave arrives, not at the choice", () => {
+    const deadline = episode.tables.decisions!["decision.recall" as never]!.deadlineT!;
+    const rate = episode.tables.rates["loc.miller_surface" as never]!;
+    const g = newGame();
+    // The warning has not even triggered yet; a hard decision may be answered early (TIMELINES §3). Nothing happens
+    // to Doyle yet, and the choice's own hour of Cooper's time then carries the clocks past the wave's arrival.
+    const early = g.game.dispatch({
+      kind: "ResolveDecision",
+      commandId: "early",
+      decisionId: "decision.recall" as never,
+      optionId: "stay_longer",
+    });
+    expect(early.kind).toBe("Ok");
+    const doyle = g.game.getState().characters["char.doyle" as never]!;
+    expect(doyle).toMatchObject({ unavailable: "DEAD", cause: "wave" });
+    expect(doyle.tau).toBeCloseTo(deadline * rate, 6); // his clock stopped at the wave's arrival
+    expect(g.game.getState().T).toBeGreaterThan(deadline); // the choice's cost ran on past it
+    // The other answer, given early, never kills him.
+    const h = newGame();
+    h.game.dispatch({
+      kind: "ResolveDecision",
+      commandId: "early",
+      decisionId: "decision.recall" as never,
+      optionId: "leave_now",
+    });
+    h.act(); // lift off
+    expect(h.game.getState().characters["char.doyle" as never]!.unavailable).toBe("NOT_INTRODUCED");
+  });
+
   describe("the choice at the wave", () => {
     const leave = play("leave_now");
     const stay = play("stay_longer");

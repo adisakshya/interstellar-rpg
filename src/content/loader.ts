@@ -4,6 +4,7 @@ import type {
   DecisionDef,
   DecisionId,
   FactId,
+  HazardDef,
   InitialSpec,
   LinkDef,
   LocationId,
@@ -131,6 +132,19 @@ export function loadEpisode(json: unknown): LoadResult {
     x.after?.forEach((d, j) => ref(decs, "decision", d, at("after", j)));
     x.before?.forEach((d, j) => ref(decs, "decision", d, at("before", j)));
   });
+  ids(ep.hazards, "hazards", "hazard");
+  ep.hazards.forEach((h, i) => {
+    const at = (...rest: PropertyKey[]) => ["hazards", i, ...rest];
+    ref(decs, "decision", h.atDeadlineOf, at("atDeadlineOf"));
+    const d = ep.decisions.find((x) => x.id === h.atDeadlineOf);
+    if (d) {
+      if (d.deadlineT === null)
+        err(at("atDeadlineOf"), `"${d.id}" has no fixed deadline, so a hazard cannot be placed on it`);
+      if (!Object.hasOwn(d.options, h.whenOption))
+        err(at("whenOption"), `decision "${d.id}" has no option "${h.whenOption}"`);
+    }
+    h.effects.forEach((e, j) => ref(chars, "character", e.characterId, at("effects", j, "characterId")));
+  });
   ref(facts, "fact", ep.ending.fact, ["ending", "fact"]);
   ref(chars, "character", ep.ending.knownBy, ["ending", "knownBy"]);
   ep.outcomeNotes.forEach((n, i) => {
@@ -167,6 +181,44 @@ export function loadEpisode(json: unknown): LoadResult {
       }),
     ),
   );
+  ep.hazards.forEach((h) =>
+    h.effects.forEach((e) => {
+      if (e.reason === null) wakes.add(e.characterId);
+    }),
+  );
+  // Hazard effects obey the same availability rules as choices: NPCs cannot be made switchable, and an
+  // incapacitation needs a wake fallback.
+  ep.hazards.forEach((h, i) =>
+    h.effects.forEach((e, j) => {
+      const path = ["hazards", i, "effects", j, "reason"];
+      if (!npcs.has(e.characterId) && chars.has(e.characterId)) {
+        err(
+          ["hazards", i, "effects", j, "characterId"],
+          `"${e.characterId}" is playable: a hazard may only act on non-playable characters, because it lands in the middle of someone's action (use a decision's effects for a playable character)`,
+        );
+      }
+      if (e.reason === null && npcs.has(e.characterId)) {
+        err(path, `"${e.characterId}" is not playable and cannot be made available`);
+      }
+      if (e.reason !== null && INCAPACITATED.has(e.reason) && !wakes.has(e.characterId)) {
+        err(path, `${e.reason} for "${e.characterId}" has no wake fallback (no effect makes them available again)`);
+      }
+    }),
+  );
+  // Some path must remain after a death, hazards included: a choice plus its hazards must not kill every playable.
+  ep.hazards.forEach((h, i) => {
+    const decision = ep.decisions.find((d) => d.id === h.atDeadlineOf);
+    const dead = new Set<string>([
+      ...h.effects.flatMap((e) => (e.reason === "DEAD" ? [e.characterId] : [])),
+      ...(decision?.options[h.whenOption] ?? []).flatMap((e) =>
+        e.kind === "SetAvailability" && e.reason === "DEAD" ? [e.characterId] : [],
+      ),
+    ]);
+    const everyone = ep.characters.filter((c) => c.playable).map((c) => c.id);
+    if (everyone.length > 0 && everyone.every((c) => dead.has(c))) {
+      err(["hazards", i], "with its choice, kills every playable character, so no path would remain");
+    }
+  });
   ep.decisions.forEach((d, i) =>
     Object.entries(d.options).forEach(([name, effects]) =>
       effects.forEach((e, j) => {
@@ -230,6 +282,7 @@ export function loadEpisode(json: unknown): LoadResult {
   const tables: TimeTables = {
     rates: rates as RateTable,
     decisions,
+    hazards: ep.hazards as unknown as HazardDef[],
     activities: Object.fromEntries(ep.activities.map(({ id, ...a }) => [id, a as unknown as ActivityDef])),
     links: ep.links as unknown as LinkDef[],
     facts: ep.facts.map((f) => f.id as FactId),

@@ -3,11 +3,12 @@ import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { Scene } from "@babylonjs/core/scene";
 import type { TierSettings } from "../quality";
+import type { WaveSchedule } from "../wave";
 
 /** What a scene shows for the current game state. Derived from domain state; never written back. */
 export interface SceneView {
   readonly characterId: string;
-  /** Reference time, for things that follow the timeline. */
+  /** Reference time, for things that follow the timeline (the wave). */
   readonly T: number;
   /** Characters who are dead: they are no longer in the scene. */
   readonly dead: readonly string[];
@@ -28,7 +29,18 @@ export interface SceneAssets {
   readonly baseUrl: string;
 }
 
-export type SceneFactory = (engine: AbstractEngine, tier: TierSettings, assets?: SceneAssets) => SceneHandle;
+/** Story timing a scene needs, from content. */
+export interface SceneContent {
+  /** When the wave is first seen and when it arrives; null in a story with no wave. */
+  readonly wave: WaveSchedule | null;
+}
+
+export type SceneFactory = (
+  engine: AbstractEngine,
+  tier: TierSettings,
+  assets?: SceneAssets,
+  content?: SceneContent,
+) => SceneHandle;
 
 /** With deep imports Babylon registers no default material, so every mesh gets one explicitly (ARCHITECTURE §7). */
 export function material(

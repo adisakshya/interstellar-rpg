@@ -3,7 +3,7 @@ import type { CheckpointCapture, Forecaster, HandlerMap, HandlerOutcome } from "
 import type { CharacterId, DecisionId, LocationId } from "./ids";
 import { deliver, learn } from "./knowledge";
 import { decisionTimes, depletionTimes, resourcesAt } from "./resources";
-import type { ActivityDef, DecisionDef, DecisionEffect, TimeTables } from "./rules";
+import type { ActivityDef, DecisionDef, DecisionEffect, HazardDef, TimeTables } from "./rules";
 import type { CharacterState, GameState, MessageState } from "./state";
 
 export type { RateTable } from "./rules";
@@ -22,10 +22,11 @@ function clocksAt(
   T: number,
   actorTau: number,
 ): GameState {
-  const dT = T - start.T;
+  // Move on from where the working state is now, not from the start of the advance: something that happened part-way
+  // (a hazard killing Doyle, say) must keep its effect, and the dead stop living at the moment of death.
+  const dT = T - current.T;
   const characters: Record<CharacterId, CharacterState> = {};
-  for (const [id, c] of Object.entries(start.characters) as [CharacterId, CharacterState][]) {
-    // The dead stop living: their clock keeps the time they had when they died.
+  for (const [id, c] of Object.entries(current.characters) as [CharacterId, CharacterState][]) {
     const tau = id === actorId ? actorTau : c.unavailable === "DEAD" ? c.tau : c.tau + rateOf(c.location) * dT;
     characters[id] = { ...c, tau };
   }
@@ -38,9 +39,16 @@ const isAtomic = (def: ActivityDef | undefined) =>
 const isOpen = (state: GameState, def: DecisionDef) => state.decisions[def.id]?.status !== "resolved";
 
 function effectsOf(state: GameState, def: DecisionDef, optionId: string): { state: GameState; events: EventDraft[] } {
+  return applyEffects(state, def.options[optionId] ?? ([] as readonly DecisionEffect[]));
+}
+
+function applyEffects(
+  state: GameState,
+  effects: readonly DecisionEffect[],
+): { state: GameState; events: EventDraft[] } {
   const events: EventDraft[] = [];
   let s = state;
-  for (const effect of def.options[optionId] ?? ([] as readonly DecisionEffect[])) {
+  for (const effect of effects) {
     if (effect.kind === "SpendTime") {
       continue; // time passes after every effect has applied (see ResolveDecision)
     } else if (effect.kind === "SetAvailability") {
@@ -133,7 +141,8 @@ export function createClockHandlers(
     type Step =
       | { T: number; order: 0; id: string; message: MessageState }
       | { T: number; order: 1; id: string }
-      | { T: number; order: 2; id: string; decision: DecisionDef };
+      | { T: number; order: 2; id: string; decision: DecisionDef }
+      | { T: number; order: 3; id: string; hazard: HazardDef };
     const steps: Step[] = [
       ...state.messages
         .filter((m) => !m.delivered && m.deliverT <= Tend)
@@ -144,6 +153,17 @@ export function createClockHandlers(
       ...decisions
         .filter((d) => state.decisions[d.id] === undefined && times.get(d.id)!.trigger <= Tend)
         .map((decision): Step => ({ T: times.get(decision.id)!.trigger, order: 2, id: decision.id, decision })),
+      // Hazards land at their decision's deadline, if that decision was resolved with the option that triggers them. A
+      // decision cannot resolve part-way through an advance, so this is decided from the state at T0.
+      ...(tables.hazards ?? [])
+        .filter((h) => {
+          const at = times.get(h.atDeadlineOf)?.deadline ?? null;
+          const entry = state.decisions[h.atDeadlineOf];
+          return (
+            at !== null && at > T0 && at <= Tend && entry?.status === "resolved" && entry.optionId === h.whenOption
+          );
+        })
+        .map((hazard): Step => ({ T: times.get(hazard.atDeadlineOf)!.deadline!, order: 3, id: hazard.id, hazard })),
     ];
     steps.sort((a, b) => a.T - b.T || a.order - b.order || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 
@@ -166,6 +186,12 @@ export function createClockHandlers(
       if (step.order === 1) {
         s = { ...s, resources: { ...s.resources, [step.id]: { amount: 0 } } };
         events.push({ kind: "ResourceDepleted", T: at, resourceId: step.id, amount: 0 });
+        continue;
+      }
+      if (step.order === 3) {
+        const out = applyEffects(s, step.hazard.effects);
+        s = out.state;
+        events.push(...out.events);
         continue;
       }
       const d = step.decision;
@@ -251,7 +277,17 @@ export function createClockHandlers(
       s = { ...s, decisions: { ...s.decisions, [def.id]: { status: "resolved", optionId: command.optionId } } };
       events.push({ kind: "DecisionResolved", T: s.T, decisionId: def.id, optionId: command.optionId });
       const effects = effectsOf(s, def, command.optionId);
-      const committed = { state: effects.state, events: [...events, ...effects.events], checkpoints };
+      // A hazard whose moment has already come (the decision was held at its deadline) lands with the choice.
+      const dueNow = (tables.hazards ?? []).filter((h) => {
+        if (h.atDeadlineOf !== def.id || h.whenOption !== command.optionId) return false;
+        const at = decisionTimes(state, tables, def, (loc) => validRate(loc) ?? 1).deadline;
+        return at !== null && at <= state.T;
+      });
+      const late = applyEffects(
+        effects.state,
+        dueNow.flatMap((h) => h.effects),
+      );
+      const committed = { state: late.state, events: [...events, ...effects.events, ...late.events], checkpoints };
       // The choice's own time cost runs through the ordinary clock rules, so another decision that triggers inside it
       // is handled as for any activity. But it cannot stop half-way: there is no activity to resume, and the choice is
       // already made. So a hard deadline inside the span blocks the whole choice (nothing commits, INV-05); the player

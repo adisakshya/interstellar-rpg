@@ -57,6 +57,19 @@ export interface DecisionDef {
   readonly options: Readonly<Record<string, readonly DecisionEffect[]>>;
 }
 
+/**
+ * A consequence that lands at a point on the timeline, not at the choice that causes it (WAVE-001). It applies when
+ * reference time reaches the deadline of `atDeadlineOf`, provided that decision was resolved with `whenOption`.
+ * So an early choice (TIMELINES §3) changes nothing until the moment arrives: nobody dies while the wave is still
+ * on the horizon. If the decision is resolved at or after its deadline, the effects apply at once.
+ */
+export interface HazardDef {
+  readonly id: string;
+  readonly atDeadlineOf: DecisionId;
+  readonly whenOption: string;
+  readonly effects: readonly Extract<DecisionEffect, { readonly kind: "SetAvailability" }>[];
+}
+
 /** Activity flags from content. Activities not listed are interruptible (TIMELINES §3 default). */
 export interface ActivityDef {
   readonly atomic: boolean;
@@ -83,6 +96,7 @@ export interface TimeTables {
   readonly activities?: Readonly<Record<string, ActivityDef>>;
   readonly links?: readonly LinkDef[];
   readonly resources?: Readonly<Record<string, ResourceDef>>;
+  readonly hazards?: readonly HazardDef[];
   /** Fact registry; when given, messages may only carry these facts. */
   readonly facts?: readonly FactId[];
 }

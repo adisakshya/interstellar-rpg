@@ -16,13 +16,14 @@ const reason = z.enum([
   "DEAD",
   "CONTROLLED_BY_OTHER",
 ]);
+const setAvailability = z.strictObject({
+  kind: z.literal("SetAvailability"),
+  characterId: charId,
+  reason: reason.nullable(),
+  cause: z.string().min(1).optional(),
+});
 const effect = z.discriminatedUnion("kind", [
-  z.strictObject({
-    kind: z.literal("SetAvailability"),
-    characterId: charId,
-    reason: reason.nullable(),
-    cause: z.string().min(1).optional(),
-  }),
+  setAvailability,
   z.strictObject({ kind: z.literal("SpendTime"), characterId: charId, dTau: z.number().finite().positive() }),
   z.strictObject({ kind: z.literal("LearnFact"), characterId: charId, factId }),
 ]);
@@ -99,6 +100,18 @@ export const episodeSchema = z.strictObject({
       unless: z.array(factId).optional(),
       after: z.array(decisionId).optional(),
       before: z.array(decisionId).optional(),
+    }),
+  ),
+  /**
+   * Consequences that land at a decision's deadline, not at the choice (WAVE-001): they apply when reference time
+   * reaches the deadline of `atDeadlineOf`, if that decision was resolved with `whenOption`.
+   */
+  hazards: z.array(
+    z.strictObject({
+      id: z.string().startsWith("hazard."),
+      atDeadlineOf: decisionId,
+      whenOption: z.string().min(1),
+      effects: z.array(setAvailability).min(1),
     }),
   ),
   /** The episode ends when this character learns this fact; the outcome screen opens (SLICE-001). */
