@@ -50,6 +50,15 @@ export interface StoryOptions {
   readonly spell: (seconds: number) => string;
   readonly setTimer?: (run: () => void, ms: number) => unknown;
   readonly clearTimer?: (handle: unknown) => void;
+  /**
+   * Remembers which entries were shown, with the event count they were shown at. A condition like "Romilly is
+   * controlled" can be false again after a reload, so the state alone cannot say it was already seen. The record is
+   * trusted only if the loaded game is at or past that point; restoring an earlier checkpoint discards it.
+   */
+  readonly memory?: {
+    load(): { ids: readonly string[]; seq: number } | null;
+    save(value: { ids: string[]; seq: number }): void;
+  };
   /** Reads and stores the "advance by itself" preference. */
   readonly preference?: { get(): boolean; set(value: boolean): void };
 }
@@ -67,6 +76,8 @@ export interface Story {
   skipAll(): void;
   readonly autoAdvance: boolean;
   setAutoAdvance(value: boolean): void;
+  /** Hold the reading timer while the page is hidden or its graphics are lost; the current line waits. */
+  setPaused(value: boolean): void;
   /** Look at the state and queue any entries that now hold. Called after every commit. */
   observe(): void;
   subscribe(listener: () => void): () => void;
@@ -90,6 +101,7 @@ export function createStory(options: StoryOptions): Story {
   let now: StoryLine | null = null;
   let timer: unknown = null;
   let auto = options.preference?.get() ?? true;
+  let paused = false;
 
   const render = (speaker: string, raw: string, state: GameState): StoryLine => {
     const text = raw.replace(/\{tau:([^}]*)\}/g, (_m, id: string) =>
@@ -111,17 +123,20 @@ export function createStory(options: StoryOptions): Story {
     now = line;
     if (line) {
       shown.push(line);
-      if (auto) timer = setTimer(() => api.next(), readMs(line.text));
+      if (auto && !paused) timer = setTimer(() => api.next(), readMs(line.text));
     }
   };
 
   const scan = (queueLines: boolean) => {
     const state = options.getState();
+    let changed = false;
     for (const entry of options.entries) {
       if (seen.has(entry.id) || !storyHolds(state, entry.when)) continue;
       seen.add(entry.id);
+      changed = true;
       if (queueLines) for (const l of entry.lines) queue.push(render(l.speaker, l.text, state));
     }
+    if (changed) options.memory?.save({ ids: [...seen], seq: state.seq });
   };
 
   const api: Story = {
@@ -145,8 +160,14 @@ export function createStory(options: StoryOptions): Story {
       auto = value;
       options.preference?.set(value);
       stopTimer();
-      if (auto && now) timer = setTimer(() => api.next(), readMs(now.text));
+      if (auto && !paused && now) timer = setTimer(() => api.next(), readMs(now.text));
       emit();
+    },
+    setPaused(value) {
+      if (paused === value) return;
+      paused = value;
+      stopTimer();
+      if (!paused && auto && now) timer = setTimer(() => api.next(), readMs(now.text));
     },
     observe() {
       const before = queue.length;
@@ -161,7 +182,10 @@ export function createStory(options: StoryOptions): Story {
   };
 
   // A loaded game is not a new scene: what already holds is history. A new game's `start` entry still shows.
-  scan(options.getState().seq === 0);
+  const start = options.getState();
+  const remembered = options.memory?.load();
+  if (start.seq > 0 && remembered && remembered.seq <= start.seq) for (const id of remembered.ids) seen.add(id);
+  scan(start.seq === 0);
   if (queue.length > 0) show(queue.shift() ?? null);
   return api;
 }

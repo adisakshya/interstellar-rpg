@@ -10,13 +10,24 @@ if (!loaded.ok) throw new Error(loaded.errors.join("\n"));
 const episode = loaded.episode;
 const fresh = () => createEngine(createInitialState(episode.initial), createRules(episode.tables));
 
-function setup(game = fresh(), entries: readonly StoryEntry[] = episode.story) {
+type Memory = { ids: readonly string[]; seq: number } | null;
+function setup(game = fresh(), entries: readonly StoryEntry[] = episode.story, memory?: { value: Memory }) {
   const timers: { run: () => void; ms: number; live: boolean }[] = [];
   const story = createStory({
     entries,
     getState: game.getState,
     names: episode.names,
     spell: livedPhrase,
+    ...(memory
+      ? {
+          memory: {
+            load: () => memory.value,
+            save: (v: { ids: string[]; seq: number }) => {
+              memory.value = v;
+            },
+          },
+        }
+      : {}),
     setTimer: (run, ms) => {
       const t = { run, ms, live: true };
       timers.push(t);
@@ -79,6 +90,39 @@ describe("story subtitles (STORY-001)", () => {
     while (story.current()) fire();
     story.observe();
     expect(story.current()).toBeNull();
+  });
+
+  it("remembers a scene whose condition can be false again after a reload, but not after an earlier checkpoint", () => {
+    const entry: StoryEntry = {
+      id: "story.r",
+      when: { controlled: "char.romilly" },
+      lines: [{ speaker: "narrator", text: "Years." }],
+    };
+    const game = fresh();
+    scan(game); // seq > 0, and Cooper is controlled
+    const seq = game.getState().seq;
+    // Seen earlier at this point in the game, then the player switched back to Cooper and reloaded.
+    const kept = setup(game, [entry], { value: { ids: ["story.r"], seq } });
+    game.dispatch({ kind: "SwitchCharacter", commandId: "sw-1", targetId: "char.romilly" as never });
+    kept.story.observe();
+    expect(kept.story.current()).toBeNull();
+    // The same record, but the loaded game is earlier than where it was written: it is not trusted.
+    const early = setup(fresh(), [entry], { value: { ids: ["story.r"], seq: 999 } });
+    expect(early.story.current()).toBeNull(); // a fresh game shows nothing of this entry yet
+    scan(early.game);
+    early.game.dispatch({ kind: "SwitchCharacter", commandId: "sw-2", targetId: "char.romilly" as never });
+    early.story.observe();
+    expect(early.story.current()?.text).toBe("Years.");
+  });
+
+  it("holds the reading timer while paused, and the line waits", () => {
+    const { story, timers } = setup();
+    story.setPaused(true);
+    expect(timers.filter((t) => t.live)).toHaveLength(0);
+    const line = story.current();
+    story.setPaused(false);
+    expect(timers.filter((t) => t.live)).toHaveLength(1);
+    expect(story.current()).toBe(line);
   });
 
   it("spells a character's lived time into a title card", () => {

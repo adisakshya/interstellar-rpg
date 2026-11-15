@@ -112,8 +112,29 @@ createKeyboardAdapter(window, onAction);
 createMouseAdapter(canvas, onAction, undefined, window);
 // Story subtitles (STORY-001): presentation only, derived from state, never saved.
 const AUTO_KEY = "irpg.story.auto";
+const STORY_SEEN_KEY = "irpg.story.seen";
 const story = createStory({
   entries: episode.story,
+  memory: {
+    load: () => {
+      try {
+        const raw = localStorage.getItem(STORY_SEEN_KEY);
+        const value = raw === null ? null : (JSON.parse(raw) as { ids?: unknown; seq?: unknown });
+        return value && Array.isArray(value.ids) && typeof value.seq === "number"
+          ? { ids: value.ids.filter((x): x is string => typeof x === "string"), seq: value.seq }
+          : null;
+      } catch {
+        return null;
+      }
+    },
+    save: (value) => {
+      try {
+        localStorage.setItem(STORY_SEEN_KEY, JSON.stringify(value));
+      } catch {
+        /* a blocked store only means a reload may replay a scene */
+      }
+    },
+  },
   getState: game.getState,
   names: episode.names,
   spell: livedPhrase,
@@ -241,6 +262,7 @@ attachLifecycle({
   canvas,
   setPaused: (paused) => {
     freeRoam.setPaused(paused);
+    story.setPaused(paused);
     hudView?.setPaused(paused);
   },
   autosave: () => autosaver.flush(),

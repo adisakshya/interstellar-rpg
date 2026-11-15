@@ -23,6 +23,7 @@ function fake() {
     get autoAdvance() {
       return autoAdvance;
     },
+    setPaused: vi.fn(),
     setAutoAdvance: vi.fn((v: boolean) => {
       autoAdvance = v;
     }),
@@ -86,7 +87,22 @@ describe("subtitle panel (STORY-001)", () => {
     ]);
     skip!.click();
     expect(story.skipAll).toHaveBeenCalled();
-    expect(document.querySelector<HTMLElement>(".irpg-sub")!.hidden).toBe(true);
+    expect(document.querySelector<HTMLElement>(".irpg-sub-line")!.hidden).toBe(true); // only the log button remains
+  });
+
+  it("keeps a log button after the last line, so what was said can still be read between scenes", () => {
+    const story = fake();
+    mountSubtitles(document.body, story);
+    story.set(["Only line."]);
+    document.querySelector<HTMLButtonElement>(".irpg-sub-ctl button")!.click(); // Close
+    const panel = document.querySelector<HTMLElement>(".irpg-sub")!;
+    expect(panel.hidden).toBe(false);
+    const buttons = [...panel.querySelectorAll<HTMLButtonElement>("button")].filter((b) => !b.hidden);
+    expect(buttons.map((b) => b.textContent)).toEqual(["Story log"]);
+    buttons[0]!.click();
+    expect([...document.querySelectorAll(".irpg-sub-log li")].map((li) => li.textContent)).toEqual([
+      "Brand: Only line.",
+    ]);
   });
 
   it("docks in the HUD slot on narrow screens and floats bottom centre on wide ones", () => {

@@ -119,17 +119,25 @@ export function mountSubtitles(root: HTMLElement, story: StorySource, options: S
 
   const paint = () => {
     const line = story.current();
+    const hasLog = story.log().length > 0;
     place();
-    panel.hidden = line === null;
-    if (options.slot) options.slot.hidden = docked !== "slot" || line === null;
-    if (line === null) return;
-    panel.className = `irpg-sub irpg-sub-${line.kind}${docked === "float" ? " irpg-floating" : ""}`;
-    name.textContent = line.name ?? "";
-    name.hidden = line.name === null;
-    text.textContent = line.text;
+    // With no line on screen the panel shrinks to the log button, so what was said can still be read (and what was
+    // skipped can be caught up on) between scenes.
+    panel.hidden = line === null && !hasLog;
+    if (options.slot) options.slot.hidden = docked !== "slot" || panel.hidden;
+    if (panel.hidden) return;
+    const kind = line?.kind ?? "narrator";
+    panel.className = `irpg-sub irpg-sub-${kind}${docked === "float" ? " irpg-floating" : ""}`;
+    lineBox.hidden = line === null;
+    name.textContent = line?.name ?? "";
+    name.hidden = line?.name == null;
+    text.textContent = line?.text ?? "";
+    next.hidden = line === null;
     next.textContent = story.pending() > 0 ? "Continue" : "Close";
-    skip.hidden = story.pending() === 0;
+    skip.hidden = line === null || story.pending() === 0;
+    autoLabel.hidden = line === null;
     auto.checked = story.autoAdvance;
+    logToggle.textContent = line === null ? "Story log" : "Log";
     logToggle.setAttribute("aria-expanded", String(logOpen));
     logList.hidden = !logOpen;
     if (logOpen) {
