@@ -30,6 +30,16 @@ export interface ActivityDef {
   readonly piloting?: boolean;
   /** While piloting, an autopilot assist may take over if the player switches away. */
   readonly assist?: boolean;
+  /** Facts the actor observes when the activity completes (TIMELINES §6 observation). */
+  readonly learns?: readonly FactId[];
+}
+
+/** A communication link between two locations; latency is in seconds of T (TIMELINES §6). */
+export interface LinkDef {
+  readonly a: LocationId;
+  readonly b: LocationId;
+  readonly latency: number;
+  readonly up: boolean;
 }
 
 /** Content-derived tables the time handlers read. */
@@ -37,4 +47,7 @@ export interface TimeTables {
   readonly rates: RateTable;
   readonly decisions?: Readonly<Record<DecisionId, DecisionDef>>;
   readonly activities?: Readonly<Record<string, ActivityDef>>;
+  readonly links?: readonly LinkDef[];
+  /** Fact registry; when given, messages may only carry these facts. */
+  readonly facts?: readonly FactId[];
 }
