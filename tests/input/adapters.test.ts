@@ -75,15 +75,40 @@ describe("keyboard adapter", () => {
     const target = new EventTarget();
     const log: InputAction[] = [];
     createKeyboardAdapter(target, (a) => log.push(a));
-    for (const code of ["KeyE", "Enter", "KeyQ", "Tab", "Digit2"]) target.dispatchEvent(key("keydown", code));
+    for (const code of ["KeyE", "Enter", "KeyQ", "Digit2"]) target.dispatchEvent(key("keydown", code));
     target.dispatchEvent(key("keydown", "KeyE", true));
     expect(log).toEqual([
       { kind: "Interact" },
       { kind: "Interact" },
       { kind: "SwitchNext" },
-      { kind: "SwitchNext" },
       { kind: "SwitchTo", index: 2 },
     ]);
+  });
+
+  it("leaves Tab alone so keyboard focus navigation keeps working", () => {
+    const target = new EventTarget();
+    const log: InputAction[] = [];
+    createKeyboardAdapter(target, (a) => log.push(a));
+    const tab = key("keydown", "Tab");
+    target.dispatchEvent(tab);
+    expect(log).toEqual([]);
+    expect(tab.defaultPrevented).toBe(false);
+  });
+
+  it("lets a focused button handle Enter itself: no second game action", () => {
+    const target = new EventTarget();
+    const log: InputAction[] = [];
+    createKeyboardAdapter(target, (a) => log.push(a));
+    const from = (selectorMatches: string) => ({ closest: (s: string) => (s.includes(selectorMatches) ? {} : null) });
+    const enterOnButton = Object.defineProperty(key("keydown", "Enter"), "target", { value: from("button") });
+    target.dispatchEvent(enterOnButton);
+    expect(log).toEqual([]);
+    // Movement and other shortcuts still work with a button focused (e.g. right after clicking it).
+    target.dispatchEvent(Object.defineProperty(key("keydown", "KeyE"), "target", { value: from("button") }));
+    expect(log).toEqual([{ kind: "Interact" }]);
+    // And text entry owns every key.
+    target.dispatchEvent(Object.defineProperty(key("keydown", "KeyE"), "target", { value: from("input") }));
+    expect(log).toHaveLength(1);
   });
 
   it("stops moving when the window loses focus, and detaches cleanly", () => {
@@ -113,6 +138,38 @@ describe("mouse adapter", () => {
       { kind: "Move", x: 1, y: 0 },
       { kind: "Move", x: 0, y: 0 },
     ]);
+  });
+});
+
+describe("mouse adapter: captured drags cannot get stuck", () => {
+  const dragging = () => {
+    const captured: number[] = [];
+    const target = Object.assign(new EventTarget(), { setPointerCapture: (id: number) => captured.push(id) });
+    const blur = new EventTarget();
+    const log: InputAction[] = [];
+    createMouseAdapter(target, (a) => log.push(a), 90, blur);
+    target.dispatchEvent(pointer("pointerdown", 7, 300, 300, "mouse"));
+    target.dispatchEvent(pointer("pointermove", 7, 390, 300, "mouse"));
+    return { target, blur, log, captured };
+  };
+
+  it("captures the pointer on press", () => {
+    expect(dragging().captured).toEqual([7]);
+  });
+
+  it("stops when capture is lost (release over a button or outside the window)", () => {
+    const { target, log } = dragging();
+    target.dispatchEvent(pointer("lostpointercapture", 7, 0, 0, "mouse"));
+    expect(log.at(-1)).toEqual({ kind: "Move", x: 0, y: 0 });
+  });
+
+  it("stops when the window loses focus, and accepts a new drag afterwards", () => {
+    const { target, blur, log } = dragging();
+    blur.dispatchEvent(new Event("blur"));
+    expect(log.at(-1)).toEqual({ kind: "Move", x: 0, y: 0 });
+    target.dispatchEvent(pointer("pointerdown", 8, 100, 100, "mouse"));
+    target.dispatchEvent(pointer("pointermove", 8, 190, 100, "mouse"));
+    expect(log.at(-1)).toEqual({ kind: "Move", x: 1, y: 0 });
   });
 });
 

@@ -47,7 +47,7 @@ const onAction = (action: InputAction) => {
   if (command) game.dispatch(command);
 };
 createKeyboardAdapter(window, onAction);
-createMouseAdapter(canvas, onAction);
+createMouseAdapter(canvas, onAction, undefined, window);
 const hud = document.getElementById("hud");
 if (hud) createTouchAdapter(mountTouchControls(hud).controls, onAction);
 

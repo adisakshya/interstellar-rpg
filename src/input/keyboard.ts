@@ -13,9 +13,18 @@ const DIRECTIONS: Readonly<Record<string, readonly [number, number]>> = {
 
 type KeyLike = Event & { code: string; repeat?: boolean };
 
+const closest = (target: EventTarget | null, selector: string): boolean => {
+  const el = target as { closest?: (s: string) => unknown } | null;
+  return typeof el?.closest === "function" && el.closest(selector) !== null;
+};
+/** Text entry owns every key. */
+const isTextEntry = (t: EventTarget | null) => closest(t, "input, textarea, select, [contenteditable='true']");
+/** A focused button or link turns Enter into its own click, so the shortcut must not also fire. */
+const activatesOnEnter = (t: EventTarget | null) => closest(t, "button, a[href], summary");
+
 /**
- * Keyboard adapter: WASD / arrows move, E or Enter interacts, Tab or Q switches to the next character, 1–9 pick a
- * roster slot. Returns a function that detaches it. Held keys are tracked, so opposite keys cancel out.
+ * Keyboard adapter: WASD / arrows move, E or Enter interacts, Q switches to the next character, 1–9 pick a roster
+ * slot. Tab is left alone so keyboard focus navigation keeps working (NFR-04). Returns a function that detaches it. Held keys are tracked, so opposite keys cancel out.
  */
 export function createKeyboardAdapter(target: EventTarget, emit: Emit): () => void {
   const held = new Set<string>();
@@ -44,16 +53,17 @@ export function createKeyboardAdapter(target: EventTarget, emit: Emit): () => vo
 
   const onDown = (event: Event) => {
     const e = event as KeyLike;
+    if (isTextEntry(event.target)) return;
     if (e.code in DIRECTIONS) {
       held.add(e.code);
       moveFromHeld();
     } else if (e.repeat) {
       return; // holding an action key does not repeat it
+    } else if (e.code === "Enter" && activatesOnEnter(event.target)) {
+      return; // the focused control handles Enter itself: one press, one action
     } else if (e.code === "KeyE" || e.code === "Enter") emit({ kind: "Interact" });
-    else if (e.code === "Tab" || e.code === "KeyQ") {
-      emit({ kind: "SwitchNext" });
-      event.preventDefault();
-    } else if (/^Digit[1-9]$/.test(e.code)) emit({ kind: "SwitchTo", index: Number(e.code.slice(5)) });
+    else if (e.code === "KeyQ") emit({ kind: "SwitchNext" });
+    else if (/^Digit[1-9]$/.test(e.code)) emit({ kind: "SwitchTo", index: Number(e.code.slice(5)) });
   };
   const onUp = (event: Event) => {
     const e = event as KeyLike;
