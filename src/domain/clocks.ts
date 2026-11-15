@@ -1,7 +1,7 @@
 import type { DecisionForecast, EventDraft } from "./commands";
 import type { CheckpointCapture, Forecaster, HandlerMap, HandlerOutcome } from "./engine";
 import type { CharacterId, DecisionId, LocationId } from "./ids";
-import type { DecisionDef, DecisionEffect, TimeTables } from "./rules";
+import type { ActivityDef, DecisionDef, DecisionEffect, TimeTables } from "./rules";
 import type { CharacterState, GameState } from "./state";
 
 export type { RateTable } from "./rules";
@@ -26,6 +26,9 @@ function clocksAt(
   }
   return { ...current, T, characters };
 }
+
+const isAtomic = (def: ActivityDef | undefined) =>
+  (def?.atomic ?? false) || (def?.piloting === true && def.assist !== true);
 
 const isOpen = (state: GameState, def: DecisionDef) => state.decisions[def.id]?.status !== "resolved";
 
@@ -154,7 +157,9 @@ export function createClockHandlers(
     AdvanceTime: (state, command) =>
       advance(state, command.actorId, command.dTau, {
         id: command.activityId,
-        atomic: tables.activities?.[command.activityId]?.atomic ?? false,
+        // A flight with no assist can't be left mid-air: it must never stop part-way at a deadline, or the
+        // player could not switch to the decision's owner (switching away is locked). So it runs atomically.
+        atomic: isAtomic(tables.activities?.[command.activityId]),
       }),
     FreeRoamTick: (state, command) => advance(state, command.actorId, command.dTau, null),
 

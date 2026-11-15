@@ -26,6 +26,10 @@ export interface DecisionDef {
 /** Activity flags from content. Activities not listed are interruptible (TIMELINES §3 default). */
 export interface ActivityDef {
   readonly atomic: boolean;
+  /** The actor is flying (TIMELINES §4 piloting hand-off). */
+  readonly piloting?: boolean;
+  /** While piloting, an autopilot assist may take over if the player switches away. */
+  readonly assist?: boolean;
 }
 
 /** Content-derived tables the time handlers read. */
