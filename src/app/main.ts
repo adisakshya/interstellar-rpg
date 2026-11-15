@@ -1,5 +1,6 @@
 import { Engine } from "@babylonjs/core/Engines/engine";
 import m1 from "../content/episodes/m1.json";
+import assetLedger from "../../docs/ASSETS.md?raw";
 import { loadEpisode } from "../content";
 import { createEngine, createInitialState, createRules, type Command, type DomainEvent, type Result } from "../domain";
 import {
@@ -11,7 +12,16 @@ import {
 } from "../input";
 import { IndexedDbBackend, MemoryBackend, SaveSlots, stateHash } from "../persistence";
 import { createAdaptiveScaler, createRenderer, detectTier, scalingLevel, TIERS, waveScheduleOf } from "../render";
-import { buildHudModel, isFinished, livedPhrase, mountHud, mountNotice, mountSubtitles } from "../ui";
+import {
+  buildHudModel,
+  isFinished,
+  livedPhrase,
+  mountHud,
+  mountNotice,
+  mountSubtitles,
+  mountTitle,
+  parseCredits,
+} from "../ui";
 import { actionToCommand } from "./actions";
 import { watchEnding } from "./ending";
 import { offerFor } from "./interactions";
@@ -95,8 +105,8 @@ renderer.attach(game);
 // everything else is a domain command with a fresh id per player action.
 const interactions = episode.interactions;
 const onAction = (action: InputAction) => {
-  // Once the episode is over the outcome dialog owns the screen; keys pressed behind it do nothing.
-  if (isFinished(game.getState(), episode.ending)) return;
+  // While the title screen is up, and once the episode is over (the outcome dialog), keys pressed behind them do nothing.
+  if (titleOpen || isFinished(game.getState(), episode.ending)) return;
   if (action.kind === "Move") {
     renderer.setMove(action.x, action.y);
     return;
@@ -156,6 +166,10 @@ const story = createStory({
   },
 });
 game.subscribe(() => story.observe());
+// The title screen (FAN-001) holds the story and free-roam until the player chooses.
+let titleOpen = false;
+let lifecyclePaused = false;
+const syncStoryPause = () => story.setPaused(lifecyclePaused || titleOpen);
 const hud = document.getElementById("hud");
 let hudView: ReturnType<typeof mountHud> | null = null;
 if (hud) {
@@ -192,7 +206,7 @@ const freeRoam = createFreeRoam({
   newId: () => crypto.randomUUID(),
   ownerOf: (id) => episode.tables.decisions?.[id]?.owner,
   halted: () => isFinished(game.getState(), episode.ending),
-  holding: () => hud !== null && story.current() !== null,
+  holding: () => titleOpen || (hud !== null && story.current() !== null),
 });
 const baseLevel = scalingLevel(tier, devicePixelRatio);
 const scaler = createAdaptiveScaler(baseLevel, { min: baseLevel, max: baseLevel + 1 });
@@ -262,12 +276,31 @@ attachLifecycle({
   canvas,
   setPaused: (paused) => {
     freeRoam.setPaused(paused);
-    story.setPaused(paused);
+    lifecyclePaused = paused;
+    syncStoryPause();
     hudView?.setPaused(paused);
   },
   autosave: () => autosaver.flush(),
   rebuildScene: () => renderer.rebuild(),
 });
+
+// The title screen (FAN-001, D-21): the fan-project notice is seen before play starts. It is skipped for an explicit
+// new game (`?fresh`, from the outcome screen) and for the test hook (`?debug`, unless it also asks for `&title`).
+if ((!fresh && !params.has("debug")) || params.has("title")) {
+  titleOpen = true;
+  syncStoryPause();
+  const close = () => {
+    titleOpen = false;
+    syncStoryPause();
+  };
+  mountTitle(document.body, {
+    hasSave: startup.kind === "resumed",
+    credits: parseCredits(assetLedger),
+    behind: [canvas, ...(hud ? [hud] : [])],
+    onContinue: close,
+    onNewGame: () => (startup.kind === "resumed" ? location.assign(`${location.pathname}?fresh`) : close()),
+  });
+}
 
 // Test hook for Playwright and screenshots only (`?debug`); not a game feature. `?debug&frozen` also stops real-time
 // free-roam from the start, so a scripted run issues exactly the commands it sends and nothing else (QA-001).

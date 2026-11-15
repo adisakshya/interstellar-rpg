@@ -13,3 +13,7 @@ export { mountOutcome } from "./outcomeView";
 export type { OutcomeAction, OutcomeView } from "./outcomeView";
 export { mountSubtitles } from "./subtitles";
 export type { StorySource, SubtitleOptions, Subtitles } from "./subtitles";
+export { parseCredits } from "./credits";
+export type { CreditRow } from "./credits";
+export { FAN_NOTICE, mountTitle } from "./title";
+export type { Title, TitleOptions } from "./title";
