@@ -30,6 +30,11 @@ Places: `loc.endurance` (rate 1), `loc.ranger` (transit routes), `loc.miller_sur
 
 ## 4. Beat sheet (M1)
 
+> **As built (SLICE-001):** the playable slice covers B3, B4, B7, B8, B10 and B12 in simplified form (scan, search, the
+> choice at the wave, lift-off, outcome). See [evidence/slice-001/README.md](evidence/slice-001/README.md) for what was
+> kept, what was cut and why. The table below is the full M1 target.
+
+
 | # | Controlling | What happens | Decision | Clock impact (placeholder) | What persists |
 | --- | --- | --- | --- | --- | --- |
 | B1 | Cooper | Ranger cockpit above Miller; brief on fuel, Romilly's supplies, wave risk | **`decision.descent`**: *direct* (12 min, heavy fuel) or *efficient* (25 min, light fuel) | Transit table, tuned | `res.ranger_fuel` |

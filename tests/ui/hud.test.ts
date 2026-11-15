@@ -22,6 +22,7 @@ const model = (over: Partial<HudModel> = {}): HudModel => ({
   controlledName: "Cooper",
   reference: "21.0 y",
   referenceSpoken: "21.0 years",
+  action: null,
   prompts: [],
   waiting: [],
   ...over,
@@ -48,7 +49,7 @@ afterEach(() => {
 function setup() {
   const root = document.createElement("div");
   document.body.append(root);
-  const handlers = { onSwitch: vi.fn(), onResolve: vi.fn() } satisfies HudHandlers;
+  const handlers = { onSwitch: vi.fn(), onResolve: vi.fn(), onAct: vi.fn() } satisfies HudHandlers;
   hud = mountHud(root, handlers);
   return { root, handlers };
 }
@@ -194,6 +195,9 @@ describe("decision prompts", () => {
     expect(live(root)).toBe(announced);
     hud!.update(model({ prompts: [prompt({ deadline: null, deadlineSpoken: null })] }));
     expect(box.textContent).not.toContain("Deadline");
+    expect(box.textContent).toContain("Time is held until you choose.");
+    hud!.update(model({ prompts: [prompt({ hard: false, deadline: null, deadlineSpoken: null })] }));
+    expect(box.querySelector<HTMLElement>(".irpg-note")!.hidden).toBe(true);
   });
 
   it("tells the player who the game is waiting on, and announces it once", () => {
@@ -209,6 +213,43 @@ describe("decision prompts", () => {
     hud!.update(model({ waiting }));
     hud!.update(model());
     expect(note.hidden).toBe(true);
+  });
+});
+
+describe("the offered action", () => {
+  const action = {
+    label: "Scan the beacon",
+    cost: "10 m for you · Romilly +1.1 y",
+    costSpoken: "costs 10 minutes of your time",
+  };
+
+  it("appears as a button with its cost in text and in the accessible name, and acts on click", () => {
+    const { root, handlers } = setup();
+    hud!.update(model());
+    const panel = root.querySelector('section[aria-labelledby="irpg-act-h"]') as HTMLElement;
+    expect(panel.hidden).toBe(true);
+    hud!.update(model({ action }));
+    expect(panel.hidden).toBe(false);
+    const button = panel.querySelector("button")!;
+    expect(button.textContent).toContain("Scan the beacon");
+    expect(button.textContent).toContain("Romilly +1.1 y");
+    expect(button.getAttribute("aria-label")).toBe("Scan the beacon, costs 10 minutes of your time");
+    expect(button.getAttribute("aria-keyshortcuts")).toBe("E");
+    button.click();
+    expect(handlers.onAct).toHaveBeenCalledTimes(1);
+  });
+
+  it("repaints in place as the cost changes, keeping keyboard focus, and goes away when there is no action", () => {
+    const { root } = setup();
+    hud!.update(model({ action }));
+    const button = root.querySelector<HTMLButtonElement>('section[aria-labelledby="irpg-act-h"] button')!;
+    button.focus();
+    hud!.update(model({ action: { ...action, cost: "10 m for you · Romilly +2.3 y" } }));
+    expect(root.querySelector('section[aria-labelledby="irpg-act-h"] button')).toBe(button);
+    expect(document.activeElement).toBe(button);
+    expect(button.textContent).toContain("+2.3 y");
+    hud!.update(model());
+    expect((root.querySelector('section[aria-labelledby="irpg-act-h"]') as HTMLElement).hidden).toBe(true);
   });
 });
 

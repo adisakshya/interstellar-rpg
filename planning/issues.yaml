@@ -568,7 +568,7 @@ issues:
     milestone: M1
     epic: EPIC-M1
     agent: codex
-    status: blocked
+    status: done
     size: L
     review_effort: 2h
     requirements: [C-05, C-06, C-07, C-08, D-01, D-02, FR-13]

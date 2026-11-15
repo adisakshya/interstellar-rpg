@@ -25,7 +25,9 @@ function clocksAt(
   const dT = T - start.T;
   const characters: Record<CharacterId, CharacterState> = {};
   for (const [id, c] of Object.entries(start.characters) as [CharacterId, CharacterState][]) {
-    characters[id] = { ...c, tau: id === actorId ? actorTau : c.tau + rateOf(c.location) * dT };
+    // The dead stop living: their clock keeps the time they had when they died.
+    const tau = id === actorId ? actorTau : c.unavailable === "DEAD" ? c.tau : c.tau + rateOf(c.location) * dT;
+    characters[id] = { ...c, tau };
   }
   return { ...current, T, characters, resources: resourcesAt(start, tables, T, rateOf) };
 }
@@ -39,10 +41,18 @@ function effectsOf(state: GameState, def: DecisionDef, optionId: string): { stat
   const events: EventDraft[] = [];
   let s = state;
   for (const effect of def.options[optionId] ?? ([] as readonly DecisionEffect[])) {
-    if (effect.kind === "SetAvailability") {
+    if (effect.kind === "SpendTime") {
+      continue; // time passes after every effect has applied (see ResolveDecision)
+    } else if (effect.kind === "SetAvailability") {
       const c = s.characters[effect.characterId];
       if (!c) continue;
-      s = { ...s, characters: { ...s.characters, [c.id]: { ...c, unavailable: effect.reason } } };
+      s = {
+        ...s,
+        characters: {
+          ...s.characters,
+          [c.id]: { ...c, unavailable: effect.reason, ...(effect.cause === undefined ? {} : { cause: effect.cause }) },
+        },
+      };
       events.push({ kind: "AvailabilityChanged", T: s.T, characterId: c.id, reason: effect.reason });
     } else {
       const out = learn(s, effect.characterId, effect.factId);
@@ -237,7 +247,27 @@ export function createClockHandlers(
       s = { ...s, decisions: { ...s.decisions, [def.id]: { status: "resolved", optionId: command.optionId } } };
       events.push({ kind: "DecisionResolved", T: s.T, decisionId: def.id, optionId: command.optionId });
       const effects = effectsOf(s, def, command.optionId);
-      return { kind: "commit", state: effects.state, events: [...events, ...effects.events], checkpoints };
+      const committed = { state: effects.state, events: [...events, ...effects.events], checkpoints };
+      // The choice's own time cost runs through the ordinary clock rules, so a deadline or another decision that
+      // falls inside it is handled exactly as for any activity. Anything that stops it stops the whole choice.
+      let interruptedBy: DecisionId | undefined;
+      for (const effect of def.options[command.optionId] ?? []) {
+        if (effect.kind !== "SpendTime") continue;
+        const out = advance(committed.state, effect.characterId, effect.dTau, null);
+        if (out.kind !== "commit") return out;
+        const offset = committed.events.length;
+        committed.state = out.state;
+        committed.events = [...committed.events, ...out.events];
+        committed.checkpoints = [
+          ...committed.checkpoints,
+          ...(out.checkpoints ?? []).map((c) => ({ ...c, afterEvents: c.afterEvents + offset })),
+        ];
+        interruptedBy = out.interruptedBy;
+        if (interruptedBy !== undefined) break;
+      }
+      return interruptedBy === undefined
+        ? { kind: "commit", ...committed }
+        : { kind: "commit", ...committed, interruptedBy };
     },
   };
 }

@@ -17,7 +17,13 @@ const reason = z.enum([
   "CONTROLLED_BY_OTHER",
 ]);
 const effect = z.discriminatedUnion("kind", [
-  z.strictObject({ kind: z.literal("SetAvailability"), characterId: charId, reason: reason.nullable() }),
+  z.strictObject({
+    kind: z.literal("SetAvailability"),
+    characterId: charId,
+    reason: reason.nullable(),
+    cause: z.string().min(1).optional(),
+  }),
+  z.strictObject({ kind: z.literal("SpendTime"), characterId: charId, dTau: z.number().finite().positive() }),
   z.strictObject({ kind: z.literal("LearnFact"), characterId: charId, factId }),
 ]);
 const level = z.strictObject({ resourceId: resId, atOrBelow: z.number().finite().nonnegative() });
@@ -77,6 +83,28 @@ export const episodeSchema = z.strictObject({
       note: z.string().optional(),
     }),
   ),
+  /**
+   * What Interact does at a place (SLICE-001). The first entry whose place matches and whose conditions hold for the
+   * controlled character is offered: `requires`/`unless` are facts that character knows, `after` lists decisions
+   * that must be resolved and `before` decisions that must not have been raised yet.
+   */
+  interactions: z.array(
+    z.strictObject({
+      id: z.string().startsWith("act."),
+      location: locId,
+      label: z.string().min(1),
+      activityId: z.string().min(1),
+      dTau: z.number().finite().positive(),
+      requires: z.array(factId).optional(),
+      unless: z.array(factId).optional(),
+      after: z.array(decisionId).optional(),
+      before: z.array(decisionId).optional(),
+    }),
+  ),
+  /** The episode ends when this character learns this fact; the outcome screen opens (SLICE-001). */
+  ending: z.strictObject({ fact: factId, knownBy: charId }),
+  /** One plain-language line per consequential choice, shown on the outcome screen when that option was taken. */
+  outcomeNotes: z.array(z.strictObject({ decision: decisionId, option: z.string().min(1), text: z.string().min(1) })),
   beats: z.array(
     z.strictObject({
       id: z.string().startsWith("beat."),

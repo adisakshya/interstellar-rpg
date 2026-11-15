@@ -319,3 +319,85 @@ describe("forecast through the engine", () => {
     expect(engine.forecast(asId("decision", "decision.unknown"))).toBeNull();
   });
 });
+
+describe("a choice that costs its owner time (SpendTime)", () => {
+  const dWave = asId("decision", "decision.wave");
+  const dLater = asId("decision", "decision.later");
+  const doyle = asId("char", "char.doyle");
+  const WAVE: DecisionDef = {
+    id: dWave,
+    owner: cooper,
+    triggerT: 1 * YEAR,
+    deadlineT: 2 * YEAR,
+    checkpoint: true,
+    options: {
+      leave: [],
+      stay: [
+        { kind: "SetAvailability", characterId: doyle, reason: "DEAD", cause: "wave" },
+        { kind: "SpendTime", characterId: cooper, dTau: H },
+      ],
+    },
+  };
+  const LATER: DecisionDef = { ...D_SOFT, id: dLater, triggerT: 3 * YEAR };
+  const withDoyle = (): GameState => {
+    const s = start();
+    return {
+      ...s,
+      characters: {
+        ...s.characters,
+        [doyle]: { id: doyle, tau: 0, location: LOCATIONS.millerSurface, unavailable: null },
+      },
+    };
+  };
+  const h = createHandlers(tables(false, [WAVE, LATER]));
+
+  it("moves the clocks for everyone and records why a character died", () => {
+    const base = apply(withDoyle(), resolve("r0", dWave, "stay"), h);
+    const r = committed(base.result);
+    expect(r.kind).toBe("Ok");
+    // One hour of Cooper's time on Miller is 61 362 hours of reference time, so Romilly waits 7 years.
+    near(base.state.T, H * 61362, 1);
+    near(base.state.characters[cooper]!.tau, H, 1e-6);
+    near(base.state.characters[romilly]!.tau, H * 61362, 1);
+    expect(base.state.characters[doyle]).toMatchObject({ unavailable: "DEAD", cause: "wave" });
+    // Later decisions that fall inside the hour trigger on the way, in the same commit.
+    expect(base.state.decisions[dLater]?.status).toBe("pending");
+    const kinds = r.events.map((e) => e.kind);
+    expect(kinds.indexOf("DecisionResolved")).toBeLessThan(kinds.indexOf("ClockAdvanced"));
+  });
+
+  it("costs nothing when the other option is chosen", () => {
+    const out = apply(withDoyle(), resolve("r0", dWave, "leave"), h);
+    expect(out.state.T).toBe(0);
+    expect(out.state.characters[doyle]).toMatchObject({ unavailable: null });
+  });
+
+  it("keeps the checkpoint ordering when the spend opens a checkpointed decision", () => {
+    const lateHard: DecisionDef = { ...D_HIB, id: dHib, owner: cooper, triggerT: 3 * YEAR, deadlineT: null };
+    const hh = createHandlers(tables(false, [WAVE, lateHard]));
+    const out = apply(withDoyle(), resolve("r0", dWave, "stay"), hh);
+    const r = committed(out.result);
+    expect(r.checkpoints.map((c) => c.decisionId)).toEqual([dWave, dHib]);
+    // Each snapshot's seq lands inside its own command's event range, in order.
+    expect(r.checkpoints[0]!.state.seq).toBeLessThan(r.checkpoints[1]!.state.seq);
+    expect(r.checkpoints[1]!.state.decisions[dHib]?.status).toBe("pending");
+  });
+
+  it("stops at a hard deadline inside the spend, like any activity", () => {
+    const wall: DecisionDef = { ...D_HIB, id: dHib, owner: cooper, triggerT: 2.5 * YEAR, deadlineT: 3 * YEAR };
+    const hh = createHandlers(tables(false, [WAVE, wall]));
+    const out = apply(withDoyle(), resolve("r0", dWave, "stay"), hh);
+    expect(committed(out.result)).toMatchObject({ kind: "Interrupted", decisionId: dHib });
+    expect(out.state.T).toBe(3 * YEAR);
+  });
+
+  it("is all-or-nothing: if the time cannot pass, the choice is not recorded", () => {
+    // A hard decision already held at its deadline blocks any time from passing, so the whole resolve is blocked.
+    const held: DecisionDef = { ...D_HIB, id: dHib, owner: cooper, triggerT: 0, deadlineT: 0 };
+    const hh = createHandlers(tables(false, [WAVE, held]));
+    const s: GameState = { ...withDoyle(), decisions: { [dHib]: { status: "pending", optionId: null } } };
+    const out = apply(s, resolve("r0", dWave, "stay"), hh);
+    expect(out.result.kind).toBe("Blocked");
+    expect(out.state).toBe(s);
+  });
+});
