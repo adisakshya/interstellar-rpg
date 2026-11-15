@@ -2,7 +2,15 @@ import { Engine } from "@babylonjs/core/Engines/engine";
 import m1 from "../content/episodes/m1.json";
 import { loadEpisode } from "../content";
 import { createEngine, createInitialState, createRules } from "../domain";
+import {
+  createKeyboardAdapter,
+  createMouseAdapter,
+  createTouchAdapter,
+  mountTouchControls,
+  type InputAction,
+} from "../input";
 import { createRenderer, detectTier, scalingLevel, TIERS } from "../render";
+import { actionToCommand, type Interaction } from "./actions";
 
 // Composition root (ARCHITECTURE §2): content → domain engine → renderer. Input and HUD arrive in INPUT-001/UI-001.
 const canvas = document.getElementById("game");
@@ -20,10 +28,33 @@ engine.setHardwareScalingLevel(scalingLevel(tier, devicePixelRatio));
 const renderer = createRenderer(engine, { tier, fade: { set: (o) => (fade.style.opacity = String(o)) } });
 renderer.attach(game);
 
+// Input → actions → commands. Movement is presentation only (free-roam ticks come with the frame loop, PERF-001);
+// everything else is a domain command with a fresh id per player action.
+const interactions: Record<string, Interaction> = {
+  // M1 placeholder: one beacon scan. SLICE-001 replaces this table with the authored beats.
+  "loc.miller_surface": { activityId: "scan.beacon", dTau: 600 },
+};
+const onAction = (action: InputAction) => {
+  if (action.kind === "Move") {
+    renderer.setMove(action.x, action.y);
+    return;
+  }
+  const command = actionToCommand(action, game.getState(), {
+    newId: () => crypto.randomUUID(),
+    interactions,
+    activities: episode.tables.activities,
+  });
+  if (command) game.dispatch(command);
+};
+createKeyboardAdapter(window, onAction);
+createMouseAdapter(canvas, onAction);
+const hud = document.getElementById("hud");
+if (hud) createTouchAdapter(mountTouchControls(hud).controls, onAction);
+
 engine.runRenderLoop(() => renderer.render());
 window.addEventListener("resize", () => engine.resize());
 
 // Test hook for Playwright and screenshots only (`?debug`); not a game feature.
 if (new URLSearchParams(location.search).has("debug")) {
-  (window as unknown as { __irpg: unknown }).__irpg = { game, renderer, tier };
+  (window as unknown as { __irpg: unknown }).__irpg = { game, renderer, tier, onAction };
 }

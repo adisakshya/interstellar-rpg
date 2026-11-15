@@ -504,8 +504,8 @@ issues:
     priority: P0
     milestone: M1
     epic: EPIC-M1
-    agent: codex
-    status: blocked
+    agent: claude-code  # taken over 2026-11-15: Codex had no environment for this repo
+    status: done
     size: M
     review_effort: 0.5h
     requirements: [C-10, FR-12]
