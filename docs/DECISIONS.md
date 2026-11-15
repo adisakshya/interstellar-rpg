@@ -32,6 +32,9 @@ C-01 – C-15 are confirmed in [PROJECT_BRIEF.md §2](PROJECT_BRIEF.md). Do not 
 | D-20 | Story and dialogue **follow the film's Miller sequence in events, characters and tone, in original wording** (no verbatim film lines). Claude drafts; the creator reviews before merge. | Creator pop-ups, 2026-11-15 | STORY-001 |
 | D-21 | The game is an **unofficial, non-commercial fan project** with a clear "not affiliated" notice; it is never monetised and ships no film footage, stills, score or logos. | Creator pop-up, 2026-11-15 | FAN-001, release |
 | D-22 | Art review order: **a mood board (reference page plus an in-engine lighting test) first, then one fully dressed scene (Miller's surface)**, signed off before the other scenes are dressed. | Creator pop-up, 2026-11-15 | ART-001, SCENE-002 |
+| D-23 | **Download budgets approved as proposed** (ART_DIRECTION §8): Miller 6 MB, cockpit 3, Endurance 3, Gargantua sky 1 MB `low` / 3 MB `high`, first load under 15 MB, whole episode under 75 MB. | Creator pop-up, 2026-11-15 | All scene and asset work |
+| D-24 | **Overnight autonomy (2026-11-15):** the creator will not be reviewing. PRs merge after two Codex review rounds, green CI and the author's own review, including creative ones (art, dialogue). Each is marked *creator review pending* and listed for the morning; changes the creator asks for land as follow-up PRs. Master stays shippable: every merge must leave the live site loading and playable, and a merge that breaks it is reverted at once. No subagents. If Codex or the usage limit is hit, wait about an hour and continue. | Creator pop-up and message, 2026-11-15 | Process |
+| D-25 | **Network hosts added** to the session environment for free asset sites (Poly Haven, ambientCG, Quaternius, Kenney, OpenGameArt, freesound, jsDelivr, unpkg). Only CC0 or similarly free-licensed files may be used, each recorded in `docs/ASSETS.md`. | Creator approval prompt, 2026-11-15 | D-17 |
 
 ## Proposed (not approved)
 

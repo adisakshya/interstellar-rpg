@@ -1,7 +1,7 @@
 # Art Direction
 
-Status: **Draft for creator approval** (ART-001). Decisions it rests on: D-14 to D-21 in [DECISIONS.md](DECISIONS.md).
-Requirements: FR-20 to FR-25 in [PRD.md](PRD.md). Budgets marked *Proposed* need approval before they bind.
+Status: **Approved in principle by the creator (D-14 to D-23); creator review of the finished look is pending** (ART-001). Decisions it rests on: D-14 to D-21 in [DECISIONS.md](DECISIONS.md).
+Requirements: FR-20 to FR-25 in [PRD.md](PRD.md). The download budgets were approved as D-23.
 
 ## 1. The look in one line
 
@@ -73,7 +73,7 @@ rendering approximation, as PHYSICS §1 already says.
   Quaternius and Kenney for models), plus procedural geometry and textures generated in code. No AI-generated assets.
 - **Formats:** GLB with meshopt or Draco; KTX2 (Basis) textures, 1K on `low`, 2K on `high`; audio as Opus/AAC.
 - **Record:** `docs/ASSETS.md` lists every file: path, source URL, author, licence, changes made.
-- **Per-scene budgets (compressed, *Proposed*):** Miller 6 MB, cockpit 3 MB, Endurance 3 MB, Gargantua sky 1 MB
+- **Per-scene budgets (compressed, approved as D-23):** Miller 6 MB, cockpit 3 MB, Endurance 3 MB, Gargantua sky 1 MB
   (`low`) / 3 MB (`high`), tick and UI sounds 0.2 MB. That keeps the first scene plus the shell under 15 MB.
 - **Quality tiers:** `low` has baked lighting, no post-processing, opaque water with a cheap normal map and fog. `high`
   adds ACES tone mapping, mild bloom on the disk and lamps, screen-space reflections on water where affordable, and a
