@@ -41,6 +41,8 @@ export function skippedDays(prev: GameState, next: GameState, watcherId: Charact
 /** Where a click goes. The browser implementation is in `synth.ts`; tests use a recorder. */
 export interface ClickSink {
   now(): number;
+  /** Silence or restore everything already queued, not just later clicks. Optional: a sink with no queue ignores it. */
+  mute?(muted: boolean): void;
   /** A short click at `at` (sink clock, seconds). `pitch` 1 is the base tone; `gain` is 0..1. */
   click(at: number, pitch: number, gain: number): void;
 }
@@ -68,6 +70,8 @@ export interface Ticker {
 /** Longest run, so a decade-long skip does not drone: the day count is shown as text instead. */
 export const MAX_RUN_TICKS = 24;
 const LOOKAHEAD = 0.25;
+/** How far behind the audio clock a beat may fall before it is dropped. */
+const LATE = 0.5;
 const POLL_MS = 100;
 
 /**
@@ -95,6 +99,9 @@ export function createTicker(options: TickerOptions): Ticker {
       next = null;
     } else {
       next ??= Math.max(now, holdUntil) + interval;
+      // After a stall (a hidden tab, a blocked thread) the beat is behind the clock. Those days were never simulated
+      // (free-roam caps a frame at 250 ms), so the missed beats are dropped, not replayed as a burst.
+      if (next < now - LATE) next = now + interval;
       while (next < now + LOOKAHEAD) {
         emit(next, 1, 0.5);
         next += interval;

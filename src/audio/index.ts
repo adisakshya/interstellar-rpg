@@ -40,7 +40,11 @@ export function createAudio(options: AudioOptions): GameAudio {
     now: () => performance.now() / 1000,
     click: () => undefined, // before the first gesture the beat still runs, so the visual cue works
   };
-  const sink: ClickSink = { now: () => current.now(), click: (at, p, g) => current.click(at, p, g) };
+  const sink: ClickSink = {
+    now: () => current.now(),
+    click: (at, p, g) => current.click(at, p, g),
+    mute: (muted) => current.mute?.(muted),
+  };
   const ticker = createTicker({
     sink,
     interval: () => tickIntervalSeconds(options.getState(), options.rates, options.watcher),
@@ -73,6 +77,7 @@ export function createAudio(options: AudioOptions): GameAudio {
       if (!ctx) return;
       void (ctx as unknown as { resume?: () => Promise<void> }).resume?.();
       current = createClickSink(ctx);
+      current.mute?.(!enabled);
       ticker.stop();
       ticker.start();
     },
@@ -81,6 +86,7 @@ export function createAudio(options: AudioOptions): GameAudio {
     },
     setEnabled(value) {
       enabled = value;
+      current.mute?.(!value); // also silences what is already queued
       options.preference?.set(value);
     },
     observe(state) {

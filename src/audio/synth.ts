@@ -41,14 +41,21 @@ export function createClickSink(ctx: AudioContextLike): ClickSink {
     seed = (seed * 1664525 + 1013904223) >>> 0;
     data[i] = ((seed / 0xffffffff) * 2 - 1) * (1 - i / data.length);
   }
+  // Every click goes through one master gain, so muting silences clicks that are already queued, such as the rest of a run.
+  const master = ctx.createGain();
+  master.gain.value = 1;
+  master.connect(ctx.destination);
   return {
     now: () => ctx.currentTime,
+    mute(muted) {
+      master.gain.value = muted ? 0 : 1;
+    },
     click(at, pitch, gain) {
       const out = ctx.createGain();
       out.gain.setValueAtTime(0.0001, at);
       out.gain.exponentialRampToValueAtTime(Math.max(gain, 0.001) * 0.35, at + 0.003);
       out.gain.exponentialRampToValueAtTime(0.0001, at + 0.07);
-      out.connect(ctx.destination);
+      out.connect(master);
 
       const tone = ctx.createOscillator();
       tone.type = "sine";

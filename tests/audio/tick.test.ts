@@ -141,6 +141,98 @@ describe("the ticker", () => {
   });
 });
 
+describe("stalls and muting", () => {
+  it("drops the beats missed during a stall instead of replaying them as a burst", () => {
+    let now = 0;
+    const clicks: number[] = [];
+    const timers: { run: () => void; live: boolean }[] = [];
+    const ticker = createTicker({
+      sink: { now: () => now, click: (at) => clicks.push(at) },
+      interval: () => 1.5,
+      active: () => true,
+      enabled: () => true,
+      setTimer: (run) => {
+        const t = { run, live: true };
+        timers.push(t);
+        return t;
+      },
+      clearTimer: (h) => {
+        (h as { live: boolean }).live = false;
+      },
+    });
+    ticker.start();
+    now = 30; // the thread was blocked for 30 s
+    timers
+      .filter((t) => t.live)
+      .pop()!
+      .run();
+    expect(clicks.length).toBeLessThanOrEqual(1); // not 20 overdue clicks at once
+    expect(clicks.every((c) => c >= 30)).toBe(true);
+  });
+
+  it("silences clicks that are already queued when sound is switched off", () => {
+    const game = fresh();
+    const muted: boolean[] = [];
+    let ctxGain = 1;
+    const base = ((): AudioContextLike => {
+      const param = () => ({
+        value: 0,
+        setValueAtTime: () => undefined,
+        exponentialRampToValueAtTime: () => undefined,
+      });
+      return {
+        currentTime: 0,
+        destination: {},
+        sampleRate: 8000,
+        createGain: () => {
+          const g = { gain: param(), connect: () => undefined };
+          return new Proxy(g, {
+            get(t, k) {
+              if (k === "gain") {
+                return new Proxy(t.gain, {
+                  set(o, key, v) {
+                    if (key === "value") {
+                      ctxGain = v as number;
+                      muted.push(v === 0);
+                    }
+                    (o as Record<string, unknown>)[key as string] = v;
+                    return true;
+                  },
+                });
+              }
+              return (t as Record<string | symbol, unknown>)[k];
+            },
+          });
+        },
+        createOscillator: () => ({
+          type: "",
+          frequency: { value: 0 },
+          connect: () => undefined,
+          start: () => undefined,
+          stop: () => undefined,
+        }),
+        createBuffer: (_c, length) => ({ getChannelData: () => new Float32Array(length) }),
+        createBufferSource: () => ({ buffer: null, connect: () => undefined, start: () => undefined }),
+        createBiquadFilter: () => ({ type: "", frequency: { value: 0 }, Q: { value: 0 }, connect: () => undefined }),
+      };
+    })();
+    const audio = createAudio({
+      getState: game.getState,
+      rates,
+      watcher: ROMILLY,
+      active: () => false,
+      createContext: () => base,
+    });
+    audio.unlock();
+    audio.setEnabled(false);
+    expect(ctxGain).toBe(0); // the master gain drops, so queued clicks go quiet too
+    audio.setEnabled(true);
+    expect(ctxGain).toBe(1);
+    expect(muted).toContain(true);
+    audio.dispose();
+  });
+});
+
 describe("the audio controller", () => {
   const fakeContext = () => {
     const calls: string[] = [];
