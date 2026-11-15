@@ -136,7 +136,7 @@ issues:
     milestone: M0
     epic: EPIC-M0
     agent: claude-code
-    status: ready
+    status: review
     size: L
     review_effort: 2h
     requirements: [C-01, C-02, C-07, C-08, D-01, D-02, D-03, P-01, P-02]

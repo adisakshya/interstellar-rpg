@@ -28,7 +28,7 @@ C-01 – C-15 are confirmed in [PROJECT_BRIEF.md §2](PROJECT_BRIEF.md). Do not 
 | ID | Proposal | Owner | Approve before |
 | --- | --- | --- | --- |
 | P-01 | Episode working title "The Cost of Staying", 15–25 min, two outcomes. | Creator | M0 gate (DOCS-007) |
-| P-02 | Progression staging: knowledge in M1; relationships + knowledge depth in M2; skills + equipment in M2/M4 per GDD. Staging is a scheduling proposal; all four remain in scope (D-03). | Creator | DOCS-004 |
+| P-02 | Progression staging: knowledge/evidence and resources in M1; minimal trust (Brand, Romilly) in M1, deepened in M2; skills in M2; equipment in M4. All four remain in scope (D-03). See [GDD.md §7](GDD.md). | Creator | DOCS-004 review |
 | P-03 | Budgets: 30 FPS phone / 60 FPS desktop; ≤15 MB initial, ≤75 MB episode (compressed). | Creator | DOCS-005 |
 | P-04 | Local versioned saves with export/import (checkpoint policy now confirmed as D-08). | Creator | SAVE-001 |
 | P-07 | Endurance parks at `r = 100 M`, so Romilly's clock is within 1.5% of Earth's (rate 1.0153). A closer orbit makes Ranger trips shorter but splits Romilly's and Earth's clocks further (18% at `10 M`). | Creator | DOCS-002 review |
