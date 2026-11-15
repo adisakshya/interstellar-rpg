@@ -108,7 +108,7 @@ interface GameEngine {
 }
 ```
 
-The domain is a **pure reducer** underneath: `apply(state, command, content) → { state, result }`. `GameEngine` is a thin stateful wrapper around it. Tests call the reducer directly; the app uses the engine.
+The domain is a **pure reducer** underneath: `apply(state, command, handlers) → { state, result }`, where `handlers` (one per command kind, plus the `forecast` query) are built from loaded content. `GameEngine` is a thin stateful wrapper around it. Tests call the reducer directly; the app uses the engine. A command kind with no handler is rejected as `INVALID`.
 
 `LoadCheckpoint` is not a domain command. `persistence` loads a snapshot and the app swaps in a new engine (TIMELINES §8).
 
