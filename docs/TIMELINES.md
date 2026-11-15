@@ -13,7 +13,7 @@ This is the rulebook the game-domain code implements (DOM-001, TIME-001..004, RE
 | Proper time | `τ[c]` | The time character `c` has actually lived through | Derived: each advance of `T` advances every `τ[c]` by that character's location rate |
 | Narrative order | `seq` | Order in which events were committed | Yes. A total order; ties on `T` are broken by `seq` |
 
-**Location rate** `r(loc) = dτ/dT`. Endurance is `1` by definition. Miller's surface is far below 1 (the film's "1 hour = 7 years" is ≈ `1/61 362`, a **placeholder** until DOCS-002 validates or replaces it). Transit routes (e.g. Ranger descent) use precomputed `(ΔT, Δτ)` pairs from PHYSICS.md instead of a single rate.
+**Location rate** `r(loc) = dτ/dT`. Endurance is `1` by definition. Miller's surface is `1.6546×10⁻⁵` (1 h there ≈ 6.89 years of Endurance time; derived in [PHYSICS.md](PHYSICS.md) §4, D-12). The worked examples below keep the round placeholder `1/61 362` for readability. Transit routes (e.g. Ranger descent) use precomputed `(ΔT, Δτ)` pairs from PHYSICS.md instead of a single rate.
 
 **Arithmetic rule.** Domain time math uses only `+ − × ÷` on float64 seconds plus table lookups. No `Math.pow/exp/log/sin` in timeline code: JavaScript allows those to differ between engines, and identical results across devices (walkthrough 6) and in future co-op depend on it. Tolerance for equality: absolute 1e-6 s, relative 1e-12.
 

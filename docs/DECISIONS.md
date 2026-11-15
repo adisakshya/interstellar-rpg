@@ -21,6 +21,7 @@ C-01 – C-15 are confirmed in [PROJECT_BRIEF.md §2](PROJECT_BRIEF.md). Do not 
 | D-09 | Death of a playable character is **permanent and the story continues**; a failure ending occurs only when no playable character can continue. | Creator pop-up, 2026-11-14 | DOCS-001, DOCS-004 |
 | D-10 | Decisions are **soft** (block only dependent events) or **hard** (also stop reference time at their deadline; interruptible activities interrupt, atomic ones are rejected). Was P-05. See [TIMELINES.md §3](TIMELINES.md). | Creator chat, 2026-11-15 | TIME-002 |
 | D-11 | Active free-roam advances the controlled character's proper time in real time (`timeScale` default 1.0, fixed 1 s quanta). Was P-06. See [TIMELINES.md §5](TIMELINES.md). | Creator chat, 2026-11-15 | TIME-001, SLICE-001 |
+| D-12 | Keep the film's **1 h on Miller = 7 years on Earth**, obtained from real Kerr physics with Gargantua's spin set to `1 − 1.33×10⁻¹⁴` and flagged as a speculative parameter (beyond the ≈0.998 accretion limit). See [PHYSICS.md](PHYSICS.md). | Creator pop-up, 2026-11-15 | TIME-001, content, codex |
 
 ## Proposed (not approved)
 
@@ -30,6 +31,7 @@ C-01 – C-15 are confirmed in [PROJECT_BRIEF.md §2](PROJECT_BRIEF.md). Do not 
 | P-02 | Progression staging: knowledge in M1; relationships + knowledge depth in M2; skills + equipment in M2/M4 per GDD. Staging is a scheduling proposal; all four remain in scope (D-03). | Creator | DOCS-004 |
 | P-03 | Budgets: 30 FPS phone / 60 FPS desktop; ≤15 MB initial, ≤75 MB episode (compressed). | Creator | DOCS-005 |
 | P-04 | Local versioned saves with export/import (checkpoint policy now confirmed as D-08). | Creator | SAVE-001 |
+| P-07 | Endurance parks at `r = 100 M`, so Romilly's clock is within 1.5% of Earth's (rate 1.0153). A closer orbit makes Ranger trips shorter but splits Romilly's and Earth's clocks further (18% at `10 M`). | Creator | DOCS-002 review |
 
 ## Open
 
