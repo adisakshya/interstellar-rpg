@@ -1,6 +1,6 @@
 # Decision Register
 
-Plan version: **0.2.0** · Updated 2026-11-15 · Canonical brief: [PROJECT_BRIEF.md](PROJECT_BRIEF.md)
+Plan version: **0.3.0** · Updated 2026-11-15 · Canonical brief: [PROJECT_BRIEF.md](PROJECT_BRIEF.md)
 
 Statuses: **Confirmed** (creator-approved) · **Proposed** (awaiting approval) · **Open** (undecided) · **Validated** (confirmed and evidenced).
 
@@ -22,6 +22,7 @@ C-01 – C-15 are confirmed in [PROJECT_BRIEF.md §2](PROJECT_BRIEF.md). Do not 
 | D-10 | Decisions are **soft** (block only dependent events) or **hard** (also stop reference time at their deadline; interruptible activities interrupt, atomic ones are rejected). Was P-05. See [TIMELINES.md §3](TIMELINES.md). | Creator chat, 2026-11-15 | TIME-002 |
 | D-11 | Active free-roam advances the controlled character's proper time in real time (`timeScale` default 1.0, fixed 1 s quanta). Was P-06. See [TIMELINES.md §5](TIMELINES.md). | Creator chat, 2026-11-15 | TIME-001, SLICE-001 |
 | D-12 | Keep the film's **1 h on Miller = 7 years on Earth**, obtained from real Kerr physics with Gargantua's spin set to `1 − 1.33×10⁻¹⁴` and flagged as a speculative parameter (beyond the ≈0.998 accretion limit). See [PHYSICS.md](PHYSICS.md). | Creator pop-up, 2026-11-15 | TIME-001, content, codex |
+| D-13 | **M0 gate passed** for the planning docs (TIMELINES, PHYSICS, ARCHITECTURE + ADRs, VISION/GDD, PRD/VALIDATION, COOP_POLICY). Proposed items (P-01 to P-12) stay Proposed and are used as working assumptions until the creator rules on them. SPIKE-001 carries into M1. | Creator standing go-ahead for this session ("no need to wait for me for approval"), 2026-11-15 | M1 start |
 
 ## Proposed (not approved)
 

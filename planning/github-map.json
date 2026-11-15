@@ -1,6 +1,6 @@
 {
   "repository": "adisakshya/interstellar-rpg",
-  "plan_version": "0.1.0",
+  "plan_version": "0.3.0",
   "published": "2026-10-18",
   "note": "Publication record only; requirements live in planning/issues.yaml. Sub-issue links are native; blocked-by is written as body sections (native dependency API not available to the publishing tool). A body whose current hash differs from managed_hash has been edited outside the publisher: surface it, do not overwrite.",
   "issues": {
@@ -72,32 +72,32 @@
     "SPIKE-001": {
       "number": 14,
       "url": "https://github.com/adisakshya/interstellar-rpg/issues/14",
-      "managed_hash": "sha256:66fca01487e3a9430766542ee051909bf50284a9d6119e09f1d7bc5f6fe46c99"
+      "managed_hash": "sha256:d6081170c30abcc1a346189187fc771f4d941195741458a1a32100876f570087"
     },
     "CI-001": {
       "number": 15,
       "url": "https://github.com/adisakshya/interstellar-rpg/issues/15",
-      "managed_hash": "sha256:dd565cced30a57dcb46a75effdd73933a145e0514625fafad35ae1a978361998"
+      "managed_hash": "sha256:5798f8d5a909ef1c1195ab81c884644789d74d35b8dcdfb97a88b643289f0580"
     },
     "DOM-001": {
       "number": 16,
       "url": "https://github.com/adisakshya/interstellar-rpg/issues/16",
-      "managed_hash": "sha256:b53eb080ac7dd16a92e9151e0f3404b05fb25e3d5b75aa48b2be8719cafb38a0"
+      "managed_hash": "sha256:fecdbefb507ce6ca9a6290a452552a976f34327bc39b5547e81a1d1811d794a9"
     },
     "TIME-001": {
       "number": 17,
       "url": "https://github.com/adisakshya/interstellar-rpg/issues/17",
-      "managed_hash": "sha256:766ce3b67439bf9bf5f4f3afa5e974ccb2e72cfd67f11ad437cda96fce02d917"
+      "managed_hash": "sha256:062dfbb77266ac1ef76b6bcebff3f943c6a15e74f202ff54a318b03f1b64320f"
     },
     "CONT-001": {
       "number": 18,
       "url": "https://github.com/adisakshya/interstellar-rpg/issues/18",
-      "managed_hash": "sha256:36b14a18ae8d986cbf09a53f1300fec68b24d7192dbfa19eac9d3f1d7ea8b8dd"
+      "managed_hash": "sha256:fa14112e26b29e122fb0cdacd2c1e242a06c056b742f57e770d5e5facbfe6e74"
     },
     "SCENE-001": {
       "number": 19,
       "url": "https://github.com/adisakshya/interstellar-rpg/issues/19",
-      "managed_hash": "sha256:97cda3689bdd5a965cdd624df166209d130061744539ff7833030e21aa6bd9dc"
+      "managed_hash": "sha256:309dac4a5605f9cb50f999e4242aec7926a4b4682dfb18b03669416660576b1a"
     },
     "DOCS-007": {
       "number": 20,
@@ -107,52 +107,52 @@
     "TIME-002": {
       "number": 21,
       "url": "https://github.com/adisakshya/interstellar-rpg/issues/21",
-      "managed_hash": "sha256:fcf07a6849720f1009aa155a1eec3709c518c77bd9c6d144f0b14efcadaf6f06"
+      "managed_hash": "sha256:ad628e5704291ce3c2b2e742321ac5d7a9fd7b515fbbfeea2dfe7485d9dd075b"
     },
     "TIME-003": {
       "number": 22,
       "url": "https://github.com/adisakshya/interstellar-rpg/issues/22",
-      "managed_hash": "sha256:c4736f62f7f40fe9fff05740de346270b198b158e965756ca6e70b2bb3438381"
+      "managed_hash": "sha256:76e8d0b7d967f4ebe7d51e09042389a54b0646d65bf87a00ac56900dbba2f71f"
     },
     "TIME-004": {
       "number": 23,
       "url": "https://github.com/adisakshya/interstellar-rpg/issues/23",
-      "managed_hash": "sha256:d2ca0773194db01873cc78479be85096bab9d651bb7f9e6f2c663a33e5b190ae"
+      "managed_hash": "sha256:dfbcc41ffaf95b581aacdd885d211a22c2c6fbf61cf1403d4d0904282bbec218"
     },
     "RES-001": {
       "number": 24,
       "url": "https://github.com/adisakshya/interstellar-rpg/issues/24",
-      "managed_hash": "sha256:207a356f4df81be6a4e69f46f1411ae70fffba3660430b7d3a983743780233f7"
+      "managed_hash": "sha256:47facfdd81e20c853117176b503715f7caba9c0b66bd30b2d77b70fe009835be"
     },
     "INPUT-001": {
       "number": 25,
       "url": "https://github.com/adisakshya/interstellar-rpg/issues/25",
-      "managed_hash": "sha256:1d4dc344ef68e9ebb7e4c5cf56a194b071e945f1b92cdd6f8eccb36a01ac8bfb"
+      "managed_hash": "sha256:da95d0df5384893be42370fa8341d8c050a7049fa94ce21e2d6e54e62ee2e5cd"
     },
     "PERF-001": {
       "number": 26,
       "url": "https://github.com/adisakshya/interstellar-rpg/issues/26",
-      "managed_hash": "sha256:77b74c51c1ea55f99e2c32f405e7741eec61ac08d06bf0df2f899b7bd931eaee"
+      "managed_hash": "sha256:98822035899b9f1cf7b3517fab65aca09ecde29dba99f074feb82cbf4f15a537"
     },
     "SAVE-001": {
       "number": 27,
       "url": "https://github.com/adisakshya/interstellar-rpg/issues/27",
-      "managed_hash": "sha256:a534fba1602dd7d0b2c3c800eed4e5b2d12f97f6c45892e4a8b1ee0d7b440f33"
+      "managed_hash": "sha256:c32ae6e08808beaa9c2c5d0aa0825c23d029797dfc76a788a4696945fe600e00"
     },
     "UI-001": {
       "number": 28,
       "url": "https://github.com/adisakshya/interstellar-rpg/issues/28",
-      "managed_hash": "sha256:6d099daaddca102a70439fb85c234e4fefa189fce159d7eb2575f0e9e8d339fd"
+      "managed_hash": "sha256:abef7294020c6716351623529c9b6c94a21256c1c5f7fcabf9a5368e3959f3a0"
     },
     "SLICE-001": {
       "number": 29,
       "url": "https://github.com/adisakshya/interstellar-rpg/issues/29",
-      "managed_hash": "sha256:0e86757c55c8d176de647dc9bd11d989c1850c18de33371dafded27c3562253e"
+      "managed_hash": "sha256:66dbda0ac293888946ccc67f68fe79cbeea70781ca71925da4557ec3c71976d9"
     },
     "QA-001": {
       "number": 30,
       "url": "https://github.com/adisakshya/interstellar-rpg/issues/30",
-      "managed_hash": "sha256:d8f6c317f4b3127eee013e1bd3092872d0c2fbf88c3f37f8a6245089a2f5cf76"
+      "managed_hash": "sha256:de4ea9441263b26db8176f4c3a3f69e345469244831bea4bb4238ad64517819f"
     }
   },
   "hash_scope": "sha256 of the issue body as published, excluding the trailing attribution footer, trailing whitespace stripped"
