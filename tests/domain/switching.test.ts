@@ -91,6 +91,7 @@ describe("availability reason codes (TIMELINES §4, FR-03)", () => {
     expect(switchView(s).options.find((o) => o.characterId === doyle)).toEqual({
       characterId: doyle,
       controlled: false,
+      introduced: true,
       switchable: false,
       reason: "DEAD",
       cause: "WAVE",
@@ -102,6 +103,13 @@ describe("availability reason codes (TIMELINES §4, FR-03)", () => {
     const rows = switchView(s).options;
     expect(rows.filter((o) => !o.controlled).every((o) => !o.switchable && o.reason === "LOCKED_SEQUENCE")).toBe(true);
     expect(rows.find((o) => o.controlled)).toMatchObject({ characterId: cooper, switchable: true });
+  });
+
+  it("keeps `introduced` true to each character's own state, even while a lock masks the reason", () => {
+    const s = start({ [cooper]: "LOCKED_SEQUENCE", [brand]: "NOT_INTRODUCED", [doyle]: "INJURED" });
+    const rows = switchView(s).options;
+    expect(rows.find((o) => o.characterId === brand)).toMatchObject({ introduced: false, reason: "LOCKED_SEQUENCE" });
+    expect(rows.find((o) => o.characterId === doyle)).toMatchObject({ introduced: true });
   });
 
   it("agrees with the command handler for every row", () => {

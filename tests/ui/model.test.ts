@@ -130,3 +130,12 @@ describe("decision prompts (C-06)", () => {
     expect(buildHudModel(s, ctxFor()).prompts).toEqual([]);
   });
 });
+
+describe("introduction while the controlled character is locked", () => {
+  it("still hides characters who have not been introduced, so the slots do not shift", () => {
+    const locked = patch(start(), "char.cooper", { unavailable: "LOCKED_SEQUENCE" });
+    const model = buildHudModel(locked, ctxFor());
+    expect(model.characters.map((c) => c.id)).toEqual(["char.cooper", "char.romilly"]);
+    expect(model.characters.map((c) => c.slot)).toEqual([1, 2]);
+  });
+});

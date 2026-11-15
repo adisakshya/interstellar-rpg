@@ -60,6 +60,24 @@ describe("actionToCommand", () => {
     });
     expect(actionToCommand({ kind: "SwitchTo", index: 3 }, state, counterContext())).toBeNull();
   });
+
+  it("keeps unintroduced characters out of the slots while the controlled character is locked", () => {
+    const locked = {
+      ...state,
+      characters: {
+        ...state.characters,
+        ["char.cooper" as never]: {
+          ...state.characters["char.cooper" as never]!,
+          unavailable: "LOCKED_SEQUENCE" as const,
+        },
+      },
+    };
+    // Slot 3 would be Brand if his hidden state were masked by the lock.
+    expect(actionToCommand({ kind: "SwitchTo", index: 3 }, locked, counterContext())).toBeNull();
+    expect(actionToCommand({ kind: "SwitchTo", index: 2 }, locked, counterContext())).toMatchObject({
+      targetId: "char.romilly",
+    });
+  });
 });
 
 describe("W6: keyboard and touch reach the same outcome (INV-15)", () => {

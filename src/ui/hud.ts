@@ -101,7 +101,7 @@ export function mountHud(root: HTMLElement, handlers: HudHandlers): Hud {
   root.append(style, wrap);
 
   const rows = new Map<string, RowView>();
-  const promptViews = new Map<string, HTMLElement>();
+  const promptViews = new Map<string, { box: HTMLElement; deadline: HTMLElement }>();
   let previous: HudModel | null = null;
   let announceSeq = 0;
   const announce = (text: string) => {
@@ -157,7 +157,7 @@ export function mountHud(root: HTMLElement, handlers: HudHandlers): Hud {
     );
   }
 
-  function buildPrompt(p: DecisionPrompt): HTMLElement {
+  function buildPrompt(p: DecisionPrompt): { box: HTMLElement; deadline: HTMLElement } {
     const box = make(doc, "section", {
       class: "irpg-panel irpg-prompt",
       role: "group",
@@ -167,7 +167,9 @@ export function mountHud(root: HTMLElement, handlers: HudHandlers): Hud {
       make(doc, "h2", { id: `irpg-d-${p.id}` }, p.hard ? "Decision (time stops at the deadline)" : "Decision"),
     );
     box.append(make(doc, "p", {}, p.title));
-    if (p.deadline) box.append(make(doc, "p", { class: "irpg-note" }, `Deadline in ${p.deadline} of reference time`));
+    const deadline = make(doc, "p", { class: "irpg-note" });
+    paintDeadline(deadline, p);
+    box.append(deadline);
     const options = make(doc, "ul", { class: "irpg-options" });
     for (const o of p.options) {
       const li = make(doc, "li");
@@ -177,7 +179,13 @@ export function mountHud(root: HTMLElement, handlers: HudHandlers): Hud {
       options.append(li);
     }
     box.append(options);
-    return box;
+    return { box, deadline };
+  }
+
+  /** The countdown changes as reference time advances, so it is repainted on every update, never rebuilt. */
+  function paintDeadline(el: HTMLElement, p: DecisionPrompt): void {
+    el.textContent = p.deadline ? `Deadline in ${p.deadline} of reference time` : "";
+    el.hidden = !p.deadline;
   }
 
   return {
@@ -204,19 +212,22 @@ export function mountHud(root: HTMLElement, handlers: HudHandlers): Hud {
       const live = new Set(model.prompts.map((p) => p.id as string));
       let focusFirst: HTMLElement | null = null;
       for (const p of model.prompts) {
-        if (!promptViews.has(p.id)) {
-          const box = buildPrompt(p);
-          promptViews.set(p.id, box);
-          prompts.append(box);
-          focusFirst ??= box.querySelector("button");
+        const existing = promptViews.get(p.id);
+        if (existing) {
+          paintDeadline(existing.deadline, p);
+        } else {
+          const view = buildPrompt(p);
+          promptViews.set(p.id, view);
+          prompts.append(view.box);
+          focusFirst ??= view.box.querySelector("button");
           announce(
             `Decision for ${model.controlledName}: ${p.title}. ${p.deadlineSpoken ? `Deadline in ${p.deadlineSpoken}. ` : ""}Options: ${p.options.map((o) => o.label).join(", ")}.`,
           );
         }
       }
-      for (const [id, box] of promptViews) {
+      for (const [id, view] of promptViews) {
         if (!live.has(id)) {
-          box.remove();
+          view.box.remove();
           promptViews.delete(id);
         }
       }

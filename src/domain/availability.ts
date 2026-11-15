@@ -6,13 +6,18 @@ import type { GameState, UnavailableReason } from "./state";
 /** What happens to the controlled character if the player switches away now. */
 export type Handoff = "NONE" | "ASSIST";
 
-/** Characters the player has met. Not-yet-introduced ones stay hidden, so the switcher never spoils the cast. */
-export const isIntroduced = (row: SwitchOption): boolean => row.reason !== "NOT_INTRODUCED";
+/**
+ * Characters the player has met. Not-yet-introduced ones stay hidden, so the switcher never spoils the cast. This
+ * reads the character's own state, not `reason`, which a locked current sequence can mask (LOCKED_SEQUENCE).
+ */
+export const isIntroduced = (row: SwitchOption): boolean => row.introduced;
 
 /** One row of the character switcher (TIMELINES §4). UI-001 turns the codes into text. */
 export interface SwitchOption {
   readonly characterId: CharacterId;
   readonly controlled: boolean;
+  /** False only while the character's own availability is NOT_INTRODUCED, whatever else blocks switching. */
+  readonly introduced: boolean;
   /** Whether a SwitchCharacter to this character would be accepted now. */
   readonly switchable: boolean;
   /** Why not, when `switchable` is false: the target's own state, or LOCKED_SEQUENCE when the current one is locked. */
@@ -69,6 +74,7 @@ export function switchView(state: GameState, activities?: Activities): SwitchVie
     const row: SwitchOption = {
       characterId: id,
       controlled: id === state.controlled,
+      introduced: c.unavailable !== "NOT_INTRODUCED",
       switchable: rejection === null,
       reason: rejection?.reason ?? null,
     };

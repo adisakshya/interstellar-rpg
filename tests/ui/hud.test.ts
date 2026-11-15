@@ -180,6 +180,22 @@ describe("decision prompts", () => {
     expect(root.querySelector(".irpg-prompt")).toBeNull();
   });
 
+  it("repaints the countdown on an open prompt in place, keeping focus and not re-announcing", () => {
+    const { root } = setup();
+    hud!.update(model({ prompts: [prompt()] }));
+    const box = root.querySelector(".irpg-prompt")!;
+    const second = box.querySelectorAll("button")[1]!;
+    second.focus();
+    const announced = live(root);
+    hud!.update(model({ prompts: [prompt({ deadline: "4.0 y", deadlineSpoken: "4.0 years" })] }));
+    expect(box.textContent).toContain("Deadline in 4.0 y");
+    expect(box.textContent).not.toContain("5.0 y");
+    expect(document.activeElement).toBe(second);
+    expect(live(root)).toBe(announced);
+    hud!.update(model({ prompts: [prompt({ deadline: null, deadlineSpoken: null })] }));
+    expect(box.textContent).not.toContain("Deadline");
+  });
+
   it("tells the player who the game is waiting on, and announces it once", () => {
     const { root } = setup();
     const waiting = [
