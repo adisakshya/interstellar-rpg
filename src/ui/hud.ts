@@ -56,7 +56,7 @@ const CSS = `
   .irpg-panel>h2{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
   .irpg-prompt>h2{position:static;width:auto;height:auto;margin:0 0 .25rem;clip:auto;overflow:visible;white-space:normal}
   .irpg-clock{font-size:.8125rem}
-  .irpg-btn{min-height:2.5rem;padding:.25rem .5rem;gap:0 .375rem}
+  .irpg-btn{min-height:2.75rem;padding:.25rem .5rem;gap:0 .375rem}
   .irpg-list{flex-direction:row;flex-wrap:wrap;gap:.25rem}
   .irpg-list>li{flex:1 1 8rem}
   .irpg-meta{font-size:.8125rem}

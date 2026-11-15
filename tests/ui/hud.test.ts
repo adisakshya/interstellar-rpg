@@ -279,6 +279,15 @@ describe("layout rules", () => {
     expect(css).not.toMatch(/font-size:\s*\d+px/); // text sizes use rem, so browser zoom scales them
   });
 
+  it("keeps the 44 px minimum for buttons in the compact phone layout too (NFR-04)", () => {
+    const { root } = setup();
+    const css = root.querySelector("style")!.textContent!;
+    const compact = css.slice(css.indexOf("@media"));
+    const heights = [...compact.matchAll(/min-height:([\d.]+)rem/g)].map((m) => Number(m[1]));
+    expect(heights.length).toBeGreaterThan(0);
+    for (const h of heights) expect(h).toBeGreaterThanOrEqual(2.75);
+  });
+
   it("cleans up on dispose", () => {
     const { root } = setup();
     hud!.update(model());
