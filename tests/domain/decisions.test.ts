@@ -383,12 +383,21 @@ describe("a choice that costs its owner time (SpendTime)", () => {
     expect(r.checkpoints[1]!.state.decisions[dHib]?.status).toBe("pending");
   });
 
-  it("stops at a hard deadline inside the spend, like any activity", () => {
+  it("never stops half-way: a hard deadline inside the spend blocks the whole choice, and the cost is paid in full later", () => {
     const wall: DecisionDef = { ...D_HIB, id: dHib, owner: cooper, triggerT: 2.5 * YEAR, deadlineT: 3 * YEAR };
     const hh = createHandlers(tables(false, [WAVE, wall]));
-    const out = apply(withDoyle(), resolve("r0", dWave, "stay"), hh);
-    expect(committed(out.result)).toMatchObject({ kind: "Interrupted", decisionId: dHib });
-    expect(out.state.T).toBe(3 * YEAR);
+    const s0 = withDoyle();
+    const blocked = apply(s0, resolve("r0", dWave, "stay"), hh);
+    // Nothing commits: no death, no rewards, no recorded choice, no time passed (INV-05).
+    expect(blocked.result).toEqual({ kind: "Blocked", decisionId: dHib, deadlineT: 3 * YEAR });
+    expect(blocked.state).toBe(s0);
+    // Resolve the blocker early (a hard decision may be), then the choice goes through and costs the full hour.
+    const early = apply(blocked.state, resolve("r1", dHib, "stay"), hh);
+    expect(committed(early.result).kind).toBe("Ok");
+    const done = apply(early.state, resolve("r2", dWave, "stay"), hh);
+    expect(committed(done.result).kind).toBe("Ok");
+    near(done.state.characters[cooper]!.tau, H, 1e-6);
+    expect(done.state.characters[doyle]).toMatchObject({ unavailable: "DEAD" });
   });
 
   it("is all-or-nothing: if the time cannot pass, the choice is not recorded", () => {

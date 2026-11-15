@@ -78,6 +78,8 @@ export function createClockHandlers(
     actorId: CharacterId,
     dTau: number,
     activity: { id: string; atomic: boolean } | null,
+    /** Never stop part-way at a hard deadline, even with no activity to resume (a choice's own time cost). */
+    wholly = false,
   ): HandlerOutcome {
     const actor = state.characters[actorId];
     if (!actor) return reject("INVALID", `unknown character ${actorId}`);
@@ -109,7 +111,7 @@ export function createClockHandlers(
         barrierT = dl;
       }
     }
-    if (barrier && (activity?.atomic || barrierT <= T0)) {
+    if (barrier && (wholly || activity?.atomic || barrierT <= T0)) {
       // Atomic, or already held at the deadline: nothing commits (INV-05).
       return { kind: "blocked", decisionId: barrier.id, deadlineT: barrierT };
     }
@@ -248,12 +250,13 @@ export function createClockHandlers(
       events.push({ kind: "DecisionResolved", T: s.T, decisionId: def.id, optionId: command.optionId });
       const effects = effectsOf(s, def, command.optionId);
       const committed = { state: effects.state, events: [...events, ...effects.events], checkpoints };
-      // The choice's own time cost runs through the ordinary clock rules, so a deadline or another decision that
-      // falls inside it is handled exactly as for any activity. Anything that stops it stops the whole choice.
-      let interruptedBy: DecisionId | undefined;
+      // The choice's own time cost runs through the ordinary clock rules, so another decision that triggers inside it
+      // is handled as for any activity. But it cannot stop half-way: there is no activity to resume, and the choice is
+      // already made. So a hard deadline inside the span blocks the whole choice (nothing commits, INV-05); the player
+      // resolves that decision first, which a hard decision allows even before it is pending, and then chooses.
       for (const effect of def.options[command.optionId] ?? []) {
         if (effect.kind !== "SpendTime") continue;
-        const out = advance(committed.state, effect.characterId, effect.dTau, null);
+        const out = advance(committed.state, effect.characterId, effect.dTau, null, true);
         if (out.kind !== "commit") return out;
         const offset = committed.events.length;
         committed.state = out.state;
@@ -262,12 +265,8 @@ export function createClockHandlers(
           ...committed.checkpoints,
           ...(out.checkpoints ?? []).map((c) => ({ ...c, afterEvents: c.afterEvents + offset })),
         ];
-        interruptedBy = out.interruptedBy;
-        if (interruptedBy !== undefined) break;
       }
-      return interruptedBy === undefined
-        ? { kind: "commit", ...committed }
-        : { kind: "commit", ...committed, interruptedBy };
+      return { kind: "commit", ...committed };
     },
   };
 }
