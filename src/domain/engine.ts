@@ -14,6 +14,13 @@ import type { GameState } from "./state";
 /** How many processed command ids the state remembers for idempotency (ADR-002). */
 export const PROCESSED_ID_WINDOW = 1024;
 
+/** A checkpoint a handler captured: `afterEvents` = how many of its events precede the snapshot. */
+export interface CheckpointCapture {
+  readonly decisionId: DecisionId;
+  readonly state: GameState;
+  readonly afterEvents: number;
+}
+
 /** What a command handler decides. Handlers are pure: they never mutate `state`. */
 export type HandlerOutcome =
   | {
@@ -21,7 +28,7 @@ export type HandlerOutcome =
       state: GameState;
       events: readonly EventDraft[];
       /** Snapshots for CheckpointCreated; `afterEvents` = how many of `events` precede the snapshot. */
-      checkpoints?: readonly { decisionId: DecisionId; state: GameState; afterEvents: number }[];
+      checkpoints?: readonly CheckpointCapture[];
       /** Set when an activity stopped at a hard deadline (TIMELINES §3). */
       interruptedBy?: DecisionId;
       /** Record the command id for idempotency (default true). Session-only commands such as switching opt out. */

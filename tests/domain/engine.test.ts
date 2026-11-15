@@ -35,7 +35,7 @@ function initialState(): GameState {
     knowledge: {},
     playerSeen: [],
     messages: [],
-    activity: null,
+    activities: {},
     processedCommandIds: [],
     rng: { seed: 1, state: 1 },
   };
@@ -226,10 +226,10 @@ describe("createEngine", () => {
     expect(plain.forecast(recorder)).toBeNull();
     const withForecast = createEngine(initialState(), {
       handlers: testHandlers,
-      forecast: (state, decisionId) => ({ decisionId, triggerT: state.T + 30 }),
+      forecast: (state, decisionId) => ({ decisionId, triggerT: state.T + 30, deadlineT: null }),
     });
     withForecast.dispatch(tick("c1"));
-    expect(withForecast.forecast(recorder)).toEqual({ decisionId: recorder, triggerT: 31 });
+    expect(withForecast.forecast(recorder)).toEqual({ decisionId: recorder, triggerT: 31, deadlineT: null });
     expect(withForecast.getState().seq).toBe(1);
   });
 });

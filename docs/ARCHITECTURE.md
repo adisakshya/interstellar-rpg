@@ -68,7 +68,7 @@ interface GameState {
   readonly knowledge: Readonly<Record<CharacterId, readonly FactId[]>>;
   readonly playerSeen: readonly FactId[];
   readonly messages: readonly MessageState[];
-  readonly activity: ActivityProgress | null;
+  readonly activities: Readonly<Record<CharacterId, ActivityProgress>>;  // interrupted work, one per character
   readonly processedCommandIds: readonly string[];   // bounded window, see ADR-002
   readonly rng: { readonly seed: number; readonly state: number };
 }

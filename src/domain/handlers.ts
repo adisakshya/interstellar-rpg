@@ -1,5 +1,6 @@
-import { createClockHandlers, type RateTable } from "./clocks";
-import type { HandlerMap } from "./engine";
+import { createClockHandlers, createForecaster } from "./clocks";
+import type { EngineRules, HandlerMap } from "./engine";
+import type { TimeTables } from "./rules";
 
 /**
  * Production command handlers. DOM-001 provides switching; TIME-001..004, RES-001 and later issues add
@@ -23,6 +24,11 @@ export const defaultHandlers: HandlerMap = {
 };
 
 /** All production handlers for the given content-derived tables. */
-export function createHandlers(tables: { rates: RateTable }): HandlerMap {
-  return { ...defaultHandlers, ...createClockHandlers(tables.rates) };
+export function createHandlers(tables: TimeTables): HandlerMap {
+  return { ...defaultHandlers, ...createClockHandlers(tables) };
+}
+
+/** Handlers plus the forecast query, ready for `createEngine`. */
+export function createRules(tables: TimeTables): EngineRules {
+  return { handlers: createHandlers(tables), forecast: createForecaster(tables) };
 }
