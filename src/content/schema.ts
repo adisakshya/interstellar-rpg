@@ -114,6 +114,52 @@ export const episodeSchema = z.strictObject({
       effects: z.array(setAvailability).min(1),
     }),
   ),
+  /**
+   * Story text (STORY-001): lines shown as subtitles the first time `when` holds. Presentation only: nothing here is
+   * game state, so a reload never replays a line that was already true when the game was saved. A line may contain
+   * `{tau:char.x}`, replaced by how long that character has lived since the start ("23 years 4 months").
+   */
+  story: z
+    .array(
+      z.strictObject({
+        id: z.string().startsWith("story."),
+        when: z
+          .strictObject({
+            /** True only on a brand-new game, before anything has happened. */
+            start: z.literal(true).optional(),
+            controlled: charId.optional(),
+            minT: seconds.optional(),
+            /** Facts the named characters know (INV-08: a line never leaks what its speaker cannot know). */
+            knows: z
+              .array(z.strictObject({ by: charId, fact: factId }))
+              .min(1)
+              .optional(),
+            decision: z
+              .array(
+                z.strictObject({
+                  id: decisionId,
+                  status: z.enum(["pending", "resolved"]),
+                  option: z.string().min(1).optional(),
+                }),
+              )
+              .min(1)
+              .optional(),
+            /** Characters who are dead. */
+            dead: z.array(charId).min(1).optional(),
+          })
+          .refine((w) => Object.keys(w).length > 0, { message: "a story entry needs at least one condition" }),
+        lines: z
+          .array(
+            z.strictObject({
+              /** A character, the ship's voice, a narrator, or a title card. */
+              speaker: z.union([charId, z.enum(["narrator", "ship", "card"])]),
+              text: z.string().min(1).max(240),
+            }),
+          )
+          .min(1),
+      }),
+    )
+    .default([]),
   /** The episode ends when this character learns this fact; the outcome screen opens (SLICE-001). */
   ending: z.strictObject({ fact: factId, knownBy: charId }),
   /** One plain-language line per consequential choice, shown on the outcome screen when that option was taken. */

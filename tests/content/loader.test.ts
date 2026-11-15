@@ -273,3 +273,47 @@ describe("invalid content fails with a precise error", () => {
     expect(errorsOf(e)).toHaveLength(2);
   });
 });
+
+describe("story entries (STORY-001)", () => {
+  it("must reference real characters, facts, decisions and options, and need a condition and a line", () => {
+    const bad = clone();
+    bad.story = [
+      { id: "story.x", when: { controlled: "char.nobody" }, lines: [{ speaker: "char.cooper", text: "Hi" }] },
+      {
+        id: "story.y",
+        when: { knows: [{ by: "char.cooper", fact: "fact.nope" }] },
+        lines: [{ speaker: "narrator", text: "{tau:char.ghost}" }],
+      },
+      {
+        id: "story.z",
+        when: { decision: [{ id: "decision.recall", status: "resolved", option: "fly" }] },
+        lines: [{ speaker: "card", text: "x" }],
+      },
+      {
+        id: "story.w",
+        when: { decision: [{ id: "decision.recall", status: "pending", option: "leave_now" }] },
+        lines: [{ speaker: "card", text: "x" }],
+      },
+    ];
+    const errors = errorsOf(bad).join("\n");
+    expect(errors).toContain('story[0].when.controlled: unknown character "char.nobody"');
+    expect(errors).toContain('story[1].when.knows[0].fact: unknown fact "fact.nope"');
+    expect(errors).toContain('story[1].lines[0].text: unknown character "char.ghost"');
+    expect(errors).toContain('story[2].when.decision[0].option: decision "decision.recall" has no option "fly"');
+    expect(errors).toContain("story[3].when.decision[0].option: an option only exists once the decision is resolved");
+  });
+
+  it("needs at least one condition", () => {
+    const bad = clone();
+    bad.story = [{ id: "story.v", when: {}, lines: [{ speaker: "card", text: "x" }] }];
+    expect(errorsOf(bad).join("\n")).toContain("story[0].when: a story entry needs at least one condition");
+  });
+
+  it("rejects duplicate ids, and the shipped M1 story loads", () => {
+    const dup = clone();
+    dup.story = [dup.story[0], dup.story[0]];
+    expect(errorsOf(dup).join("\n")).toContain('duplicate story entry "story.arrival"');
+    const out = loadEpisode(m1);
+    expect(out.ok && out.episode.story.length).toBeGreaterThan(8);
+  });
+});

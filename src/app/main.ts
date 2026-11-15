@@ -11,13 +11,14 @@ import {
 } from "../input";
 import { IndexedDbBackend, MemoryBackend, SaveSlots, stateHash } from "../persistence";
 import { createAdaptiveScaler, createRenderer, detectTier, scalingLevel, TIERS, waveScheduleOf } from "../render";
-import { buildHudModel, isFinished, mountHud, mountNotice } from "../ui";
+import { buildHudModel, isFinished, livedPhrase, mountHud, mountNotice, mountSubtitles } from "../ui";
 import { actionToCommand } from "./actions";
 import { watchEnding } from "./ending";
 import { offerFor } from "./interactions";
 import { createAutosaver } from "./autosave";
 import { loadStartup, startupNotice } from "./startup";
 import { createFreeRoam } from "./freeroam";
+import { createStory } from "./story";
 import { attachLifecycle } from "./lifecycle";
 
 // Composition root (ARCHITECTURE §2): content → domain engine → renderer. Input and HUD arrive in INPUT-001/UI-001.
@@ -109,6 +110,31 @@ const onAction = (action: InputAction) => {
 };
 createKeyboardAdapter(window, onAction);
 createMouseAdapter(canvas, onAction, undefined, window);
+// Story subtitles (STORY-001): presentation only, derived from state, never saved.
+const AUTO_KEY = "irpg.story.auto";
+const story = createStory({
+  entries: episode.story,
+  getState: game.getState,
+  names: episode.names,
+  spell: livedPhrase,
+  preference: {
+    get: () => {
+      try {
+        return localStorage.getItem(AUTO_KEY) !== "off";
+      } catch {
+        return true;
+      }
+    },
+    set: (value) => {
+      try {
+        localStorage.setItem(AUTO_KEY, value ? "on" : "off");
+      } catch {
+        /* a blocked store only means the choice is not remembered */
+      }
+    },
+  },
+});
+game.subscribe(() => story.observe());
 const hud = document.getElementById("hud");
 let hudView: ReturnType<typeof mountHud> | null = null;
 if (hud) {
@@ -134,6 +160,8 @@ if (hud) {
   paint(game.getState());
   game.subscribe(paint);
   createTouchAdapter(mountTouchControls(hud).controls, onAction);
+  const wide = window.matchMedia("(min-width: 48rem) and (pointer: fine)");
+  mountSubtitles(hud, story, { slot: view.slot, wide: () => wide.matches });
 }
 
 // Real-time free-roam (D-11): fixed 1 s quanta from accumulated real time, never from frame rate.
@@ -143,6 +171,7 @@ const freeRoam = createFreeRoam({
   newId: () => crypto.randomUUID(),
   ownerOf: (id) => episode.tables.decisions?.[id]?.owner,
   halted: () => isFinished(game.getState(), episode.ending),
+  holding: () => hud !== null && story.current() !== null,
 });
 const baseLevel = scalingLevel(tier, devicePixelRatio);
 const scaler = createAdaptiveScaler(baseLevel, { min: baseLevel, max: baseLevel + 1 });
@@ -231,6 +260,7 @@ if (new URLSearchParams(location.search).has("debug")) {
     slots,
     /** Writes any owed autosave now, so a test does not have to guess how long the debounce takes. */
     flushSave: () => autosaver.flush(),
+    story,
     /** What the renderer is actually drawing at, for performance reports. */
     resolution: () => ({
       scalingLevel: engine.getHardwareScalingLevel(),
