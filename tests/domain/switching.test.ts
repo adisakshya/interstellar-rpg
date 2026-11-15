@@ -26,6 +26,7 @@ const TABLES: TimeTables = {
   activities: {
     "fly.descent": { atomic: false, piloting: true, assist: true },
     "fly.docking": { atomic: true, piloting: true, assist: false },
+    "fly.landing": { atomic: false, piloting: true, assist: false },
   },
 };
 const h = createHandlers(TABLES);
@@ -135,6 +136,51 @@ describe("piloting hand-off (TIMELINES §4)", () => {
       kind: "Rejected",
       code: "LOCKED_SEQUENCE",
     });
+  });
+});
+
+describe("no-assist flights never deadlock at another owner's deadline", () => {
+  it("blocks the flight before it starts, so the player can switch and resolve", () => {
+    const dRomilly = asId("decision", "decision.romilly_call");
+    const tables: TimeTables = {
+      ...TABLES,
+      decisions: {
+        [dRomilly]: {
+          id: dRomilly,
+          owner: romilly,
+          triggerT: 10,
+          deadlineT: 20,
+          checkpoint: false,
+          options: { ok: [] },
+        },
+      },
+    };
+    const hh = createHandlers(tables);
+    const onShip = (s: GameState): GameState => ({
+      ...s,
+      characters: { ...s.characters, [cooper]: { ...s.characters[cooper]!, location: LOCATIONS.endurance } },
+    });
+    const s = onShip(start());
+    const fly = apply(
+      s,
+      { kind: "AdvanceTime", commandId: "f1", actorId: cooper, activityId: "fly.landing", dTau: 60 },
+      hh,
+    );
+    expect(fly.result).toEqual({ kind: "Blocked", decisionId: dRomilly, deadlineT: 20 });
+    expect(fly.state).toBe(s);
+    const switched = apply(s, { kind: "SwitchCharacter", commandId: "s1", targetId: romilly }, hh);
+    expect(switched.result.kind).toBe("Ok");
+    const resolved = apply(
+      switched.state,
+      { kind: "ResolveDecision", commandId: "r1", decisionId: dRomilly, optionId: "ok" },
+      hh,
+    );
+    expect(resolved.result.kind).toBe("Ok");
+    const back = apply(resolved.state, { kind: "SwitchCharacter", commandId: "s2", targetId: cooper }, hh).state;
+    expect(
+      apply(back, { kind: "AdvanceTime", commandId: "f2", actorId: cooper, activityId: "fly.landing", dTau: 60 }, hh)
+        .result.kind,
+    ).toBe("Ok");
   });
 });
 
