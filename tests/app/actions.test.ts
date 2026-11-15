@@ -50,11 +50,15 @@ describe("actionToCommand", () => {
       counterContext(),
     );
     expect(wrapped).toMatchObject({ targetId: "char.cooper" });
-    // Slots follow switcher order: brand, cooper, doyle, murph, romilly.
-    expect(actionToCommand({ kind: "SwitchTo", index: 5 }, state, counterContext())).toMatchObject({
+    // Slots number the characters the player has met, in the order the HUD lists them: cooper, romilly. Brand, Doyle
+    // and Murph are not introduced yet, so they take no slot.
+    expect(actionToCommand({ kind: "SwitchTo", index: 1 }, state, counterContext())).toMatchObject({
+      targetId: "char.cooper",
+    });
+    expect(actionToCommand({ kind: "SwitchTo", index: 2 }, state, counterContext())).toMatchObject({
       targetId: "char.romilly",
     });
-    expect(actionToCommand({ kind: "SwitchTo", index: 99 }, state, counterContext())).toBeNull();
+    expect(actionToCommand({ kind: "SwitchTo", index: 3 }, state, counterContext())).toBeNull();
   });
 });
 

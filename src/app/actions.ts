@@ -1,4 +1,4 @@
-import { switchView, type ActivityDef, type Command, type GameState } from "../domain";
+import { isIntroduced, switchView, type ActivityDef, type Command, type GameState } from "../domain";
 import type { InputAction } from "../input";
 
 /** What "Interact" does at a place: spend `dTau` seconds of the actor's time on an activity. */
@@ -45,7 +45,8 @@ export function actionToCommand(action: InputAction, state: GameState, ctx: Tran
       return null;
     }
     case "SwitchTo": {
-      const row = switchView(state, ctx.activities).options[action.index - 1];
+      // Slots number the characters the player can see, in the same order the HUD lists them.
+      const row = switchView(state, ctx.activities).options.filter(isIntroduced)[action.index - 1];
       return row ? { kind: "SwitchCharacter", commandId: ctx.newId(), targetId: row.characterId } : null;
     }
   }

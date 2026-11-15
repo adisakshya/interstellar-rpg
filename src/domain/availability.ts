@@ -6,6 +6,9 @@ import type { GameState, UnavailableReason } from "./state";
 /** What happens to the controlled character if the player switches away now. */
 export type Handoff = "NONE" | "ASSIST";
 
+/** Characters the player has met. Not-yet-introduced ones stay hidden, so the switcher never spoils the cast. */
+export const isIntroduced = (row: SwitchOption): boolean => row.reason !== "NOT_INTRODUCED";
+
 /** One row of the character switcher (TIMELINES §4). UI-001 turns the codes into text. */
 export interface SwitchOption {
   readonly characterId: CharacterId;

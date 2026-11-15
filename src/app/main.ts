@@ -10,6 +10,7 @@ import {
   type InputAction,
 } from "../input";
 import { createRenderer, detectTier, scalingLevel, TIERS } from "../render";
+import { buildHudModel, mountHud } from "../ui";
 import { actionToCommand, type Interaction } from "./actions";
 
 // Composition root (ARCHITECTURE §2): content → domain engine → renderer. Input and HUD arrive in INPUT-001/UI-001.
@@ -23,7 +24,13 @@ const episode = loaded.episode;
 const game = createEngine(createInitialState(episode.initial), createRules(episode.tables));
 
 const tier = detectTier({ matchMedia: (q) => window.matchMedia(q), devicePixelRatio, search: location.search });
-const engine = new Engine(canvas, TIERS[tier].antialias, { preserveDrawingBuffer: false, stencil: false });
+const engine = new Engine(canvas, TIERS[tier].antialias, {
+  preserveDrawingBuffer: false,
+  stencil: false,
+  // Babylon defaults the canvas to tabindex 1, making it the first Tab stop. It has nothing to operate, so keep it out
+  // of the Tab order and let keyboard focus start at the HUD (NFR-04).
+  canvasTabIndex: -1,
+});
 engine.setHardwareScalingLevel(scalingLevel(tier, devicePixelRatio));
 const renderer = createRenderer(engine, { tier, fade: { set: (o) => (fade.style.opacity = String(o)) } });
 renderer.attach(game);
@@ -49,7 +56,27 @@ const onAction = (action: InputAction) => {
 createKeyboardAdapter(window, onAction);
 createMouseAdapter(canvas, onAction, undefined, window);
 const hud = document.getElementById("hud");
-if (hud) createTouchAdapter(mountTouchControls(hud).controls, onAction);
+if (hud) {
+  // HUD first, so the touch controls sit on top of it. Both only read state or send commands (ARCHITECTURE §8).
+  const view = mountHud(hud, {
+    onSwitch: (targetId) =>
+      game.dispatch({ kind: "SwitchCharacter", commandId: crypto.randomUUID(), targetId: targetId as never }),
+    onResolve: (decisionId, optionId) =>
+      game.dispatch({ kind: "ResolveDecision", commandId: crypto.randomUUID(), decisionId, optionId }),
+  });
+  const paint = (state: ReturnType<typeof game.getState>) =>
+    view.update(
+      buildHudModel(state, {
+        names: episode.names,
+        decisions: episode.tables.decisions ?? {},
+        activities: episode.tables.activities,
+        forecast: (id) => game.forecast(id),
+      }),
+    );
+  paint(game.getState());
+  game.subscribe(paint);
+  createTouchAdapter(mountTouchControls(hud).controls, onAction);
+}
 
 engine.runRenderLoop(() => renderer.render());
 window.addEventListener("resize", () => engine.resize());
