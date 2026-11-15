@@ -200,6 +200,17 @@ describe("invalid content fails with a precise error", () => {
       "hazards[0]: with its choice, kills every playable character",
     ],
     [
+      "a hazard that acts on a playable character",
+      (e) =>
+        (e.hazards[0].effects[0] = {
+          kind: "SetAvailability",
+          characterId: "char.cooper",
+          reason: "DEAD",
+          cause: "wave",
+        }),
+      'hazards[0].effects[0].characterId: "char.cooper" is playable: a hazard may only act on non-playable characters',
+    ],
+    [
       "a duplicate hazard id",
       (e) => e.hazards.push({ ...e.hazards[0] }),
       'hazards[1].id: duplicate hazard "hazard.wave"',

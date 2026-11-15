@@ -191,6 +191,12 @@ export function loadEpisode(json: unknown): LoadResult {
   ep.hazards.forEach((h, i) =>
     h.effects.forEach((e, j) => {
       const path = ["hazards", i, "effects", j, "reason"];
+      if (!npcs.has(e.characterId) && chars.has(e.characterId)) {
+        err(
+          ["hazards", i, "effects", j, "characterId"],
+          `"${e.characterId}" is playable: a hazard may only act on non-playable characters, because it lands in the middle of someone's action (use a decision's effects for a playable character)`,
+        );
+      }
       if (e.reason === null && npcs.has(e.characterId)) {
         err(path, `"${e.characterId}" is not playable and cannot be made available`);
       }

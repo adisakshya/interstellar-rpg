@@ -65,6 +65,14 @@ export const createSurfaceScene: SceneFactory = (engine, tier, assets, content) 
   const wave = createWaveMesh(scene);
   let waveTarget: number | null = null;
   let waveShown: number | null = null;
+  let dead: readonly string[] = [];
+  /** Progress per second when a skipped stretch of time carries the wave across the screen (about 4 s end to end). */
+  const WAVE_CROSSING_RATE = 0.3;
+  /** Whoever the wave takes stays in sight until it reaches them. */
+  const syncFollowers = () => {
+    const waveHolds = waveTarget !== null && waveTarget >= 0 && (waveShown ?? 1) < 1;
+    for (const f of followers) f.figure.root.setEnabled(!(dead.includes(f.id) && !waveHolds));
+  };
 
   // The crew in their suits (CHAR-001). Standing in knee-deep water on a 1.3 g planet, they wade rather than walk
   // (MOVE-001). Brand and Doyle follow Cooper at a distance (GDD B3).
@@ -109,18 +117,23 @@ export const createSurfaceScene: SceneFactory = (engine, tier, assets, content) 
   };
   scene.onBeforeRenderObservable.add(() => {
     const dt = Math.min(engine.getDeltaTime() / 1000, 0.1);
-    // The wave follows the game clock, which moves in ticks; smooth its progress between them, and jump when the clock does.
+    // The wave follows the game clock, which moves in ticks; smooth its progress between them. An action that skips
+    // time (a scan, a search, an hour spent on the choice) can jump the clock past the arrival in one command: the wave
+    // then still crosses the screen at a fixed pace instead of being cut to its end state (WAVE-001). It snaps only
+    // when there is nothing to glide from: the first frame, before the warning, or when the clock moves backwards.
     if (waveTarget !== null) {
-      // Before the warning there is nothing to glide from; a jump of a quarter of the way or more (an action that
-      // skips time) snaps instead of gliding.
-      waveShown =
-        waveShown === null || waveTarget < 0 || Math.abs(waveTarget - waveShown) > 0.25
-          ? waveTarget
-          : waveShown + (waveTarget - waveShown) * Math.min(1, dt * 3);
+      if (waveShown === null || waveTarget < 0 || waveTarget < waveShown) waveShown = waveTarget;
+      else if (waveShown < 0)
+        waveShown = Math.min(waveTarget, 0); // the warning: it starts on the horizon, then travels
+      else {
+        const gap = waveTarget - waveShown;
+        waveShown += gap > 0.25 ? Math.min(gap, WAVE_CROSSING_RATE * dt) : gap * Math.min(1, dt * 3);
+      }
       wave.show(waveShown, WATER - 0.2);
     } else {
       wave.mesh.setEnabled(false);
     }
+    syncFollowers();
     vel = stepVelocity(vel, move, profile, dt);
     // Screen "up" is +y on the stick and -z in the world.
     body.position.x += vel.x * dt;
@@ -151,7 +164,8 @@ export const createSurfaceScene: SceneFactory = (engine, tier, assets, content) 
     scene,
     update(view) {
       waveTarget = content?.wave ? waveProgress(view.T, content.wave) : null;
-      for (const f of followers) f.figure.root.setEnabled(!view.dead.includes(f.id));
+      dead = view.dead;
+      syncFollowers();
     },
     setMove(x, y) {
       move.x = x;
