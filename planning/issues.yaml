@@ -743,10 +743,10 @@ issues:
     depends_on: [ART-001]
     blockers: []
     rationale: "The wave is the scene's threat; it must be real, not a cut."
-    scope: ["Wave rises on the horizon at the warning and arrives exactly at the hard deadline", "Outcome on arrival uses the existing rules (Doyle, flooded engines)"]
+    scope: ["Wave rises on the horizon at the warning and arrives exactly at the hard deadline", "Domain and content change, not rendering only: option effects that depend on the wave (Doyle's death, the flooded-engine cost) become scheduled effects that apply when T reaches the decision's deadline, including when the choice is made early (TIMELINES §3 early resolution) and when the choice's own time cost spans the deadline", "Until arrival the world shows the wave approaching and nobody is dead"]
     exclusions: ["Fluid simulation"]
     interfaces: []
-    acceptance: ["Arrival time equals the recall deadline in every path (test)", "Never faked by a cut"]
+    acceptance: ["Arrival time equals the recall deadline in every path (test)", "Choosing early (before the deadline) kills Doyle at the deadline, not at the choice (test)", "Never faked by a cut"]
     validation: "Screen recording"
 
   - key: SCENE-002

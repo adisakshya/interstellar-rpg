@@ -152,7 +152,10 @@ test("W4: reload at a pending decision keeps it pending; it resolves once; a che
   expect(results[1]).toBe("Duplicate");
   expect(results[2]).toEqual({ kind: "Rejected", code: "DECISION_ALREADY_RESOLVED" });
 
-  // The checkpoint taken when the warning became pending still has it pending, so the other choice can be tried.
+  // The checkpoint taken when the warning became pending still has it pending, so the other choice can be tried. Let the
+  // autosave of the resolved game land first (about 2 s after the last commit), so it cannot overwrite the restore. The
+  // app's own replay button guards against that race; this test calls the slots directly.
+  await page.waitForTimeout(2600);
   const keys = await page.evaluate(async () => (await window.__irpg.slots.listCheckpoints()).map((c) => c.key));
   expect(keys).toHaveLength(1);
   await page.evaluate(async (key) => {

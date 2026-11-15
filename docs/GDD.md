@@ -127,4 +127,4 @@ trust:      trust.cooper_brand trust.cooper_romilly
 | Scenes | 3 (cockpit, surface, Endurance) | +1 (Earth farmhouse) |
 | Audio | the time tick only (FR-21) | music states, SFX, captions |
 
-M1's vertical slice (SLICE-001) uses B1, B3–B8 and B12 with the "run now" and "finish the search" branches. B6 (sending the beacon readings) is in the slice because Romilly's analysis in B8 needs those readings delivered in-world first (INV-08). The rest of the table lands in M2.
+**Staging.** The mechanics slice that is built and merged (SLICE-001) covers B3, B4, B7, B8, B10 and B12 in simplified form, starting on Miller and with a `stay_longer`/`leave_now` choice at the wave. M1 was then **reopened (D-19)**: its target is all 12 beats B1 to B12 with dialogue (STORY-001), including B1 and B2 (cockpit, descent and landing, SCENE-003), B6 (sending the beacon readings, because Romilly's analysis in B8 needs them delivered in-world first, INV-08), B9 (hibernation) and B11 (reunion). Only Brand's playable beats, Murph's Earth scene and the rest of the table's M2 column land in M2.

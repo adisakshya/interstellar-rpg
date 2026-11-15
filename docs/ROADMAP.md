@@ -37,7 +37,9 @@ playthrough.
 | --- | --- | --- |
 | Revised M1 work (D-19) | 12 issues: 4 S, 5 M, 3 L of human-equivalent effort, about 8 h of creator review (two art sign-offs, the dialogue review, the playthrough) | issues.yaml `size` |
 | Implementation (original M1) | 16 issues: 1 S (≤ ½ day), 11 M (≤ 1 day), 4 L (≤ 2 days) of human-equivalent effort | issues.yaml `size` |
-| Creator review | ≈ 14 h total across M1 (per-issue `review_effort`) | issues.yaml |
-| At 5–10 h/week of creator time | M1 review spans **roughly 2–3 weeks of creator time** | C-12 |
+| Creator review (original M1 backlog) | ≈ 14 h, **historical**: those issues are done (per-issue `review_effort`) | issues.yaml |
+| Creator review (revised M1 work, D-19) | ≈ 8.25 h of `review_effort` across the 12 new issues | issues.yaml |
+| Creator review (whole of M1) | ≈ 22.25 h | sum of the two rows above |
+| At 5–10 h/week of creator time | The **remaining** M1 review is about 1–2 weeks of creator time; the whole of M1 would have been about 2–4.5 weeks | C-12 |
 
 Uncertainty is high: there is no throughput data yet. These numbers get re-estimated after M1 (brief §11).
