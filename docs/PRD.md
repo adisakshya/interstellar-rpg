@@ -12,7 +12,7 @@ Priority: **P0** blocks the milestone, **P1** expected, **P2** nice to have.
 | FR-02 | Free character switching that never changes clocks, resources, knowledge or history | P0 | M1 | C-05 | TIMELINES §4 | INV-03; W2 |
 | FR-03 | Availability states with reasons shown to the player | P0 | M1 | C-05 | TIMELINES §4 | Reason codes in UI; screen-reader text |
 | FR-04 | Soft and hard decisions; hard deadlines stop the clock (interrupt or block) | P0 | M1 | C-06, D-10 | TIMELINES §3 | INV-05–07; W3 |
-| FR-05 | Per-character knowledge; facts cross only by in-world message | P1 | M1 | C-05, D-03 | TIMELINES §6 | INV-08, INV-09 |
+| FR-05 | Per-character knowledge; a fact reaches a character only through an in-world event: their own observation, a conversation in the same place, or a delivered message | P1 | M1 | C-05, D-03 | TIMELINES §6 | INV-08, INV-09 |
 | FR-06 | Resources accrue on their owner's proper time; unattended harm needs a prior hard decision | P1 | M1 | C-07 | TIMELINES §7 | INV-10, INV-11 |
 | FR-07 | Real-time free-roam advances the controlled character's proper time; nothing advances while away | P0 | M1 | D-07, D-11 | TIMELINES §5 | INV-13 |
 | FR-08 | Autosave plus ≤3 automatic checkpoints; loading a checkpoint is the only rewind | P0 | M1 | D-08 | TIMELINES §8, ADR-003 | INV-14; W4 |
@@ -26,7 +26,7 @@ Priority: **P0** blocks the milestone, **P1** expected, **P2** nice to have.
 | FR-16 | Brand playable on the surface; Murph playable on Earth | P1 | M2 | D-02 | GDD §3 | — |
 | FR-17 | Adaptive music and SFX, with captions for critical sounds | P2 | M2 | brief §6.4 | — | — |
 | FR-18 | In-game codex that discloses speculative physics (spin, wormhole) | P2 | M2 | C-11, D-12 | PHYSICS §1 | Every "speculative" row has a codex entry |
-| FR-19 | Live co-op, two players | P1 | M5 | C-04 | COOP_POLICY | — |
+| FR-19 | Live co-op in one shared campaign; player count is an **open creator decision** (DECISIONS: Open) | P1 | M5 | C-04 | COOP_POLICY | — |
 
 ## Non-functional requirements
 
