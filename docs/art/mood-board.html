@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mood board (ART-001)</title>
+<style>
+  :root { --bg:#0c1117; --fg:#e8edf2; --muted:#9aa7b4; --card:#141b23; --line:#26313c; --accent:#e68c1f; }
+  @media (prefers-color-scheme: light) { :root { --bg:#f5f3ee; --fg:#1b2127; --muted:#59646f; --card:#fff; --line:#d8d4ca; } }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:1rem 1rem 4rem; background:var(--bg); color:var(--fg); font:1rem/1.55 system-ui, sans-serif; }
+  main { max-width: 62rem; margin: 0 auto; }
+  h1 { font-size: 1.75rem; margin: .5rem 0 .25rem; }
+  h2 { font-size: 1.15rem; margin: 2.25rem 0 .5rem; padding-top: .75rem; border-top: 1px solid var(--line); }
+  p, li { max-width: 46rem; }
+  .muted { color: var(--muted); }
+  .grid { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: .5rem; overflow: hidden; }
+  .card .body { padding: .6rem .75rem .75rem; font-size: .9rem; }
+  .sw { height: 4rem; }
+  code { font: .85em ui-monospace, monospace; }
+  img { display: block; width: 100%; height: auto; }
+  .shots { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); }
+  table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+  th, td { text-align: left; padding: .35rem .5rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+</style>
+</head>
+<body>
+<main>
+  <p class="muted">ART-001 · <a href="../ART_DIRECTION.md" style="color:inherit">ART_DIRECTION.md</a> · creator review pending (D-24)</p>
+  <h1>Mood board: cinematic realism</h1>
+  <p>
+    Believable light, air, water and scale, framed like the film, inside a browser budget. Simple shapes, but lit, fogged
+    and framed properly. Every visual should make the player feel <em>where</em> they are and <em>what time is costing</em>.
+    This is an unofficial, non-commercial fan project (D-21); nothing here is film material.
+  </p>
+
+  <h2>1. Palette</h2>
+  <p class="muted">Desaturated and natural. Strong colour is kept for warnings and for Gargantua's disk.</p>
+  <div class="grid">
+    <div class="card"><div class="sw" style="background:#03040a"></div><div class="body"><b>Miller sky</b><br /><code>#03040a</code><br />Black space; Gargantua is the light</div></div>
+    <div class="card"><div class="sw" style="background:#1f3342"></div><div class="body"><b>Miller water</b><br /><code>#1f3342</code><br />Cold blue-grey, slightly emissive</div></div>
+    <div class="card"><div class="sw" style="background:#080a0d"></div><div class="body"><b>The wave</b><br /><code>#080a0d</code><br />Near-black silhouette on the glow</div></div>
+    <div class="card"><div class="sw" style="background:#e0841a"></div><div class="body"><b>Disk orange</b><br /><code>#e0841a</code><br />Gargantua's disk, warm</div></div>
+    <div class="card"><div class="sw" style="background:#fff1d6"></div><div class="body"><b>Disk hot side</b><br /><code>#fff1d6</code><br />Approaching side, Doppler boosted</div></div>
+    <div class="card"><div class="sw" style="background:#ccccc2"></div><div class="body"><b>Suit fabric</b><br /><code>#ccccc2</code><br />Scuffed off-white</div></div>
+    <div class="card"><div class="sw" style="background:#e68c1f"></div><div class="body"><b>Cooper's trim</b><br /><code>#e68c1f</code><br />Copper band; others get their own</div></div>
+    <div class="card"><div class="sw" style="background:#2a2c30"></div><div class="body"><b>Ranger cabin</b><br /><code>#2a2c30</code><br />Dark grey, cramped</div></div>
+    <div class="card"><div class="sw" style="background:#ffb347"></div><div class="body"><b>Instrument amber</b><br /><code>#ffb347</code><br />Cockpit readouts, warnings</div></div>
+    <div class="card"><div class="sw" style="background:#c9ccd0"></div><div class="body"><b>Endurance panel</b><br /><code>#c9ccd0</code><br />Off-white, a little worn</div></div>
+    <div class="card"><div class="sw" style="background:#ffbf66"></div><div class="body"><b>Endurance lamp</b><br /><code>#ffbf66</code><br />Warm practical light</div></div>
+  </div>
+
+  <h2>2. Lighting rules</h2>
+  <ul>
+    <li><b>One key light per scene.</b> On Miller there is no sun: the key is Gargantua's disk, low in the sky, warm and soft. A dim, cool fill comes from the sky. A very dim cool light from the camera side keeps faces of suits from becoming silhouettes.</li>
+    <li><b>Haze on every exterior.</b> Near things crisp, the horizon soft; scale is read through haze.</li>
+    <li><b>Wet things look wet.</b> The water is nearly mirror-dark with a faint glow; the seabed shows through it at the knee.</li>
+    <li><b>Colour discipline.</b> Cold exterior, warm practicals inside, amber for warnings. Never colour alone for information (NFR-04).</li>
+    <li><b>Low, wide camera on Miller.</b> The horizon and the sky dominate; people are small.</li>
+  </ul>
+
+  <h2>3. In-engine lighting test (Miller)</h2>
+  <p class="muted">From the production build: the baked Gargantua sky (GARG-001) and the night palette, with the placeholder capsule still in place. The suited figure arrives with CHAR-001.</p>
+  <div class="shots">
+    <div class="card"><img src="lighting-test-desktop.png" alt="Miller's surface: dark water under a black sky, Gargantua's disk and its lensed halo above the horizon" /><div class="body">Desktop viewport, <code>high</code> tier</div></div>
+  </div>
+
+  <h2>4. Shot list</h2>
+  <table>
+    <thead><tr><th>#</th><th>Beat</th><th>Frame</th><th>Light and mood</th></tr></thead>
+    <tbody>
+      <tr><td>S1</td><td>B1 Descent</td><td>First person, cockpit window full of Gargantua, instruments in the lower third</td><td>Amber readouts on dark grey, the disk lighting the dashboard edge</td></tr>
+      <tr><td>S2</td><td>B2 Landing</td><td>Third person, wide and low: the Ranger standing in water, the horizon a thin line</td><td>Warm low key from the disk, cold sky fill; stillness</td></tr>
+      <tr><td>S3</td><td>B3 to B4 Beacon</td><td>Cooper small in the frame, the beacon on a short mast, the water to his knees</td><td>Disk glow behind the mast, spray at the shins</td></tr>
+      <tr><td>S4</td><td>B5 Wreck</td><td>The half-submerged lander, Brand and Doyle at its hull</td><td>Rust and weathered plating, rim light from the sky</td></tr>
+      <tr><td>S5</td><td>B7 The wave</td><td>Wide: a dark band rising along the horizon, Gargantua's glow rimming its top</td><td>Near-black silhouette, the sky brighter than the water for the first time</td></tr>
+      <tr><td>S6</td><td>B8 Endurance, years later</td><td>Ring corridor, tally marks on a panel, a plant that has grown</td><td>Warm lamps, a cold window with Gargantua in it</td></tr>
+      <tr><td>S7</td><td>B9 Decision</td><td>Romilly at the window, seen from behind</td><td>His silhouette against the disk</td></tr>
+      <tr><td>S8</td><td>B12 Outcome</td><td>Title card over a slow drift of the sky</td><td>Quiet; type only</td></tr>
+    </tbody>
+  </table>
+
+  <h2>5. Reference assets (candidates)</h2>
+  <p class="muted">Poly Haven textures, all CC0. Thumbnails below are reduced copies of the 1K diffuse maps. Nothing here ships yet: an asset is added to <code>docs/ASSETS.md</code> in the PR that first uses it.</p>
+  <div class="grid">
+    <div class="card"><img src="thumbs/damp_sand.jpg" alt="Damp sand" /><div class="body"><b>damp_sand</b><br />Miller seabed under the shallow water<br /><span class="muted">Poly Haven · eye-candy.xyz · CC0</span></div></div>
+    <div class="card"><img src="thumbs/coast_sand_05.jpg" alt="Coast sand with rocks" /><div class="body"><b>coast_sand_05</b><br />Miller seabed (alternate, more rock)<br /><span class="muted">Poly Haven · Rob Tuytel, Dario Barresi · CC0</span></div></div>
+    <div class="card"><img src="thumbs/gravelly_sand.jpg" alt="Gravelly sand" /><div class="body"><b>gravelly_sand</b><br />Miller seabed (coarse)<br /><span class="muted">Poly Haven · Dario Barresi · CC0</span></div></div>
+    <div class="card"><img src="thumbs/rusty_metal_02.jpg" alt="Rusty metal" /><div class="body"><b>rusty_metal_02</b><br />Wreck of Miller's lander<br /><span class="muted">Poly Haven · CC0</span></div></div>
+    <div class="card"><img src="thumbs/metal_plate_02.jpg" alt="Metal plate" /><div class="body"><b>metal_plate_02</b><br />Ranger hull and wreck plating<br /><span class="muted">Poly Haven · Rob Tuytel · CC0</span></div></div>
+    <div class="card"><img src="thumbs/blue_metal_plate.jpg" alt="Blue metal plate" /><div class="body"><b>blue_metal_plate</b><br />Endurance wall panels<br /><span class="muted">Poly Haven · Rob Tuytel · CC0</span></div></div>
+    <div class="card"><img src="thumbs/concrete_floor_worn_001.jpg" alt="Worn floor" /><div class="body"><b>concrete_floor_worn_001</b><br />Endurance corridor floor<br /><span class="muted">Poly Haven · Dimitrios Savva, Rico Cilliers · CC0</span></div></div>
+  </div>
+
+  <h2>6. What is deliberately not here</h2>
+  <p>
+    Film stills, the film's score and logos (D-21); AI-generated art (D-17). Water, the wave, sky, suits and the interior
+    shells are built in code, so only a few small CC0 textures are downloaded, which keeps the first load well under the
+    15 MB budget (D-23).
+  </p>
+</main>
+</body>
+</html>

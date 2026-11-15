@@ -11,3 +11,19 @@ generated from this file (FAN-001).
 
 Third-party assets are added here before they merge, one row each, with the URL they were taken from and the licence
 text or page that grants the right to use and redistribute them.
+
+## Reference images (documentation only, not shipped in the game)
+
+The mood board (`docs/art/mood-board.html`) shows reduced thumbnails of candidate textures. They are copies of Poly Haven
+1K diffuse maps, **CC0** (Poly Haven's licence: https://polyhaven.com/license). They are not in `public/` and not in
+the game build.
+
+| Path | Poly Haven asset | Author | Licence |
+| --- | --- | --- | --- |
+| `docs/art/thumbs/damp_sand.jpg` | https://polyhaven.com/a/damp_sand | eye-candy.xyz | CC0 |
+| `docs/art/thumbs/coast_sand_05.jpg` | https://polyhaven.com/a/coast_sand_05 | Rob Tuytel (photography), Dario Barresi (processing) | CC0 |
+| `docs/art/thumbs/gravelly_sand.jpg` | https://polyhaven.com/a/gravelly_sand | Dario Barresi | CC0 |
+| `docs/art/thumbs/rusty_metal_02.jpg` | https://polyhaven.com/a/rusty_metal_02 | Poly Haven contributors | CC0 |
+| `docs/art/thumbs/metal_plate_02.jpg` | https://polyhaven.com/a/metal_plate_02 | Rob Tuytel | CC0 |
+| `docs/art/thumbs/blue_metal_plate.jpg` | https://polyhaven.com/a/blue_metal_plate | Rob Tuytel | CC0 |
+| `docs/art/thumbs/concrete_floor_worn_001.jpg` | https://polyhaven.com/a/concrete_floor_worn_001 | Dimitrios Savva (photography), Rico Cilliers (processing) | CC0 |
