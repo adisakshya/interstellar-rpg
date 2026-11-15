@@ -75,6 +75,20 @@ describe("W2: a fact seen through Cooper stays with Cooper (INV-08)", () => {
   });
 });
 
+describe("player visibility follows observation, not knowledge", () => {
+  it("records a fact the controlled character already knew when they observe it again", () => {
+    const base = start();
+    // Cooper learned the fact while uncontrolled (e.g. a decision effect): the player has not seen it.
+    const s: GameState = { ...base, controlled: brand, knowledge: { [cooper]: [beaconAge] } };
+    const switched = apply(s, { kind: "SwitchCharacter", commandId: "s1", targetId: cooper }, h).state;
+    expect(switched.playerSeen).toEqual([]);
+    const out = apply(switched, scan, h);
+    expect(out.state.playerSeen).toEqual([beaconAge]);
+    expect(out.state.knowledge[cooper]).toEqual([beaconAge]);
+    expect(kinds(out.result)).toEqual(["ClockAdvanced", "ActivityCompleted"]);
+  });
+});
+
 describe("messages over a link arrive at T_send + latency, never earlier (INV-09)", () => {
   const sent = () => apply(apply(start(), scan, h).state, send("m1"), h);
 

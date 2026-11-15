@@ -18,11 +18,15 @@ export function learn(
   factId: FactId,
 ): { state: GameState; events: EventDraft[] } {
   const c = state.characters[characterId];
-  const known = state.knowledge[characterId] ?? [];
-  if (!c || c.unavailable === "DEAD" || known.includes(factId)) return { state, events: [] };
-  let s: GameState = { ...state, knowledge: { ...state.knowledge, [characterId]: [...known, factId] } };
-  if (characterId === s.controlled && !s.playerSeen.includes(factId))
+  if (!c || c.unavailable === "DEAD") return { state, events: [] };
+  let s = state;
+  // The player sees what the controlled character observes, even a fact that character already knew.
+  if (characterId === s.controlled && !s.playerSeen.includes(factId)) {
     s = { ...s, playerSeen: [...s.playerSeen, factId] };
+  }
+  const known = s.knowledge[characterId] ?? [];
+  if (known.includes(factId)) return { state: s, events: [] };
+  s = { ...s, knowledge: { ...s.knowledge, [characterId]: [...known, factId] } };
   return { state: s, events: [{ kind: "FactLearned", T: s.T, characterId, factId }] };
 }
 
