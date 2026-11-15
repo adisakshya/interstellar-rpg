@@ -1,0 +1,13 @@
+- region "Time":
+  - heading "Time" [level=2]
+  - paragraph: Cooper · 0 s passed overall
+  - text: Reference time 0 seconds
+- navigation "Characters":
+  - heading "Characters" [level=2]
+  - list:
+    - listitem:
+      - button "Cooper, you are controlling, 0 seconds lived": Cooper (you) 0 s lived
+    - listitem:
+      - button "Romilly, 0 seconds lived": Romilly 0 s lived
+- group "Decisions"
+- status: Now controlling Cooper

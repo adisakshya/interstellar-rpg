@@ -50,11 +50,33 @@ describe("actionToCommand", () => {
       counterContext(),
     );
     expect(wrapped).toMatchObject({ targetId: "char.cooper" });
-    // Slots follow switcher order: brand, cooper, doyle, murph, romilly.
-    expect(actionToCommand({ kind: "SwitchTo", index: 5 }, state, counterContext())).toMatchObject({
+    // Slots number the characters the player has met, in the order the HUD lists them: cooper, romilly. Brand, Doyle
+    // and Murph are not introduced yet, so they take no slot.
+    expect(actionToCommand({ kind: "SwitchTo", index: 1 }, state, counterContext())).toMatchObject({
+      targetId: "char.cooper",
+    });
+    expect(actionToCommand({ kind: "SwitchTo", index: 2 }, state, counterContext())).toMatchObject({
       targetId: "char.romilly",
     });
-    expect(actionToCommand({ kind: "SwitchTo", index: 99 }, state, counterContext())).toBeNull();
+    expect(actionToCommand({ kind: "SwitchTo", index: 3 }, state, counterContext())).toBeNull();
+  });
+
+  it("keeps unintroduced characters out of the slots while the controlled character is locked", () => {
+    const locked = {
+      ...state,
+      characters: {
+        ...state.characters,
+        ["char.cooper" as never]: {
+          ...state.characters["char.cooper" as never]!,
+          unavailable: "LOCKED_SEQUENCE" as const,
+        },
+      },
+    };
+    // Slot 3 would be Brand if his hidden state were masked by the lock.
+    expect(actionToCommand({ kind: "SwitchTo", index: 3 }, locked, counterContext())).toBeNull();
+    expect(actionToCommand({ kind: "SwitchTo", index: 2 }, locked, counterContext())).toMatchObject({
+      targetId: "char.romilly",
+    });
   });
 });
 

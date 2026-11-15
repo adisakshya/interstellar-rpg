@@ -19,7 +19,7 @@ export type {
 } from "./engine";
 export { createHandlers, createRules, defaultHandlers } from "./handlers";
 export { createClockHandlers, createForecaster } from "./clocks";
-export { switchRejection, switchView } from "./availability";
+export { isIntroduced, switchRejection, switchView } from "./availability";
 export { createKnowledgeHandlers, playerOnlyFacts } from "./knowledge";
 export type { Handoff, SwitchOption, SwitchView } from "./availability";
 export type {
