@@ -192,6 +192,53 @@ describe("W3, atomic survey (INV-05) and early resolution", () => {
   });
 });
 
+describe("activity progress across interruptions and checkpoints (TIMELINES §3, §8)", () => {
+  const first = asId("decision", "decision.first");
+  const second = asId("decision", "decision.second");
+  const hard = (id: typeof first, triggerT: number, deadlineT: number, checkpoint = false): DecisionDef => ({
+    id,
+    owner: cooper,
+    triggerT,
+    deadlineT,
+    checkpoint,
+    options: { go: [] },
+  });
+  // Cooper on Endurance (rate 1) so Δτ and T line up: a 100 s survey, deadlines at 80 s and 85 s.
+  const onShip = (): GameState => {
+    const s = start();
+    return {
+      ...s,
+      characters: { ...s.characters, [cooper]: { ...s.characters[cooper]!, location: LOCATIONS.endurance } },
+    };
+  };
+
+  it("keeps cumulative progress when a resumed activity is interrupted again", () => {
+    const h = createHandlers({ ...tables(false, [hard(first, 10, 80), hard(second, 82, 85)]) });
+    let s = apply(onShip(), survey("c1", 100), h).state;
+    expect(s.activity?.progress).toBeCloseTo(0.8, 12);
+    s = apply(s, resolve("r1", first, "go"), h).state;
+    const again = apply(s, survey("c2", 20), h);
+    expect(again.result.kind).toBe("Interrupted");
+    expect(again.state.activity?.progress).toBeCloseTo(0.85, 12);
+    const done = apply(apply(again.state, resolve("r2", second, "go"), h).state, survey("c3", 15), h);
+    expect(done.state.activity).toBeNull();
+  });
+
+  it("records the activity's progress in a checkpoint taken part-way through", () => {
+    const h = createHandlers({ ...tables(false, [{ ...hard(first, 70, 1000, true), deadlineT: null }]) });
+    const out = apply(onShip(), survey("c1", 100), h);
+    const r = committed(out.result);
+    expect(r.checkpoints[0]!.state.activity).toEqual({ activityId: "survey", actorId: cooper, progress: 0.7 });
+    expect(out.state.activity).toBeNull();
+  });
+
+  it("does not drop an unrelated interrupted activity when another one completes", () => {
+    const h = createHandlers(tables(false, []));
+    const s: GameState = { ...onShip(), activity: { activityId: "repair", actorId: cooper, progress: 0.5 } };
+    expect(apply(s, survey("c1", 10), h).state.activity).toEqual(s.activity);
+  });
+});
+
 describe("soft decisions (INV-07) and resolution rules (INV-16)", () => {
   const h = createHandlers(tables(false, [D_SOFT, D_HIB]));
 
@@ -218,6 +265,12 @@ describe("soft decisions (INV-07) and resolution rules (INV-16)", () => {
     const s = apply(start(), survey("c1", 1 * H), h).state;
     expect(apply(s, resolve("r0", dHib, "stay"), h).result).toMatchObject({ kind: "Rejected", code: "NOT_CONTROLLED" });
     expect(apply(s, resolve("rx", dSoft, "nope"), h).result).toMatchObject({ kind: "Rejected", code: "INVALID" });
+    for (const inherited of ["toString", "constructor", "__proto__"]) {
+      expect(apply(s, resolve(`ry-${inherited}`, dSoft, inherited), h).result).toMatchObject({
+        kind: "Rejected",
+        code: "INVALID",
+      });
+    }
     const once = apply(s, resolve("r1", dSoft, "keep"), h).state;
     expect(apply(once, resolve("r1", dSoft, "send"), h).result).toEqual({ kind: "Duplicate" });
     expect(apply(once, resolve("r2", dSoft, "send"), h).result).toEqual({

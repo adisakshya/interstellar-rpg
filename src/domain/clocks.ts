@@ -92,6 +92,10 @@ export function createClockHandlers(
     }
     const Tend = barrier ? barrier.deadlineT! : T1;
     const tauAt = (T: number) => (T === T1 ? actor.tau + dTau : actor.tau + (T - T0) * actorRate);
+    // A resumed activity's Δτ covers what was left, so progress accumulates on top of what was kept (§3).
+    const resumed = activity && state.activity?.activityId === activity.id && state.activity.actorId === actorId;
+    const kept = resumed ? state.activity!.progress : 0;
+    const progressAt = (T: number) => kept + ((T - T0) / (T1 - T0)) * (1 - kept);
 
     // Decisions not yet triggered whose trigger is at or before Tend, in T order then id order.
     const triggers = decisions
@@ -109,6 +113,8 @@ export function createClockHandlers(
         events.push({ kind: "ClockAdvanced", T: at, dT });
       }
       s = { ...s, decisions: { ...s.decisions, [d.id]: { status: "pending", optionId: null } } };
+      // The snapshot is a full state at this moment, including how far the activity has got (§8).
+      if (activity) s = { ...s, activity: { activityId: activity.id, actorId, progress: progressAt(at) } };
       events.push({ kind: "DecisionPending", T: at, decisionId: d.id });
       if (d.checkpoint) {
         events.push({ kind: "CheckpointCreated", T: at, decisionId: d.id });
@@ -122,7 +128,7 @@ export function createClockHandlers(
     }
 
     if (barrier) {
-      const progress = (Tend - T0) / (T1 - T0);
+      const progress = progressAt(Tend);
       if (activity) {
         s = { ...s, activity: { activityId: activity.id, actorId, progress } };
         events.push({ kind: "ActivityInterrupted", T: Tend, activityId: activity.id, progress });
@@ -130,7 +136,8 @@ export function createClockHandlers(
       return { kind: "commit", state: s, events, checkpoints, interruptedBy: barrier.id };
     }
     if (activity) {
-      if (s.activity?.activityId === activity.id) s = { ...s, activity: null };
+      // Done: clear it, or put back an unrelated activity that was in progress before this command.
+      s = { ...s, activity: resumed ? null : state.activity };
       events.push({ kind: "ActivityCompleted", T: Tend, activityId: activity.id, progress: 1 });
     }
     return { kind: "commit", state: s, events, checkpoints };
@@ -147,7 +154,7 @@ export function createClockHandlers(
     ResolveDecision(state, command) {
       const def = tables.decisions?.[command.decisionId];
       if (!def) return reject("INVALID", `unknown decision ${command.decisionId}`);
-      if (!(command.optionId in def.options)) return reject("INVALID", `unknown option ${command.optionId}`);
+      if (!Object.hasOwn(def.options, command.optionId)) return reject("INVALID", `unknown option ${command.optionId}`);
       const current = state.decisions[def.id];
       if (current?.status === "resolved") return reject("DECISION_ALREADY_RESOLVED");
       if (state.controlled !== def.owner) return reject("NOT_CONTROLLED");
