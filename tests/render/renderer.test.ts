@@ -215,6 +215,24 @@ describe("Miller's plain is dressed (SCENE-002)", () => {
   });
 });
 
+describe("Endurance ages with the years that pass (SCENE-004)", () => {
+  it("has no marks at the start, then tally marks, books and a taller plant as the clock runs", async () => {
+    engine = new NullEngine();
+    renderer = createRenderer(engine, { tier: "high", fadeMs: 0 });
+    const base = createInitialState(episode.initial);
+    await renderer.show({ ...base, controlled: "char.romilly" as never });
+    const scene = renderer.handle!.scene;
+    const count = (name: string) => scene.meshes.filter((m) => m.name === name).length;
+    expect(count("tally")).toBe(0);
+    expect(count("logbook")).toBe(0);
+    await renderer.show({ ...base, controlled: "char.romilly" as never, T: 12.5 * 365.25 * 86400 });
+    expect(count("tally")).toBeGreaterThanOrEqual(12);
+    expect(count("logbook")).toBe(6);
+    const wall = scene.getMaterialByName("corridorMat") as unknown as { diffuseColor: { r: number } };
+    expect(wall.diffuseColor.r).toBeLessThan(0.66); // dustier than clean
+  });
+});
+
 describe("the dead leave the scene (CHAR-001)", () => {
   it("hides a follower who has died, and shows him again if the scene is rebuilt from a state where he lives", async () => {
     engine = new NullEngine();
