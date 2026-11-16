@@ -14,6 +14,8 @@ export interface Hud {
   update(model: HudModel): void;
   /** A spot at the top of the HUD column where narrow screens put the subtitles, so they never cover a decision. */
   readonly slot: HTMLElement;
+  /** The current goal while the player is not yet where the offered action is ("Walk to the beacon · 31 m"), or null. */
+  setObjective(text: string | null): void;
   /** Update the sound switch's label. */
   setSound(on: boolean): void;
   /** Flash the tick dot: the visual cue for the time tick, for players without sound. */
@@ -59,6 +61,8 @@ const CSS = `
 .irpg-options{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:.375rem}
 .irpg-options>li{flex:1 1 8rem}
 .irpg-note{margin:0;font-size:.875rem}
+.irpg-objective-text{margin:0;font-size:1rem;font-weight:500}
+.irpg-objective-text::before{content:"\\25B8";margin-right:.5rem;color:#ffd166}
 .irpg-stake{margin:.25rem 0 .5rem;font-size:.9375rem}
 .irpg-timerow{display:flex;align-items:center;justify-content:space-between;gap:.5rem}
 .irpg-timerow .irpg-btn{width:auto;flex:none;align-items:center}
@@ -163,6 +167,14 @@ export function mountHud(root: HTMLElement, handlers: HudHandlers): Hud {
   actionButton.addEventListener("click", () => handlers.onAct());
   actionPanel.append(actionButton);
 
+  const objectivePanel = make(doc, "section", {
+    class: "irpg-panel irpg-actionbar irpg-objective",
+    "aria-label": "Objective",
+    hidden: "",
+  });
+  const objectiveText = make(doc, "p", { class: "irpg-objective-text" });
+  objectivePanel.append(objectiveText);
+
   const roster = make(doc, "nav", { class: "irpg-panel", "aria-labelledby": "irpg-who-h" });
   roster.append(make(doc, "h2", { id: "irpg-who-h" }, "Characters"));
   const list = make(doc, "ul", { class: "irpg-list" });
@@ -177,7 +189,7 @@ export function mountHud(root: HTMLElement, handlers: HudHandlers): Hud {
 
   const column = make(doc, "div", { class: "irpg-scroll" });
   const slot = make(doc, "div", { hidden: "" });
-  column.append(slot, timePanel, actionPanel, roster, prompts, notes);
+  column.append(slot, timePanel, actionPanel, objectivePanel, roster, prompts, notes);
   wrap.append(column, status);
   root.append(style, wrap);
 
@@ -276,6 +288,14 @@ export function mountHud(root: HTMLElement, handlers: HudHandlers): Hud {
 
   return {
     slot,
+    setObjective(text) {
+      if (text === null) {
+        objectivePanel.hidden = true;
+        return;
+      }
+      if (objectiveText.textContent !== text) objectiveText.textContent = text;
+      objectivePanel.hidden = false;
+    },
     setSound(on) {
       soundButton.textContent = on ? "Sound on" : "Sound off";
       soundButton.setAttribute("aria-pressed", String(on));

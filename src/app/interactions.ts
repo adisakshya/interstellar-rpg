@@ -13,6 +13,10 @@ export interface InteractionDef {
   readonly after?: readonly string[] | undefined;
   /** Decisions that must not have been raised yet (neither pending nor resolved). */
   readonly before?: readonly string[] | undefined;
+  /** A landmark the player must be near to do this (PLAY-001). */
+  readonly near?: string | undefined;
+  /** What to say while they are not there yet. */
+  readonly goal?: string | undefined;
 }
 
 const resolved = (state: GameState, id: string) => state.decisions[id as never]?.status === "resolved";
@@ -21,7 +25,22 @@ const resolved = (state: GameState, id: string) => state.decisions[id as never]?
  * The interaction the controlled character is offered now, or null. The first entry whose place matches and whose
  * conditions hold wins. Facts are checked against what that character knows, not what the player knows (INV-08).
  */
-export function currentInteraction(state: GameState, defs: readonly InteractionDef[]): InteractionDef | null {
+export function currentInteraction(
+  state: GameState,
+  defs: readonly InteractionDef[],
+  /** Is the player standing near this landmark? Omitted: everywhere counts (no gating, as in tests and other scenes). */
+  isNear?: (landmark: string) => boolean,
+): InteractionDef | null {
+  const wanted = pendingInteraction(state, defs);
+  if (!wanted) return null;
+  return wanted.near === undefined || isNear === undefined || isNear(wanted.near) ? wanted : null;
+}
+
+/**
+ * The interaction the controlled character could do now if they were standing in the right place: the same rules as
+ * `currentInteraction`, ignoring where the player is. It is what the objective line points at.
+ */
+export function pendingInteraction(state: GameState, defs: readonly InteractionDef[]): InteractionDef | null {
   const actor = state.characters[state.controlled];
   if (!actor || actor.unavailable !== null) return null;
   const known = new Set<string>(state.knowledge[actor.id] ?? []);
@@ -51,8 +70,13 @@ export interface Offer {
  * `dTau / r(actor's place)`, and each other character ages `r(their place)` times that. Only + − × ÷, so it
  * matches the domain exactly. Characters who cannot age (no rate, or dead) are left out.
  */
-export function offerFor(state: GameState, defs: readonly InteractionDef[], rates: RateTable): Offer | null {
-  const def = currentInteraction(state, defs);
+export function offerFor(
+  state: GameState,
+  defs: readonly InteractionDef[],
+  rates: RateTable,
+  isNear?: (landmark: string) => boolean,
+): Offer | null {
+  const def = currentInteraction(state, defs, isNear);
   const actor = state.characters[state.controlled];
   if (!def || !actor) return null;
   const rate = rates[actor.location];

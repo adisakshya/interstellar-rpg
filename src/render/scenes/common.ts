@@ -3,6 +3,7 @@ import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { Scene } from "@babylonjs/core/scene";
 import type { TierSettings } from "../quality";
+import { gradeScene } from "./post";
 import type { WaveSchedule } from "../wave";
 
 /** What a scene shows for the current game state. Derived from domain state; never written back. */
@@ -20,6 +21,12 @@ export interface SceneHandle {
   update(view: SceneView): void;
   /** Presentation-only movement for the visible character (INPUT-001 drives it); −1..1 per axis. */
   setMove(x: number, y: number): void;
+  /** Where the player's character stands on the plain, for scenes where that matters (null elsewhere). */
+  position?(): { readonly x: number; readonly z: number } | null;
+  /** Put the player's character at a spot (the test hook and the replay of a saved position use it). */
+  teleport?(x: number, z: number): void;
+  /** Mark a landmark as the current goal with a beam of light, or clear it with null. */
+  setObjective?(landmark: string | null): void;
   dispose(): void;
 }
 
@@ -60,5 +67,6 @@ export function material(
 export function newScene(engine: AbstractEngine, clear: Color4): Scene {
   const scene = new Scene(engine);
   scene.clearColor = clear;
+  gradeScene(scene);
   return scene;
 }

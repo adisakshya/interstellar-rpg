@@ -233,6 +233,26 @@ describe("Endurance ages with the years that pass (SCENE-004)", () => {
   });
 });
 
+describe("the player's position survives a scene being replaced (PLAY-001)", () => {
+  it("is restored when the surface scene comes back after Endurance, and from a saved start position", async () => {
+    engine = new NullEngine();
+    renderer = createRenderer(engine, { tier: "high", fadeMs: 0 });
+    const base = createInitialState(episode.initial);
+    await renderer.show(base);
+    renderer.handle!.teleport!(9, 21);
+    await renderer.show({ ...base, controlled: "char.romilly" as never }); // Endurance
+    expect(renderer.handle!.position?.() ?? null).toBeNull();
+    await renderer.show(base); // back on Miller
+    expect(renderer.handle!.position!()).toMatchObject({ x: 9, z: 21 });
+    await renderer.rebuild(); // a lost graphics context
+    expect(renderer.handle!.position!()).toMatchObject({ x: 9, z: 21 });
+    renderer.dispose();
+    renderer = createRenderer(engine, { tier: "high", fadeMs: 0, startPosition: { x: 3, z: 14 } });
+    await renderer.show(base);
+    expect(renderer.handle!.position!()).toMatchObject({ x: 3, z: 14 });
+  });
+});
+
 describe("the dead leave the scene (CHAR-001)", () => {
   it("hides a follower who has died, and shows him again if the scene is rebuilt from a state where he lives", async () => {
     engine = new NullEngine();
@@ -410,5 +430,24 @@ describe("context-loss recovery (PERF-001, TIMELINES §5)", () => {
     await renderer.show(at(game.getState(), "loc.ranger")).catch(() => undefined);
     await renderer.rebuild();
     expect(renderer.current).toBe("cockpit");
+  });
+});
+
+describe("the cinematic grade (ART_DIRECTION §8)", () => {
+  it("tone-maps every scene with ACES and a vignette, and only the high tier asks for bloom", async () => {
+    const { TIERS } = await import("../../src/render/quality");
+    expect(TIERS.high.bloom).toBe(true);
+    expect(TIERS.low.bloom).toBe(false);
+    for (const tier of ["low", "high"] as const) {
+      engine = new NullEngine();
+      renderer = createRenderer(engine, { tier, fadeMs: 0 });
+      await renderer.show(createInitialState(episode.initial));
+      const c = renderer.handle!.scene.imageProcessingConfiguration;
+      expect(c.toneMappingEnabled).toBe(true);
+      expect(c.toneMappingType).toBe(1); // ACES
+      expect(c.vignetteEnabled).toBe(true);
+      renderer.dispose();
+      renderer = null;
+    }
   });
 });

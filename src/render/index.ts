@@ -10,3 +10,5 @@ export { addSky } from "./scenes/sky";
 export { waveAt, waveLook, waveProgress, waveScheduleOf } from "./wave";
 export type { WaveLook, WaveSchedule } from "./wave";
 export type { SceneContent } from "./scenes/common";
+export { distanceTo, isNearLandmark, MILLER_LANDMARKS } from "./landmarks";
+export type { Landmark } from "./landmarks";

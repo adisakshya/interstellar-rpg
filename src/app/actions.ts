@@ -8,6 +8,8 @@ export interface TranslateContext {
   /** What Interact can do at each place, with its conditions (from content). */
   readonly interactions: readonly InteractionDef[];
   readonly activities?: Readonly<Record<string, ActivityDef>> | undefined;
+  /** Is the player near this landmark? Omitted: nothing is gated. */
+  readonly isNear?: ((landmark: string) => boolean) | undefined;
 }
 
 /**
@@ -20,7 +22,7 @@ export function actionToCommand(action: InputAction, state: GameState, ctx: Tran
       return null;
     case "Interact": {
       const actor = state.characters[state.controlled];
-      const what = currentInteraction(state, ctx.interactions);
+      const what = currentInteraction(state, ctx.interactions, ctx.isNear);
       if (!actor || !what) return null;
       return {
         kind: "AdvanceTime",

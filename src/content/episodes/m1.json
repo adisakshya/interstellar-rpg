@@ -313,17 +313,21 @@
       "activityId": "scan.beacon",
       "dTau": 600,
       "unless": ["fact.beacon_active"],
-      "before": ["decision.recall"]
+      "before": ["decision.recall"],
+      "near": "beacon",
+      "goal": "Walk to the beacon"
     },
     {
       "id": "act.search",
       "location": "loc.miller_surface",
-      "label": "Search the surface",
+      "label": "Search the wreck",
       "activityId": "search.surface",
       "dTau": 1200,
       "requires": ["fact.beacon_active"],
       "unless": ["fact.surface_searched"],
-      "before": ["decision.recall"]
+      "before": ["decision.recall"],
+      "near": "wreck",
+      "goal": "Wade out to the wreck"
     },
     {
       "id": "act.ascend",
@@ -332,7 +336,9 @@
       "activityId": "ascend",
       "dTau": 1800,
       "after": ["decision.recall"],
-      "unless": ["fact.lifted_off"]
+      "unless": ["fact.lifted_off"],
+      "near": "ranger",
+      "goal": "Get back to the Ranger"
     },
     {
       "id": "act.wait",

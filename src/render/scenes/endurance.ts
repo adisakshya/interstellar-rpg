@@ -14,6 +14,7 @@ import { Scene } from "@babylonjs/core/scene";
 import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { ageKey, enduranceAge, type EnduranceAge } from "./endurance-age";
+import { addBloom } from "./post";
 import { material, newScene, type SceneFactory } from "./common";
 
 const CLEAN_WALL = new Color3(0.66, 0.67, 0.64);
@@ -198,6 +199,7 @@ export const createEnduranceScene: SceneFactory = (engine, tier, assets) => {
   camera.minZ = 0.05;
   camera.maxZ = 600;
   scene.activeCamera = camera;
+  addBloom(scene, camera, tier);
 
   const move = { x: 0, y: 0 };
   scene.onBeforeRenderObservable.add(() => {

@@ -11,7 +11,17 @@ import {
   type InputAction,
 } from "../input";
 import { IndexedDbBackend, MemoryBackend, SaveSlots, stateHash } from "../persistence";
-import { createAdaptiveScaler, createRenderer, detectTier, scalingLevel, TIERS, waveScheduleOf } from "../render";
+import {
+  createAdaptiveScaler,
+  createRenderer,
+  detectTier,
+  distanceTo,
+  isNearLandmark,
+  MILLER_LANDMARKS,
+  scalingLevel,
+  TIERS,
+  waveScheduleOf,
+} from "../render";
 import {
   buildHudModel,
   isFinished,
@@ -24,7 +34,8 @@ import {
 } from "../ui";
 import { actionToCommand } from "./actions";
 import { watchEnding } from "./ending";
-import { offerFor } from "./interactions";
+import { makeNearGate } from "./gate";
+import { offerFor, pendingInteraction } from "./interactions";
 import { createAutosaver } from "./autosave";
 import { loadStartup, startupNotice } from "./startup";
 import { createFreeRoam } from "./freeroam";
@@ -94,8 +105,29 @@ const engine = new Engine(canvas, TIERS[tier].antialias, {
   canvasTabIndex: -1,
 });
 engine.setHardwareScalingLevel(scalingLevel(tier, devicePixelRatio));
+// Where the player stood when the game was last saved, so a reload does not send them back to the start of the plain
+// (their position decides which actions are allowed). Trusted only if the loaded game is at or past the point it was
+// written at, like the story record: restoring an earlier checkpoint puts them back at the start.
+const POSITION_KEY = "irpg.position";
+const savedPosition = (): { x: number; z: number } | null => {
+  if (startup.kind !== "resumed") return null;
+  try {
+    const raw = localStorage.getItem(POSITION_KEY);
+    const v = raw === null ? null : (JSON.parse(raw) as { x?: unknown; z?: unknown; seq?: unknown });
+    return v &&
+      typeof v.x === "number" &&
+      typeof v.z === "number" &&
+      typeof v.seq === "number" &&
+      v.seq <= startup.state.seq
+      ? { x: v.x, z: v.z }
+      : null;
+  } catch {
+    return null;
+  }
+};
 const renderer = createRenderer(engine, {
   tier,
+  startPosition: savedPosition(),
   assets: { baseUrl: import.meta.env.BASE_URL },
   content: { wave: waveScheduleOf(episode.tables) },
   fade: { set: (o) => (fade.style.opacity = String(o)) },
@@ -105,6 +137,11 @@ renderer.attach(game);
 // Input → actions → commands. Movement is presentation only (free-roam ticks come with the frame loop, PERF-001);
 // everything else is a domain command with a fresh id per player action.
 const interactions = episode.interactions;
+// Where the player stands matters (PLAY-001): an action tied to a landmark is only offered within reach of it. Scenes
+// with no position (Endurance, the cockpit) offer everything.
+const playerAt = () => renderer.handle?.position?.() ?? null;
+const isNear = makeNearGate(playerAt);
+let repaintHud: (() => void) | null = null;
 const onAction = (action: InputAction) => {
   // While the title screen is up, and once the episode is over (the outcome dialog), keys pressed behind them do nothing.
   if (titleOpen || isFinished(game.getState(), episode.ending)) return;
@@ -116,6 +153,7 @@ const onAction = (action: InputAction) => {
     newId: () => crypto.randomUUID(),
     interactions,
     activities: episode.tables.activities,
+    isNear,
   });
   if (command) dispatch(command);
 };
@@ -195,11 +233,12 @@ if (hud) {
         text: episode.decisionText,
         activities: episode.tables.activities,
         forecast: (id) => game.forecast(id),
-        offer: offerFor(state, interactions, episode.tables.rates),
+        offer: offerFor(state, interactions, episode.tables.rates, isNear),
       }),
     );
   paint(game.getState());
   game.subscribe(paint);
+  repaintHud = () => paint(game.getState());
   // The on-screen pad and buttons are for touch screens; with a mouse and keyboard they only clutter the view.
   const touchDevice = window.matchMedia("(pointer: coarse)").matches || navigator.maxTouchPoints > 0;
   if (touchDevice) createTouchAdapter(mountTouchControls(hud).controls, onAction);
@@ -299,8 +338,44 @@ watchEnding({
   newGame: () => location.assign(`${location.pathname}?fresh`),
 });
 
+// The goal line and its beam, refreshed a few times a second: how far to the place where the offered action is.
+let objectiveAt = 0;
+let savedAt = { x: Number.NaN, z: Number.NaN };
+let wasNear: boolean | null = null;
+const refreshObjective = (now: number) => {
+  if (now - objectiveAt < 250) return;
+  objectiveAt = now;
+  const state = game.getState();
+  const pending = titleOpen || isFinished(state, episode.ending) ? null : pendingInteraction(state, interactions);
+  const at = playerAt();
+  if (at !== null && (Math.abs(at.x - savedAt.x) > 0.5 || Math.abs(at.z - savedAt.z) > 0.5)) {
+    savedAt = { x: at.x, z: at.z };
+    try {
+      localStorage.setItem(POSITION_KEY, JSON.stringify({ x: at.x, z: at.z, seq: state.seq }));
+    } catch {
+      /* a blocked store only means a reload starts at the beginning of the plain */
+    }
+  }
+  const landmark = pending?.near !== undefined ? MILLER_LANDMARKS[pending.near] : undefined;
+  if (!pending || pending.near === undefined || !landmark || at === null) {
+    hudView?.setObjective(null);
+    renderer.handle?.setObjective?.(null);
+    wasNear = null;
+    return;
+  }
+  const near = isNearLandmark(pending.near, at);
+  if (near !== wasNear) {
+    wasNear = near;
+    repaintHud?.(); // the offered action appears or goes away as the player arrives or leaves
+  }
+  hudView?.setObjective(
+    near ? null : `${pending.goal ?? `Go to the ${pending.near}`} · ${Math.round(distanceTo(landmark, at))} m`,
+  );
+  renderer.handle?.setObjective?.(near ? null : pending.near);
+};
 engine.runRenderLoop(() => {
   freeRoam.frame(engine.getDeltaTime());
+  refreshObjective(performance.now());
   const level = adaptive ? scaler.frame(engine.getDeltaTime()) : null;
   if (level !== null) {
     engine.setHardwareScalingLevel(level);
@@ -353,6 +428,13 @@ if (new URLSearchParams(location.search).has("debug")) {
     slots,
     /** Writes any owed autosave now, so a test does not have to guess how long the debounce takes. */
     flushSave: () => autosaver.flush(),
+    /** Walk straight to the place of the offered action, so a scripted run does not have to steer. */
+    goToObjective: () => {
+      const pending = pendingInteraction(game.getState(), interactions);
+      const l = pending?.near === undefined ? undefined : MILLER_LANDMARKS[pending.near];
+      if (l) renderer.handle?.teleport?.(l.x, l.z - 2);
+      refreshObjective(performance.now() + 500);
+    },
     story,
     /** What the renderer is actually drawing at, for performance reports. */
     resolution: () => ({
