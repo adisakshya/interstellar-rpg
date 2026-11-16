@@ -11,6 +11,8 @@ export interface TierSettings {
   /** Transparent water costs a full-screen blend; `low` draws it opaque. */
   readonly transparentWater: boolean;
   readonly terrainSubdivisions: number;
+  /** A soft bloom on bright things (the disk, the lamps): extra full-screen passes, so `high` only. */
+  readonly bloom: boolean;
   /** The Gargantua sky image for this tier, under `public/sky/` (ART_DIRECTION §8: 1 MB low, 3 MB high). */
   readonly skyFile: string;
 }
@@ -21,6 +23,7 @@ export const TIERS: Readonly<Record<Tier, TierSettings>> = {
     antialias: false,
     transparentWater: false,
     terrainSubdivisions: 48,
+    bloom: false,
     skyFile: "sky/gargantua-low.webp",
   },
   high: {
@@ -28,6 +31,7 @@ export const TIERS: Readonly<Record<Tier, TierSettings>> = {
     antialias: true,
     transparentWater: true,
     terrainSubdivisions: 128,
+    bloom: true,
     skyFile: "sky/gargantua-high.webp",
   },
 };

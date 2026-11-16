@@ -10,6 +10,7 @@ import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { VertexBuffer } from "@babylonjs/core/Buffers/buffer";
 import { VertexData } from "@babylonjs/core/Meshes/mesh.vertexData";
 import { Scene } from "@babylonjs/core/scene";
+import { addBloom } from "./post";
 import { material, newScene, type SceneFactory } from "./common";
 import { CREW } from "../figures/crew";
 import { createSuitedFigure } from "../figures/suit";
@@ -146,6 +147,7 @@ export const createSurfaceScene: SceneFactory = (engine, tier, assets, content) 
   camera.lowerRadiusLimit = 3;
   camera.upperRadiusLimit = 15;
   scene.activeCamera = camera;
+  addBloom(scene, camera, tier);
 
   const move = { x: 0, y: 0 };
   let vel: Velocity = { x: 0, y: 0 };

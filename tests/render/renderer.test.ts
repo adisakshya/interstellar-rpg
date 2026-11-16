@@ -412,3 +412,22 @@ describe("context-loss recovery (PERF-001, TIMELINES §5)", () => {
     expect(renderer.current).toBe("cockpit");
   });
 });
+
+describe("the cinematic grade (ART_DIRECTION §8)", () => {
+  it("tone-maps every scene with ACES and a vignette, and only the high tier asks for bloom", async () => {
+    const { TIERS } = await import("../../src/render/quality");
+    expect(TIERS.high.bloom).toBe(true);
+    expect(TIERS.low.bloom).toBe(false);
+    for (const tier of ["low", "high"] as const) {
+      engine = new NullEngine();
+      renderer = createRenderer(engine, { tier, fadeMs: 0 });
+      await renderer.show(createInitialState(episode.initial));
+      const c = renderer.handle!.scene.imageProcessingConfiguration;
+      expect(c.toneMappingEnabled).toBe(true);
+      expect(c.toneMappingType).toBe(1); // ACES
+      expect(c.vignetteEnabled).toBe(true);
+      renderer.dispose();
+      renderer = null;
+    }
+  });
+});

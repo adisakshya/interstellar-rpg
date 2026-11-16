@@ -3,6 +3,7 @@ import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { Scene } from "@babylonjs/core/scene";
 import type { TierSettings } from "../quality";
+import { gradeScene } from "./post";
 import type { WaveSchedule } from "../wave";
 
 /** What a scene shows for the current game state. Derived from domain state; never written back. */
@@ -66,5 +67,6 @@ export function material(
 export function newScene(engine: AbstractEngine, clear: Color4): Scene {
   const scene = new Scene(engine);
   scene.clearColor = clear;
+  gradeScene(scene);
   return scene;
 }
