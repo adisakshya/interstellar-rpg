@@ -35,6 +35,8 @@ export interface RendererOptions {
   readonly assets?: SceneAssets;
   /** Story timing from content (the wave). */
   readonly content?: SceneContent;
+  /** Where the player's character stood (a resumed game), so the surface scene starts there and not at the origin. */
+  readonly startPosition?: { readonly x: number; readonly z: number } | null;
   readonly loaders?: Readonly<Record<SceneKind, () => Promise<SceneFactory>>>;
   /** Where scene-load failures go when following an engine (default: console.error). */
   readonly onError?: (error: unknown) => void;
@@ -86,6 +88,17 @@ export function createRenderer(engine: AbstractEngine, options: RendererOptions)
   // The latest movement vector, so a held direction carries over into a replacement scene (and a press made during
   // the fade is not lost).
   let move = { x: 0, y: 0 };
+  // Where the player's character stands on the plain. It now decides which actions are allowed (PLAY-001), so it must
+  // survive a scene being replaced (switching to Endurance and back, a lost graphics context) instead of resetting
+  // with the disposable scene.
+  let standing: { x: number; z: number } | null = options.startPosition ? { ...options.startPosition } : null;
+  const remember = () => {
+    const at = handle?.position?.();
+    if (at) standing = { x: at.x, z: at.z };
+  };
+  const arrive = (h: SceneHandle) => {
+    if (standing) h.teleport?.(standing.x, standing.z);
+  };
 
   async function swapTo(kind: SceneKind): Promise<void> {
     const factory = await loaders[kind]();
@@ -97,11 +110,13 @@ export function createRenderer(engine: AbstractEngine, options: RendererOptions)
         // dispose() may have run during the fade: build nothing on a disposed renderer.
         if (disposed) return;
       }
+      remember();
       handle?.dispose();
       handle = null;
       current = null;
       handle = factory(engine, TIERS[options.tier], options.assets, options.content);
       handle.setMove(move.x, move.y);
+      arrive(handle);
       current = kind;
       if (latest) handle.update(viewOf(latest));
     } finally {
@@ -154,6 +169,7 @@ export function createRenderer(engine: AbstractEngine, options: RendererOptions)
         // The old scene's GPU resources died with the context: drop it without a fade and build it afresh.
         const factory = await loaders[kind]();
         if (disposed) return;
+        remember();
         try {
           handle?.dispose();
         } catch {
@@ -163,6 +179,7 @@ export function createRenderer(engine: AbstractEngine, options: RendererOptions)
         current = null;
         handle = factory(engine, TIERS[options.tier], options.assets, options.content);
         handle.setMove(move.x, move.y);
+        arrive(handle);
         current = kind;
         wanted = kind;
         handle.update(viewOf(latest));

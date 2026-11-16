@@ -1,12 +1,18 @@
 import { expect, test } from "@playwright/test";
 
 /** The test hook, read inside the page (the full typing lives in slice.spec.ts). */
-declare const window: { __irpg: { game: { getState(): { T: number } }; goToObjective(): void } };
+declare const window: {
+  __irpg: {
+    game: { getState(): { T: number } };
+    goToObjective(): void;
+    renderer: { handle: { position?(): unknown } | null };
+  };
+};
 
 test("you have to walk to the beacon to scan it, and the HUD says where it is", async ({ page }, info) => {
   await page.goto("./?debug&frozen&fresh");
   await page.waitForSelector(".irpg-btn");
-  await page.evaluate(() => window.__irpg.game.getState()); // the game is up
+  await page.waitForFunction(() => window.__irpg.renderer.handle?.position?.() != null); // the surface scene is up
 
   // At the start you are far from the beacon: pressing E does nothing, and the goal is shown with a distance.
   const touch = info.project.name.startsWith("mobile");

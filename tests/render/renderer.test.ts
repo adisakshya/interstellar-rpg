@@ -233,6 +233,26 @@ describe("Endurance ages with the years that pass (SCENE-004)", () => {
   });
 });
 
+describe("the player's position survives a scene being replaced (PLAY-001)", () => {
+  it("is restored when the surface scene comes back after Endurance, and from a saved start position", async () => {
+    engine = new NullEngine();
+    renderer = createRenderer(engine, { tier: "high", fadeMs: 0 });
+    const base = createInitialState(episode.initial);
+    await renderer.show(base);
+    renderer.handle!.teleport!(9, 21);
+    await renderer.show({ ...base, controlled: "char.romilly" as never }); // Endurance
+    expect(renderer.handle!.position?.() ?? null).toBeNull();
+    await renderer.show(base); // back on Miller
+    expect(renderer.handle!.position!()).toMatchObject({ x: 9, z: 21 });
+    await renderer.rebuild(); // a lost graphics context
+    expect(renderer.handle!.position!()).toMatchObject({ x: 9, z: 21 });
+    renderer.dispose();
+    renderer = createRenderer(engine, { tier: "high", fadeMs: 0, startPosition: { x: 3, z: 14 } });
+    await renderer.show(base);
+    expect(renderer.handle!.position!()).toMatchObject({ x: 3, z: 14 });
+  });
+});
+
 describe("the dead leave the scene (CHAR-001)", () => {
   it("hides a follower who has died, and shows him again if the scene is rebuilt from a state where he lives", async () => {
     engine = new NullEngine();

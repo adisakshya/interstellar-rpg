@@ -27,6 +27,7 @@ interface Probe {
   hash(): Promise<string>;
   flushSave(): Promise<void>;
   goToObjective(): void;
+  renderer: { handle: { position?(): unknown } | null };
   slots: {
     listCheckpoints(): Promise<{ key: string }[]>;
     restoreCheckpoint(key: string): Promise<unknown>;
@@ -43,6 +44,8 @@ const touch = (info: TestInfo) => info.project.name.startsWith("mobile");
 async function start(page: Page): Promise<void> {
   await page.goto("./?debug&frozen&fresh");
   await page.waitForSelector(".irpg-btn");
+  // The surface scene loads after the HUD; actions tied to a landmark are refused until it reports where Cooper stands.
+  await page.waitForFunction(() => window.__irpg.renderer.handle?.position?.() != null);
 }
 
 async function interact(page: Page, info: TestInfo): Promise<void> {

@@ -5,6 +5,7 @@ import { createEngine, createInitialState, createRules } from "../../src/domain"
 import { actionToCommand } from "../../src/app/actions";
 import { currentInteraction, offerFor, pendingInteraction } from "../../src/app/interactions";
 import { distanceTo, isNearLandmark, MILLER_LANDMARKS } from "../../src/render";
+import { makeNearGate } from "../../src/app/gate";
 
 const loaded = loadEpisode(m1);
 if (!loaded.ok) throw new Error(loaded.errors.join("\n"));
@@ -71,5 +72,19 @@ describe("landmarks", () => {
       expect(d).toBeGreaterThan(l.reach); // not already there at the start
       expect(d).toBeLessThan(60); // about a minute of wading at Miller's pace
     }
+  });
+});
+
+describe("the gate fails closed (PLAY-001)", () => {
+  it("counts nothing as near while the player's position is not known yet, and follows the position once it is", () => {
+    let at: { x: number; z: number } | null = null;
+    const isNear = makeNearGate(() => at);
+    expect(isNear("beacon")).toBe(false); // the surface scene is still loading
+    const b = MILLER_LANDMARKS["beacon"]!;
+    at = { x: b.x, z: b.z - 2 };
+    expect(isNear("beacon")).toBe(true);
+    expect(isNear("wreck")).toBe(false);
+    const state = start();
+    expect(actionToCommand({ kind: "Interact" }, state, ctx(makeNearGate(() => null)))).toBeNull();
   });
 });
