@@ -187,6 +187,19 @@ describe("Miller's plain is dressed (SCENE-002)", () => {
     expect(seen.size).toBeGreaterThan(3); // it pulses
   });
 
+  it("puts the wake rings just above the water surface, so they show on the opaque low tier too", async () => {
+    engine = new NullEngine();
+    renderer = createRenderer(engine, { tier: "low", fadeMs: 0 });
+    await renderer.show(createInitialState(episode.initial));
+    const scene = renderer.handle!.scene;
+    engine.getDeltaTime = () => 100;
+    for (let i = 0; i < 3; i++) renderer.render();
+    const water = scene.getMeshByName("water")!;
+    const rings = scene.meshes.filter((m) => m.name.startsWith("wake"));
+    expect(rings).toHaveLength(3);
+    for (const r of rings) expect(r.position.y).toBeGreaterThan(water.position.y);
+  });
+
   it("keeps the sky, the wave and the beacon lamp out of the haze, and gives the water a moving normal map", async () => {
     engine = new NullEngine();
     renderer = createRenderer(engine, { tier: "low", fadeMs: 0 });

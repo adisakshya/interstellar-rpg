@@ -186,7 +186,7 @@ export const createSurfaceScene: SceneFactory = (engine, tier, assets, content) 
       f.figure.update(dt, { speed: fs, wading: profile.wading });
     }
     for (const [i, r] of rings.entries()) {
-      r.ring.mesh.position.set(r.root.position.x, WATER + 0.03, r.root.position.z);
+      r.ring.mesh.position.set(r.root.position.x, 0.04, r.root.position.z); // the water mesh is at y = 0 (the feet are what sit below it)
       r.ring.mesh.setEnabled(r.root.isEnabled());
       const pace = i === 0 ? speed : gaitSpeed(followers[i - 1]!.v, profile);
       r.ring.update(clock + i * 0.37, Math.min(pace, 1.2));
