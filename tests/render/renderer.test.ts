@@ -163,6 +163,58 @@ describe("the wave in Miller's scene (WAVE-001)", () => {
   });
 });
 
+describe("Miller's plain is dressed (SCENE-002)", () => {
+  it("has the Ranger, the beacon and the wreck standing in hazy air, with a live beacon lamp", async () => {
+    engine = new NullEngine();
+    renderer = createRenderer(engine, { tier: "high", fadeMs: 0 });
+    await renderer.show(createInitialState(episode.initial));
+    const scene = renderer.handle!.scene;
+    for (const name of ["ranger", "beacon", "wreck"]) {
+      expect(
+        scene.transformNodes.some((n) => n.name === name),
+        name,
+      ).toBe(true);
+    }
+    expect(scene.fogMode).toBe(2); // exponential squared: near things crisp, far ones sink
+    expect(scene.fogDensity).toBeGreaterThan(0.005);
+    const lamp = scene.getMaterialByName("beaconLamp") as unknown as { emissiveColor: { r: number } };
+    const seen = new Set<number>();
+    engine.getDeltaTime = () => 100;
+    for (let i = 0; i < 40; i++) {
+      renderer.render();
+      seen.add(Math.round(lamp.emissiveColor.r * 100));
+    }
+    expect(seen.size).toBeGreaterThan(3); // it pulses
+  });
+
+  it("puts the wake rings just above the water surface, so they show on the opaque low tier too", async () => {
+    engine = new NullEngine();
+    renderer = createRenderer(engine, { tier: "low", fadeMs: 0 });
+    await renderer.show(createInitialState(episode.initial));
+    const scene = renderer.handle!.scene;
+    engine.getDeltaTime = () => 100;
+    for (let i = 0; i < 3; i++) renderer.render();
+    const water = scene.getMeshByName("water")!;
+    const rings = scene.meshes.filter((m) => m.name.startsWith("wake"));
+    expect(rings).toHaveLength(3);
+    for (const r of rings) expect(r.position.y).toBeGreaterThan(water.position.y);
+  });
+
+  it("keeps the sky, the wave and the beacon lamp out of the haze, and gives the water a moving normal map", async () => {
+    engine = new NullEngine();
+    renderer = createRenderer(engine, { tier: "low", fadeMs: 0 });
+    await renderer.show(createInitialState(episode.initial));
+    const scene = renderer.handle!.scene;
+    expect((scene.getMaterialByName("beaconLamp") as { fogEnabled: boolean }).fogEnabled).toBe(false);
+    const water = scene.getMaterialByName("waterMat") as unknown as { bumpTexture: { uOffset: number } | null };
+    expect(water.bumpTexture).not.toBeNull();
+    const before = water.bumpTexture!.uOffset;
+    engine.getDeltaTime = () => 100;
+    for (let i = 0; i < 10; i++) renderer.render();
+    expect(water.bumpTexture!.uOffset).toBeGreaterThan(before);
+  });
+});
+
 describe("the dead leave the scene (CHAR-001)", () => {
   it("hides a follower who has died, and shows him again if the scene is rebuilt from a state where he lives", async () => {
     engine = new NullEngine();

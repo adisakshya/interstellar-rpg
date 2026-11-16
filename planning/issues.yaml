@@ -757,7 +757,7 @@ issues:
     milestone: M1
     epic: EPIC-M1
     agent: claude-code
-    status: draft  # plan v0.4.0 (D-19); published to GitHub once the creator approves the revised plan
+    status: done  # creator review pending (D-24, D-22): the one dressed scene to sign off before SCENE-003/004
     size: L
     review_effort: 1h
     requirements: [FR-11, D-14, D-22]

@@ -7,16 +7,23 @@ import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { CreateGround } from "@babylonjs/core/Meshes/Builders/groundBuilder";
 import { VertexBuffer } from "@babylonjs/core/Buffers/buffer";
 import { VertexData } from "@babylonjs/core/Meshes/mesh.vertexData";
+import { Scene } from "@babylonjs/core/scene";
 import { material, newScene, type SceneFactory } from "./common";
 import { CREW } from "../figures/crew";
 import { createSuitedFigure } from "../figures/suit";
 import { gaitSpeed, MOVEMENT, stepVelocity, type Velocity } from "../movement";
+import { createBeacon, createRanger, createWakeRing, createWaterBump, createWreck } from "./miller-props";
 import { addSky } from "./sky";
 import { createWaveMesh } from "./wave-mesh";
 import { waveProgress } from "../wave";
 
 export const createSurfaceScene: SceneFactory = (engine, tier, assets, content) => {
   const scene = newScene(engine, new Color4(0.01, 0.012, 0.016, 1));
+  // Haze on every exterior (ART_DIRECTION §3): near things crisp, the far ones sink into a cold dark. The sky, the wave
+  // and the beacon's lamp opt out of it.
+  scene.fogMode = Scene.FOGMODE_EXP2;
+  scene.fogDensity = 0.011;
+  scene.fogColor = new Color3(0.035, 0.05, 0.065);
   // Gargantua fills part of the sky, a little above the horizon, ahead of the starting camera direction.
   if (assets) addSky(scene, assets.baseUrl + tier.skyFile, { yawDeg: 90, pitchDeg: 14 });
   // There is no sun on Miller: the light is Gargantua's disk, low in the sky ahead (+z), so the key light is warm and
@@ -51,7 +58,7 @@ export const createSurfaceScene: SceneFactory = (engine, tier, assets, content) 
   floor.material = material(scene, "seabedMat", new Color3(0.24, 0.24, 0.22));
 
   const water = CreateGround("water", { width: 400, height: 400, subdivisions: 1 }, scene);
-  water.material = material(
+  const waterMat = material(
     scene,
     "waterMat",
     new Color3(0.12, 0.2, 0.26),
@@ -59,6 +66,20 @@ export const createSurfaceScene: SceneFactory = (engine, tier, assets, content) 
       ? { alpha: 0.82, emissive: new Color3(0.04, 0.07, 0.09) }
       : { emissive: new Color3(0.04, 0.07, 0.09) },
   );
+  // Wet things look wet: a slow scrolling normal map and a warm, tight specular, so the disk's light glints on the swell.
+  const bump = createWaterBump(scene);
+  bump.uScale = 70;
+  bump.vScale = 70;
+  waterMat.bumpTexture = bump;
+  waterMat.specularColor = new Color3(0.8, 0.56, 0.33);
+  waterMat.specularPower = 40;
+  water.material = waterMat;
+
+  // What stands on the plain: the Ranger beside the start, the beacon ahead, the wreck out toward the horizon.
+  createRanger(scene, new Vector3(12, -0.15, 9), 0.6);
+  const beacon = createBeacon(scene, new Vector3(4, -0.4, 32));
+  createWreck(scene, new Vector3(-13, -0.1, 42), 0.45);
+  let clock = 0;
 
   // The "mountains" on the horizon are a wave (GDD B7). It is not there until the warning, rises as the clock runs on,
   // and reaches the crew exactly when the rules say it does (WAVE-001).
@@ -99,6 +120,10 @@ export const createSurfaceScene: SceneFactory = (engine, tier, assets, content) 
     f.figure.root.position = new Vector3(f.offset.x, WATER, f.offset.z);
     f.figure.root.rotation.y = Math.PI; // facing the way they came
   }
+  const rings = [cooper.root, ...followers.map((f) => f.figure.root)].map((root, i) => ({
+    root,
+    ring: createWakeRing(scene, `wake${i}`),
+  }));
   const camTarget = new Vector3(0, 1.1, 0);
 
   const camera = new ArcRotateCamera("follow", -Math.PI / 2, 1.42, 9, camTarget.clone(), scene);
@@ -144,6 +169,10 @@ export const createSurfaceScene: SceneFactory = (engine, tier, assets, content) 
       body.rotation.y = facing;
     }
     cooper.update(dt, { speed, wading: profile.wading });
+    clock += dt;
+    beacon.update(clock);
+    bump.uOffset += dt * 0.012;
+    bump.vOffset += dt * 0.007;
     // Followers keep to their offset behind Cooper, wading at the same pace.
     for (const f of followers) {
       const dx = body.position.x + f.offset.x - f.figure.root.position.x;
@@ -155,6 +184,12 @@ export const createSurfaceScene: SceneFactory = (engine, tier, assets, content) 
       const fs = gaitSpeed(f.v, profile);
       if (fs > 0.05) f.figure.root.rotation.y = turnToward(f.figure.root.rotation.y, f.v.x, -f.v.y, dt);
       f.figure.update(dt, { speed: fs, wading: profile.wading });
+    }
+    for (const [i, r] of rings.entries()) {
+      r.ring.mesh.position.set(r.root.position.x, 0.04, r.root.position.z); // the water mesh is at y = 0 (the feet are what sit below it)
+      r.ring.mesh.setEnabled(r.root.isEnabled());
+      const pace = i === 0 ? speed : gaitSpeed(followers[i - 1]!.v, profile);
+      r.ring.update(clock + i * 0.37, Math.min(pace, 1.2));
     }
     camTarget.set(body.position.x, 1.1, body.position.z);
     camera.target.copyFrom(camTarget);
