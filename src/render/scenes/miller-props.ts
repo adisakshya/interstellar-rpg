@@ -38,7 +38,7 @@ export function createRanger(scene: Scene, at: Vector3, yaw: number): TransformN
   const root = new TransformNode("ranger", scene);
   root.position = at;
   root.rotation.y = yaw;
-  const hull = metal(scene, "rangerHull", new Color3(0.34, 0.36, 0.4));
+  const hull = metal(scene, "rangerHull", new Color3(0.42, 0.44, 0.48));
   const dark = metal(scene, "rangerDark", new Color3(0.16, 0.17, 0.19));
   const glass = metal(scene, "rangerGlass", new Color3(0.05, 0.05, 0.05), new Color3(0.9, 0.55, 0.18));
 

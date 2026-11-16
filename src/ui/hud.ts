@@ -33,14 +33,19 @@ const CSS = `
   overflow-y:auto;overscroll-behavior:contain;pointer-events:none}
 .irpg-scroll>*{flex:none;width:100%}
 .irpg-hud *{box-sizing:border-box}
-.irpg-panel{pointer-events:auto;padding:.5rem .625rem;border-radius:.5rem;
-  background:rgba(10,16,24,.84);border:1px solid rgba(255,255,255,.35)}
-.irpg-panel h2{margin:0 0 .25rem;font-size:.8125rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;opacity:.85}
+.irpg-panel{pointer-events:auto;padding:.5rem .75rem;border-radius:.75rem;
+  background:rgba(8,12,18,.74);border:1px solid rgba(255,255,255,.2);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 .25rem 1.25rem rgba(0,0,0,.35)}
+/* Section headings stay for screen readers but are not drawn: the panels explain themselves. A decision keeps its heading. */
+.irpg-panel>h2{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.irpg-prompt>h2{position:static;width:auto;height:auto;margin:0 0 .25rem;clip:auto;overflow:visible;white-space:normal;
+  font-size:.75rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#ffd166}
 .irpg-clock{margin:0;font-size:.9375rem}
 .irpg-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.375rem}
 .irpg-btn{display:flex;flex-wrap:wrap;align-items:baseline;gap:.125rem .5rem;width:100%;min-height:2.75rem;
-  padding:.375rem .625rem;text-align:left;font:inherit;color:inherit;background:rgba(255,255,255,.08);
-  border:1px solid rgba(255,255,255,.55);border-radius:.375rem;cursor:pointer;touch-action:manipulation}
+  padding:.375rem .625rem;text-align:left;font:inherit;color:inherit;background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.4);border-radius:.5rem;cursor:pointer;touch-action:manipulation}
+.irpg-btn:hover{background:rgba(255,255,255,.14)}
 .irpg-btn[aria-current="true"]{border:3px solid #8ecbff;background:rgba(142,203,255,.18)}
 .irpg-btn[aria-disabled="true"]{border-style:dashed;opacity:.9;cursor:not-allowed}
 .irpg-btn:focus-visible{outline:3px solid #ffd166;outline-offset:2px}
@@ -49,7 +54,7 @@ const CSS = `
 .irpg-meta{font-size:.875rem;opacity:.9}
 .irpg-reason{flex-basis:100%;font-size:.875rem;font-weight:600}
 .irpg-you{font-size:.8125rem;font-weight:600}
-.irpg-prompt{border:2px solid #ffd166}
+.irpg-prompt{border:1px solid #ffd166;box-shadow:0 0 1.5rem rgba(255,209,102,.18)}
 .irpg-prompt p{margin:.25rem 0 .5rem}
 .irpg-options{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:.375rem}
 .irpg-options>li{flex:1 1 8rem}
@@ -60,14 +65,27 @@ const CSS = `
 .irpg-tick{display:inline-block;width:.5rem;height:.5rem;margin-right:.5rem;border-radius:50%;background:#ffd166;opacity:.2;transition:opacity .35s ease-out}
 .irpg-tick.irpg-on{opacity:1;transition:none}
 .irpg-sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+/* Wide screens with a mouse: the roster is a row of chips and the offered action is a prompt at the bottom of the view,
+   like the context action in a game, with the E key drawn on it. */
+@media (min-width:48rem) and (pointer:fine){
+  .irpg-scroll{width:min(30rem,100%)}
+  .irpg-list{flex-direction:row;flex-wrap:wrap;gap:.375rem}
+  .irpg-list>li{flex:1 1 8rem}
+  .irpg-actionbar{position:fixed;left:50%;bottom:8.5rem;transform:translateX(-50%);width:min(30rem,calc(100% - 2rem));
+    border-color:rgba(255,209,102,.7);background:rgba(8,12,18,.82)}
+  .irpg-actionbar .irpg-btn{border-color:rgba(255,255,255,.25);background:rgba(255,209,102,.1)}
+  .irpg-actionbar .irpg-btn::before{content:"E";display:inline-flex;align-items:center;justify-content:center;
+    min-width:1.5rem;height:1.5rem;margin-right:.375rem;border:1px solid #ffd166;border-radius:.3rem;color:#ffd166;
+    font-size:.8125rem;font-weight:700}
+}
 /* Narrow or touch screens (UI-002): the world is the point, so the HUD shrinks to a strip. Headings stay for screen
    readers but are not drawn, the roster becomes a row of chips, and nothing loses its text or its focus ring. */
 @media (max-width:40rem),(pointer:coarse) and (max-height:34rem){
   .irpg-hud{padding:.375rem;font-size:.875rem}
+  /* The offered action sits just above the thumbs, not at the top over the sky. */
+  .irpg-actionbar{position:fixed;left:.5rem;right:.5rem;bottom:10.5rem;width:auto;background:rgba(8,12,18,.82);border-color:rgba(255,209,102,.7)}
   .irpg-scroll{gap:.25rem;max-height:calc(100% - 9rem)}
   .irpg-panel{padding:.25rem .5rem;border-radius:.375rem}
-  .irpg-panel>h2{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
-  .irpg-prompt>h2{position:static;width:auto;height:auto;margin:0 0 .25rem;clip:auto;overflow:visible;white-space:normal}
   .irpg-clock{font-size:.8125rem}
   .irpg-btn{min-height:2.75rem;padding:.25rem .5rem;gap:0 .375rem}
   .irpg-list{flex-direction:row;flex-wrap:wrap;gap:.25rem}
@@ -132,7 +150,11 @@ export function mountHud(root: HTMLElement, handlers: HudHandlers): Hud {
   timeRow.append(clockBox, rowEnd);
   timePanel.append(timeRow, pausedNote);
 
-  const actionPanel = make(doc, "section", { class: "irpg-panel", "aria-labelledby": "irpg-act-h", hidden: "" });
+  const actionPanel = make(doc, "section", {
+    class: "irpg-panel irpg-actionbar",
+    "aria-labelledby": "irpg-act-h",
+    hidden: "",
+  });
   actionPanel.append(make(doc, "h2", { id: "irpg-act-h" }, "Action"));
   const actionButton = make(doc, "button", { type: "button", class: "irpg-btn", "aria-keyshortcuts": "E" });
   const actionLabel = make(doc, "span", { class: "irpg-name" });
