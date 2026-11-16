@@ -76,7 +76,7 @@ export const createSurfaceScene: SceneFactory = (engine, tier, assets, content) 
   water.material = waterMat;
 
   // What stands on the plain: the Ranger beside the start, the beacon ahead, the wreck out toward the horizon.
-  createRanger(scene, new Vector3(12, -0.15, 9), 0.6);
+  createRanger(scene, new Vector3(12, -0.15, 9), Math.PI - 0.55); // nose toward the crew, so the lit window faces the player
   const beacon = createBeacon(scene, new Vector3(4, -0.4, 32));
   createWreck(scene, new Vector3(-13, -0.1, 42), 0.45);
   let clock = 0;

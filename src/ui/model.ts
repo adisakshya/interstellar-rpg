@@ -35,6 +35,8 @@ export interface DecisionOption {
 export interface DecisionPrompt {
   readonly id: DecisionId;
   readonly title: string;
+  /** A sentence on what is at stake, when the content has one. */
+  readonly prompt: string | null;
   readonly options: readonly DecisionOption[];
   /** True when time cannot pass its deadline. */
   readonly hard: boolean;
@@ -83,6 +85,10 @@ export interface HudContext {
   readonly decisions: Readonly<Record<DecisionId, DecisionDef>>;
   readonly activities?: Readonly<Record<string, ActivityDef>> | undefined;
   readonly forecast?: ((id: DecisionId) => DecisionForecast | null) | undefined;
+  /** Authored text per decision; missing parts fall back to labels made from ids. */
+  readonly text?:
+    | Readonly<Record<string, { title?: string; prompt?: string; labels?: Readonly<Record<string, string>> }>>
+    | undefined;
 }
 
 const nameOf = (ctx: HudContext, id: string) => ctx.names[id] ?? labelFromId(id);
@@ -131,14 +137,16 @@ export function buildHudModel(state: GameState, ctx: HudContext): HudModel {
     if (entry.status !== "pending") continue;
     const def = ctx.decisions[id];
     if (!def) continue;
-    const title = labelFromId(id);
+    const authored = ctx.text?.[id];
+    const title = authored?.title ?? labelFromId(id);
     if (def.owner === state.controlled) {
       const deadlineT = ctx.forecast?.(id)?.deadlineT ?? null;
       const left = deadlineT === null ? null : Math.max(0, deadlineT - state.T);
       prompts.push({
         id,
         title,
-        options: Object.keys(def.options).map((o) => ({ id: o, label: labelFromId(o) })),
+        prompt: authored?.prompt ?? null,
+        options: Object.keys(def.options).map((o) => ({ id: o, label: authored?.labels?.[o] ?? labelFromId(o) })),
         hard: def.deadlineT !== null || def.deadlineWhen !== undefined,
         // At the deadline itself there is nothing left to count: time is simply held until the player chooses.
         deadline: left === null || left <= 0 ? null : formatDuration(left),

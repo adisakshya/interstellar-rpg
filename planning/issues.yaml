@@ -799,7 +799,7 @@ issues:
     milestone: M1
     epic: EPIC-M1
     agent: claude-code
-    status: draft  # plan v0.4.0 (D-19); published to GitHub once the creator approves the revised plan
+    status: done  # creator review pending (D-24): first dressed pass of Endurance; ages with the years passed
     size: M
     review_effort: 0.5h
     requirements: [FR-11, FR-25, D-18]

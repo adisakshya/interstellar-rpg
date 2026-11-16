@@ -30,6 +30,12 @@ const CSS = `
   background:rgba(6,10,16,.82);border:1px solid rgba(255,255,255,.3);color:#f2f5f8;font:1rem/1.45 system-ui,sans-serif}
 .irpg-sub.irpg-floating{position:absolute;left:50%;transform:translateX(-50%);bottom:1.25rem;width:min(44rem,calc(100% - 2rem))}
 .irpg-sub[hidden]{display:none}
+/* Between scenes only the log button remains, as a small chip rather than an empty bar. */
+.irpg-sub.irpg-idle{width:auto;padding:0;background:none;border:none;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none}
+.irpg-sub.irpg-idle.irpg-floating{width:auto;bottom:1rem;left:auto;right:1rem;transform:none}
+.irpg-sub.irpg-idle:not(.irpg-floating){position:fixed;right:.5rem;bottom:14.25rem}
+.irpg-sub.irpg-idle .irpg-sub-ctl{margin-top:0}
+.irpg-sub.irpg-idle .irpg-sub-ctl button{background:rgba(8,12,18,.6);border-color:rgba(255,255,255,.25);font-size:.8125rem}
 .irpg-sub-line{margin:0;min-height:1.45em}
 .irpg-sub-name{font-weight:600;letter-spacing:.03em;margin-right:.5rem;color:#ffd9a0}
 .irpg-sub-narrator .irpg-sub-text{font-style:italic;opacity:.92}
@@ -128,7 +134,7 @@ export function mountSubtitles(root: HTMLElement, story: StorySource, options: S
     if (options.slot) options.slot.hidden = docked !== "slot" || panel.hidden;
     if (panel.hidden) return;
     const kind = line?.kind ?? "narrator";
-    panel.className = `irpg-sub irpg-sub-${kind}${docked === "float" ? " irpg-floating" : ""}`;
+    panel.className = `irpg-sub irpg-sub-${kind}${docked === "float" ? " irpg-floating" : ""}${line === null && !logOpen ? " irpg-idle" : ""}`;
     lineBox.hidden = line === null;
     name.textContent = line?.name ?? "";
     name.hidden = line?.name == null;

@@ -28,6 +28,10 @@ export interface LoadedEpisode {
   readonly interactions: EpisodeFile["interactions"];
   readonly ending: EpisodeFile["ending"];
   readonly outcomeNotes: EpisodeFile["outcomeNotes"];
+  /** Player-facing decision text by decision id (TEXT-001); anything missing falls back to a label made from the id. */
+  readonly decisionText: Readonly<
+    Record<string, { title?: string; prompt?: string; labels?: Readonly<Record<string, string>> }>
+  >;
   /** Subtitle text, each entry shown once when its condition first holds (STORY-001). */
   readonly story: EpisodeFile["story"];
   /** Fact id → player-facing text, for the outcome screen. */
@@ -122,6 +126,12 @@ export function loadEpisode(json: unknown): LoadResult {
         ref(chars, "character", e.characterId, at("options", name, j, "characterId"));
         if (e.kind === "LearnFact") ref(facts, "fact", e.factId, at("options", name, j, "factId"));
       });
+    }
+  });
+  ep.decisions.forEach((d, i) => {
+    for (const key of Object.keys(d.labels ?? {})) {
+      if (!Object.hasOwn(d.options, key))
+        err(["decisions", i, "labels", key], `decision "${d.id}" has no option "${key}"`);
     }
   });
   ids(ep.interactions, "interactions", "interaction");
@@ -347,6 +357,18 @@ export function loadEpisode(json: unknown): LoadResult {
       ending: ep.ending,
       outcomeNotes: ep.outcomeNotes,
       story: ep.story,
+      decisionText: Object.fromEntries(
+        ep.decisions
+          .filter((d) => d.title !== undefined || d.prompt !== undefined || d.labels !== undefined)
+          .map((d) => [
+            d.id,
+            {
+              ...(d.title !== undefined ? { title: d.title } : {}),
+              ...(d.prompt !== undefined ? { prompt: d.prompt } : {}),
+              ...(d.labels !== undefined ? { labels: d.labels } : {}),
+            },
+          ]),
+      ),
       facts: Object.fromEntries(ep.facts.map((f) => [f.id, f.text])),
     },
   };

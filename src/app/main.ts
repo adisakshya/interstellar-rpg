@@ -192,6 +192,7 @@ if (hud) {
       buildHudModel(state, {
         names: episode.names,
         decisions: episode.tables.decisions ?? {},
+        text: episode.decisionText,
         activities: episode.tables.activities,
         forecast: (id) => game.forecast(id),
         offer: offerFor(state, interactions, episode.tables.rates),
@@ -199,7 +200,9 @@ if (hud) {
     );
   paint(game.getState());
   game.subscribe(paint);
-  createTouchAdapter(mountTouchControls(hud).controls, onAction);
+  // The on-screen pad and buttons are for touch screens; with a mouse and keyboard they only clutter the view.
+  const touchDevice = window.matchMedia("(pointer: coarse)").matches || navigator.maxTouchPoints > 0;
+  if (touchDevice) createTouchAdapter(mountTouchControls(hud).controls, onAction);
   const wide = window.matchMedia("(min-width: 48rem) and (pointer: fine)");
   mountSubtitles(hud, story, { slot: view.slot, wide: () => wide.matches });
 }

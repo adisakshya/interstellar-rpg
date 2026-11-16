@@ -8,7 +8,7 @@
         {
           "decision": "decision.recall",
           "option": "leave_now",
-          "label": "Leave now"
+          "label": "Run for the Ranger"
         },
         "interact"
       ],
@@ -21,7 +21,7 @@
         {
           "decision": "decision.recall",
           "option": "stay_longer",
-          "label": "Stay longer"
+          "label": "Stay for the recorder"
         },
         "interact"
       ],
