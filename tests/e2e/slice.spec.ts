@@ -26,6 +26,7 @@ interface Probe {
   freeRoam: { setPaused(paused: boolean): void };
   hash(): Promise<string>;
   flushSave(): Promise<void>;
+  goToObjective(): void;
   slots: {
     listCheckpoints(): Promise<{ key: string }[]>;
     restoreCheckpoint(key: string): Promise<unknown>;
@@ -45,6 +46,9 @@ async function start(page: Page): Promise<void> {
 }
 
 async function interact(page: Page, info: TestInfo): Promise<void> {
+  // Actions tied to a landmark need the player to be there (PLAY-001); the script walks there in one step.
+  await page.evaluate(() => window.__irpg.goToObjective());
+  await page.waitForTimeout(150);
   if (touch(info)) await page.getByRole("button", { name: "Act", exact: true }).tap();
   else await page.keyboard.press("KeyE");
 }
@@ -97,6 +101,7 @@ test("W1: extra time on the planet changes Romilly's state and supplies", async 
 
 test("W2: switching cannot dodge costs or leak facts", async ({ page }) => {
   await start(page);
+  await page.evaluate(() => window.__irpg.goToObjective()); // the scan needs Cooper at the beacon (PLAY-001)
   await page.keyboard.press("KeyE"); // Cooper scans the beacon
   const result = await page.evaluate(async () => {
     const { game, hash } = window.__irpg;

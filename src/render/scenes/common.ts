@@ -20,6 +20,12 @@ export interface SceneHandle {
   update(view: SceneView): void;
   /** Presentation-only movement for the visible character (INPUT-001 drives it); −1..1 per axis. */
   setMove(x: number, y: number): void;
+  /** Where the player's character stands on the plain, for scenes where that matters (null elsewhere). */
+  position?(): { readonly x: number; readonly z: number } | null;
+  /** Put the player's character at a spot (the test hook and the replay of a saved position use it). */
+  teleport?(x: number, z: number): void;
+  /** Mark a landmark as the current goal with a beam of light, or clear it with null. */
+  setObjective?(landmark: string | null): void;
   dispose(): void;
 }
 

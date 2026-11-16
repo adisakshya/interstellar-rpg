@@ -100,6 +100,10 @@ export const episodeSchema = z.strictObject({
       label: z.string().min(1),
       activityId: z.string().min(1),
       dTau: z.number().finite().positive(),
+      /** A landmark the player must stand near to do this (PLAY-001); the scene knows where each one is. */
+      near: z.enum(["beacon", "wreck", "ranger"]).optional(),
+      /** What to tell the player while they are not yet there ("Walk to the beacon"). */
+      goal: z.string().min(1).optional(),
       requires: z.array(factId).optional(),
       unless: z.array(factId).optional(),
       after: z.array(decisionId).optional(),

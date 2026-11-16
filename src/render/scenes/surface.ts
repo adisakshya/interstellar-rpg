@@ -5,6 +5,8 @@ import { DirectionalLight } from "@babylonjs/core/Lights/directionalLight";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { CreateGround } from "@babylonjs/core/Meshes/Builders/groundBuilder";
+import { CreateCylinder } from "@babylonjs/core/Meshes/Builders/cylinderBuilder";
+import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { VertexBuffer } from "@babylonjs/core/Buffers/buffer";
 import { VertexData } from "@babylonjs/core/Meshes/mesh.vertexData";
 import { Scene } from "@babylonjs/core/scene";
@@ -13,6 +15,7 @@ import { CREW } from "../figures/crew";
 import { createSuitedFigure } from "../figures/suit";
 import { gaitSpeed, MOVEMENT, stepVelocity, type Velocity } from "../movement";
 import { createBeacon, createRanger, createWakeRing, createWaterBump, createWreck } from "./miller-props";
+import { MILLER_LANDMARKS } from "../landmarks";
 import { addSky } from "./sky";
 import { createWaveMesh } from "./wave-mesh";
 import { waveProgress } from "../wave";
@@ -76,10 +79,21 @@ export const createSurfaceScene: SceneFactory = (engine, tier, assets, content) 
   water.material = waterMat;
 
   // What stands on the plain: the Ranger beside the start, the beacon ahead, the wreck out toward the horizon.
-  createRanger(scene, new Vector3(12, -0.15, 9), Math.PI - 0.55); // nose toward the crew, so the lit window faces the player
-  const beacon = createBeacon(scene, new Vector3(4, -0.4, 32));
-  createWreck(scene, new Vector3(-13, -0.1, 42), 0.45);
+  createRanger(scene, new Vector3(MILLER_LANDMARKS.ranger!.x, -0.15, MILLER_LANDMARKS.ranger!.z), Math.PI - 0.55); // nose toward the crew, so the lit window faces the player
+  const beacon = createBeacon(scene, new Vector3(MILLER_LANDMARKS.beacon!.x, -0.4, MILLER_LANDMARKS.beacon!.z));
+  createWreck(scene, new Vector3(MILLER_LANDMARKS.wreck!.x, -0.1, MILLER_LANDMARKS.wreck!.z), 0.45);
   let clock = 0;
+  // The goal is marked with a slow pale beam of light, so it can be found across the water.
+  const beam = CreateCylinder("objectiveBeam", { diameter: 0.7, height: 60, tessellation: 12 }, scene);
+  const beamMat = new StandardMaterial("objectiveBeamMat", scene);
+  beamMat.diffuseColor = new Color3(0, 0, 0);
+  beamMat.emissiveColor = new Color3(1, 0.78, 0.4);
+  beamMat.alpha = 0.22;
+  beamMat.fogEnabled = false;
+  beamMat.disableLighting = true;
+  beam.material = beamMat;
+  beam.isPickable = false;
+  beam.setEnabled(false);
 
   // The "mountains" on the horizon are a wave (GDD B7). It is not there until the warning, rises as the clock runs on,
   // and reaches the crew exactly when the rules say it does (WAVE-001).
@@ -170,6 +184,7 @@ export const createSurfaceScene: SceneFactory = (engine, tier, assets, content) 
     }
     cooper.update(dt, { speed, wading: profile.wading });
     clock += dt;
+    beamMat.alpha = 0.16 + 0.1 * Math.sin(clock * 2);
     beacon.update(clock);
     bump.uOffset += dt * 0.012;
     bump.vOffset += dt * 0.007;
@@ -205,6 +220,17 @@ export const createSurfaceScene: SceneFactory = (engine, tier, assets, content) 
     setMove(x, y) {
       move.x = x;
       move.y = y;
+    },
+    position: () => ({ x: body.position.x, z: body.position.z }),
+    teleport(x, z) {
+      body.position.x = x;
+      body.position.z = z;
+      for (const f of followers) f.figure.root.position.set(x + f.offset.x, WATER, z + f.offset.z);
+    },
+    setObjective(landmark) {
+      const l = landmark === null ? undefined : MILLER_LANDMARKS[landmark];
+      beam.setEnabled(l !== undefined);
+      if (l) beam.position.set(l.x, 28, l.z);
     },
     dispose: () => {
       wave.dispose();
