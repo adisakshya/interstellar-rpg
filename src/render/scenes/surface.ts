@@ -17,6 +17,7 @@ import { createSuitedFigure } from "../figures/suit";
 import { gaitSpeed, MOVEMENT, stepVelocity, type Velocity } from "../movement";
 import { createBeacon, createRanger, createWakeRing, createWaterBump, createWreck } from "./miller-props";
 import { MILLER_LANDMARKS } from "../landmarks";
+import { loadSurface } from "./textures";
 import { addSky } from "./sky";
 import { createWaveMesh } from "./wave-mesh";
 import { waveProgress } from "../wave";
@@ -80,9 +81,16 @@ export const createSurfaceScene: SceneFactory = (engine, tier, assets, content) 
   water.material = waterMat;
 
   // What stands on the plain: the Ranger beside the start, the beacon ahead, the wreck out toward the horizon.
-  createRanger(scene, new Vector3(MILLER_LANDMARKS.ranger!.x, -0.15, MILLER_LANDMARKS.ranger!.z), Math.PI - 0.55); // nose toward the crew, so the lit window faces the player
+  const plate = assets ? loadSurface(scene, assets, "metal_plate_02", { u: 1.5, v: 1.5 }) : null;
+  const rustSurface = assets ? loadSurface(scene, assets, "rusty_metal_02", { u: 2, v: 2 }) : null;
+  createRanger(
+    scene,
+    new Vector3(MILLER_LANDMARKS.ranger!.x, -0.15, MILLER_LANDMARKS.ranger!.z),
+    Math.PI - 0.55,
+    plate,
+  ); // nose toward the crew, so the lit window faces the player
   const beacon = createBeacon(scene, new Vector3(MILLER_LANDMARKS.beacon!.x, -0.4, MILLER_LANDMARKS.beacon!.z));
-  createWreck(scene, new Vector3(MILLER_LANDMARKS.wreck!.x, -0.1, MILLER_LANDMARKS.wreck!.z), 0.45);
+  createWreck(scene, new Vector3(MILLER_LANDMARKS.wreck!.x, -0.1, MILLER_LANDMARKS.wreck!.z), 0.45, rustSurface, plate);
   let clock = 0;
   // The goal is marked with a slow pale beam of light, so it can be found across the water.
   const beam = CreateCylinder("objectiveBeam", { diameter: 0.7, height: 60, tessellation: 12 }, scene);

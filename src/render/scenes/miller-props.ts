@@ -13,6 +13,7 @@ import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { RawTexture } from "@babylonjs/core/Materials/Textures/rawTexture";
 import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import type { Scene } from "@babylonjs/core/scene";
+import { applySurface, type Surface } from "./textures";
 
 const metal = (scene: Scene, name: string, color: Color3, emissive?: Color3): StandardMaterial => {
   const m = new StandardMaterial(name, scene);
@@ -34,12 +35,13 @@ const part = (mesh: Mesh, parent: TransformNode, mat: StandardMaterial, at: Vect
  * The Ranger standing on its legs in the water: a blunt fuselage, a cockpit window that glows amber, two engine pods and
  * four legs whose feet are below the surface. Dark grey, scuffed, cramped (ART_DIRECTION palette).
  */
-export function createRanger(scene: Scene, at: Vector3, yaw: number): TransformNode {
+export function createRanger(scene: Scene, at: Vector3, yaw: number, plate?: Surface | null): TransformNode {
   const root = new TransformNode("ranger", scene);
   root.position = at;
   root.rotation.y = yaw;
   const hull = metal(scene, "rangerHull", new Color3(0.6, 0.62, 0.68));
   const dark = metal(scene, "rangerDark", new Color3(0.16, 0.17, 0.19));
+  applySurface(hull, plate, { r: 0.85, g: 0.88, b: 0.95 });
   const glass = metal(scene, "rangerGlass", new Color3(0.05, 0.05, 0.05), new Color3(0.9, 0.55, 0.18));
 
   part(CreateBox("ranger.body", { width: 3.2, height: 2.2, depth: 6.4 }, scene), root, hull, new Vector3(0, 3.1, 0));
@@ -117,13 +119,21 @@ export function createBeacon(scene: Scene, at: Vector3): { root: TransformNode; 
  * The wreck of Miller's lander: a split hull lying on its side with one wing-plate standing, half under the water.
  * Rust brown, weathered, lit from behind by the sky.
  */
-export function createWreck(scene: Scene, at: Vector3, yaw: number): TransformNode {
+export function createWreck(
+  scene: Scene,
+  at: Vector3,
+  yaw: number,
+  rustSurface?: Surface | null,
+  plateSurface?: Surface | null,
+): TransformNode {
   const root = new TransformNode("wreck", scene);
   root.position = at;
   root.rotation.y = yaw;
   root.scaling.setAll(1.3);
   const rust = metal(scene, "wreckRust", new Color3(0.45, 0.25, 0.13));
   const plate = metal(scene, "wreckPlate", new Color3(0.34, 0.31, 0.29));
+  applySurface(rust, rustSurface, { r: 1, g: 0.9, b: 0.85 });
+  applySurface(plate, plateSurface, { r: 0.6, g: 0.58, b: 0.56 });
   const hullA = CreateCylinder("wreck.hullA", { diameter: 3.4, height: 6.5, tessellation: 14 }, scene);
   hullA.rotation.z = Math.PI / 2 - 0.12;
   part(hullA, root, rust, new Vector3(0, 0.3, 0));
