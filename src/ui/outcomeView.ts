@@ -13,7 +13,8 @@ const CSS = `
   padding:1rem;background:rgba(5,8,14,.9);color:#f2f5f8;font:1rem/1.45 system-ui,sans-serif;z-index:10;pointer-events:auto}
 .irpg-outcome-card{width:min(36rem,100%);padding:1rem;border:1px solid rgba(255,255,255,.4);border-radius:.5rem;
   background:rgba(14,22,34,.98)}
-.irpg-outcome h1{margin:0 0 .5rem;font-size:1.5rem}
+.irpg-outcome h1{margin:0 0 .5rem;font-size:1.5rem;font-weight:300;letter-spacing:.06em}
+.irpg-outcome h1:focus{outline:none}
 .irpg-outcome h2{margin:1rem 0 .25rem;font-size:.9375rem;letter-spacing:.04em;text-transform:uppercase;opacity:.85}
 .irpg-outcome p,.irpg-outcome ul{margin:0}
 .irpg-outcome ul{padding-left:1.25rem}

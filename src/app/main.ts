@@ -34,7 +34,7 @@ import {
 } from "../ui";
 import { actionToCommand } from "./actions";
 import { watchEnding } from "./ending";
-import { makeNearGate } from "./gate";
+import { effectiveMove, makeNearGate } from "./gate";
 import { offerFor, pendingInteraction } from "./interactions";
 import { createAutosaver } from "./autosave";
 import { loadStartup, startupNotice } from "./startup";
@@ -142,11 +142,14 @@ const interactions = episode.interactions;
 const playerAt = () => renderer.handle?.position?.() ?? null;
 const isNear = makeNearGate(playerAt);
 let repaintHud: (() => void) | null = null;
+// The direction the player is holding. It is handed to the scene every frame, and only while time is running (see
+// `effectiveMove`), so held keys and a held stick resume by themselves when a subtitle or prompt closes.
+let desiredMove = { x: 0, y: 0 };
 const onAction = (action: InputAction) => {
   // While the title screen is up, and once the episode is over (the outcome dialog), keys pressed behind them do nothing.
   if (titleOpen || isFinished(game.getState(), episode.ending)) return;
   if (action.kind === "Move") {
-    renderer.setMove(action.x, action.y);
+    desiredMove = { x: action.x, y: action.y };
     return;
   }
   const command = actionToCommand(action, game.getState(), {
@@ -375,6 +378,8 @@ const refreshObjective = (now: number) => {
 };
 engine.runRenderLoop(() => {
   freeRoam.frame(engine.getDeltaTime());
+  const move = effectiveMove(desiredMove, { runs: freeRoam.active, paidFor: renderer.handle?.position !== undefined });
+  renderer.setMove(move.x, move.y);
   refreshObjective(performance.now());
   const level = adaptive ? scaler.frame(engine.getDeltaTime()) : null;
   if (level !== null) {

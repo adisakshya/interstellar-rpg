@@ -11,3 +11,16 @@ export function makeNearGate(position: () => { readonly x: number; readonly z: n
     return at !== null && isNearLandmark(landmark, at);
   };
 }
+
+/**
+ * The move to hand the scene this frame. Walking on the plain is paid for by free-roam ticks (every second of wading is a
+ * second of the character's time), so the character must stand still exactly when free-roam is not running: a subtitle
+ * on screen, a decision open, the title up, a hidden tab. Otherwise a player could cross to a landmark for free and
+ * then act there (PLAY-001). Scenes with no position (Endurance's corridor) are cosmetic and keep their movement.
+ */
+export function effectiveMove(
+  desired: { readonly x: number; readonly y: number },
+  state: { readonly runs: boolean; readonly paidFor: boolean },
+): { x: number; y: number } {
+  return state.paidFor && !state.runs ? { x: 0, y: 0 } : { x: desired.x, y: desired.y };
+}

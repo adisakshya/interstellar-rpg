@@ -193,7 +193,7 @@
       },
       "note": "Wave warning at T = 60 000 000 s; the wave arrives at the deadline (hazard.wave). Staying longer recovers the recorder and costs an hour of Cooper's time for the flooded engines; Doyle dies when the wave arrives, not at the choice (GDD §5, placeholder numbers).",
       "title": "The wave is coming",
-      "prompt": "A wall of water is crossing the plain and will reach you at the deadline. Run for the Ranger now, or spend an hour on Miller, about seven years for Romilly, to pull the recorder from the wreck while the wave closes in.",
+      "prompt": "A wall of water is crossing the plain and will arrive at the deadline. Run for the Ranger now, or spend an hour here, about seven years for Romilly, to pull the recorder from the wreck.",
       "labels": {
         "leave_now": "Run for the Ranger",
         "stay_longer": "Stay for the recorder"

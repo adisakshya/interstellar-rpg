@@ -5,7 +5,7 @@ import { createEngine, createInitialState, createRules } from "../../src/domain"
 import { actionToCommand } from "../../src/app/actions";
 import { currentInteraction, offerFor, pendingInteraction } from "../../src/app/interactions";
 import { distanceTo, isNearLandmark, MILLER_LANDMARKS } from "../../src/render";
-import { makeNearGate } from "../../src/app/gate";
+import { effectiveMove, makeNearGate } from "../../src/app/gate";
 
 const loaded = loadEpisode(m1);
 if (!loaded.ok) throw new Error(loaded.errors.join("\n"));
@@ -86,5 +86,18 @@ describe("the gate fails closed (PLAY-001)", () => {
     expect(isNear("wreck")).toBe(false);
     const state = start();
     expect(actionToCommand({ kind: "Interact" }, state, ctx(makeNearGate(() => null)))).toBeNull();
+  });
+});
+
+describe("walking is only free to do while it is paid for (PLAY-001, #83)", () => {
+  const held = { x: 0, y: 1 };
+  it("stands the character still whenever free-roam is not running, and resumes the held direction when it is", () => {
+    expect(effectiveMove(held, { runs: true, paidFor: true })).toEqual(held);
+    expect(effectiveMove(held, { runs: false, paidFor: true })).toEqual({ x: 0, y: 0 }); // a subtitle, a prompt, the title
+    expect(effectiveMove(held, { runs: true, paidFor: true })).toEqual(held); // the held key carries on by itself
+  });
+
+  it("leaves a scene with no position (Endurance) free to look around", () => {
+    expect(effectiveMove(held, { runs: false, paidFor: false })).toEqual(held);
   });
 });
