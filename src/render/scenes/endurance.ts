@@ -15,11 +15,15 @@ import { StandardMaterial } from "@babylonjs/core/Materials/standardMaterial";
 import { Texture } from "@babylonjs/core/Materials/Textures/texture";
 import { ageKey, enduranceAge, type EnduranceAge } from "./endurance-age";
 import { addBloom } from "./post";
+import { applySurface, loadSurface } from "./textures";
 import { material, newScene, type SceneFactory } from "./common";
 
 const CLEAN_WALL = new Color3(0.66, 0.67, 0.64);
 const DUSTY_WALL = new Color3(0.5, 0.45, 0.38);
-const lerp = (a: Color3, b: Color3, k: number) =>
+// The plate texture is dark, and the wall colour multiplies it, so with a texture the tint is lifted well above 1.
+const CLEAN_PLATE = new Color3(2.1, 2.1, 2.05);
+const DUSTY_PLATE = new Color3(1.35, 1.2, 0.98);
+const mix = (a: Color3, b: Color3, k: number) =>
   new Color3(a.r + (b.r - a.r) * k, a.g + (b.g - a.g) * k, a.b + (b.b - a.b) * k);
 
 export const createEnduranceScene: SceneFactory = (engine, tier, assets) => {
@@ -40,6 +44,17 @@ export const createEnduranceScene: SceneFactory = (engine, tier, assets) => {
   // Floor, ceiling and walls are separate so the far end can be open to the window.
   const wallMat = material(scene, "corridorMat", CLEAN_WALL);
   const floorMat = material(scene, "floorMat", new Color3(0.3, 0.3, 0.3));
+  // Real surfaces (CC0): worn concrete on the floor, scuffed metal plate on the walls. The wall colour still multiplies the
+  // map, so the dust that builds up over the years keeps dulling it.
+  if (assets) {
+    applySurface(floorMat, loadSurface(scene, assets, "concrete_floor_worn_001", { u: 1.5, v: 6 }), {
+      r: 0.9,
+      g: 0.9,
+      b: 0.9,
+    });
+    applySurface(wallMat, loadSurface(scene, assets, "metal_plate_02", { u: 1.5, v: 6 }));
+    wallMat.diffuseColor = CLEAN_PLATE.clone();
+  }
   const panel = (name: string, w: number, h: number, d: number, at: Vector3, mat = wallMat) => {
     const m = CreateBox(name, { width: w, height: h, depth: d }, scene);
     m.position = at;
@@ -182,7 +197,7 @@ export const createEnduranceScene: SceneFactory = (engine, tier, assets) => {
       add(leaf);
     }
     // Dust: the panels dull and the air thickens.
-    wallMat.diffuseColor = lerp(CLEAN_WALL, DUSTY_WALL, age.dust);
+    wallMat.diffuseColor = assets ? mix(CLEAN_PLATE, DUSTY_PLATE, age.dust) : mix(CLEAN_WALL, DUSTY_WALL, age.dust);
     scene.fogDensity = 0.002 + 0.014 * age.dust;
   };
   const show = (T: number) => {
