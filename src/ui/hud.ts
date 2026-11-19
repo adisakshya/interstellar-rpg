@@ -87,6 +87,9 @@ const CSS = `
 @media (max-width:40rem),(pointer:coarse) and (max-height:34rem){
   .irpg-hud{padding:.375rem;font-size:.875rem}
   /* The offered action sits just above the thumbs, not at the top over the sky. */
+  /* A decision sits above the thumbs too, so the sky and the horizon (and the wave on it) stay in view above it. */
+  .irpg-decisions{position:fixed;left:.5rem;right:.5rem;bottom:10.5rem;width:auto;max-height:52vh;overflow-y:auto;pointer-events:none}
+  .irpg-decisions>*{pointer-events:auto}
   .irpg-actionbar{position:fixed;left:.5rem;right:.5rem;bottom:10.5rem;width:auto;background:rgba(8,12,18,.82);border-color:rgba(255,209,102,.7)}
   .irpg-scroll{gap:.25rem;max-height:calc(100% - 9rem)}
   .irpg-panel{padding:.25rem .5rem;border-radius:.375rem}
@@ -181,7 +184,7 @@ export function mountHud(root: HTMLElement, handlers: HudHandlers): Hud {
   roster.append(list);
 
   const notes = make(doc, "section", { class: "irpg-panel", "aria-label": "Waiting on others", hidden: "" });
-  const prompts = make(doc, "div", { role: "group", "aria-label": "Decisions" });
+  const prompts = make(doc, "div", { role: "group", "aria-label": "Decisions", class: "irpg-decisions" });
   prompts.style.display = "flex";
   prompts.style.flexDirection = "column";
   prompts.style.gap = ".5rem";
